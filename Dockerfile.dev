@@ -1,0 +1,55 @@
+FROM node:20-alpine
+
+# Install development tools including bash, git, and VS Code server dependencies
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    wget \
+    openssh-client \
+    # Additional tools for VS Code integration
+    musl-dev \
+    gcc \
+    g++
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first for better layer caching
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies (without running build)
+RUN npm install --only=dev && npm install
+
+# Install global development tools
+RUN npm install -g \
+    ts-node \
+    ts-node-dev \
+    typescript \
+    nodemon
+
+# Create non-root user for development with proper shell
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S developer -u 1001 -G nodejs -s /bin/bash
+
+# Create home directory and set up environment
+RUN mkdir -p /home/developer && \
+    chown -R developer:nodejs /home/developer
+
+# Change ownership of app directory
+RUN chown -R developer:nodejs /app
+USER developer
+
+# Set up shell environment for the developer user
+RUN echo 'export PS1="\u@\h:\w$ "' >> /home/developer/.bashrc && \
+    echo 'cd /app' >> /home/developer/.bashrc
+
+# Expose port for development server
+EXPOSE 3000
+
+# Set default shell
+SHELL ["/bin/bash", "-c"]
+
+# Default command for development (keeps container running)
+CMD ["tail", "-f", "/dev/null"] 

@@ -1,0 +1,51 @@
+{
+  "name": "Imajin CLI Development",
+  "dockerComposeFile": "../docker-compose.dev.yml",
+  "service": "imajin-cli-dev",
+  "workspaceFolder": "/app",
+  
+  // Configure VS Code settings for the container
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "typescript.preferences.includePackageJsonAutoImports": "auto",
+        "typescript.suggest.autoImports": true,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/dist/**": true
+        }
+      },
+      
+      // Extensions to install in the container
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode.hexdump",
+        "ms-vscode.vscode-docker",
+        "github.copilot"
+      ]
+    }
+  },
+  
+  // Set up shell for better development experience
+  "postCreateCommand": "npm install",
+  
+  // Forward ports
+  "forwardPorts": [3000],
+  
+  // Use developer user (created in Dockerfile)
+  "remoteUser": "developer",
+  
+  // Mount additional paths if needed
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
+  ]
+} 

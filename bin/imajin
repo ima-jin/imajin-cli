@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+
+/**
+ * Imajin CLI Executable
+ * 
+ * @package     @imajin/cli
+ * @author      VETEZE
+ * @copyright   imajin
+ * @license     .fair LICENSING AGREEMENT
+ * @version     0.1.0
+ * @since       2025-06-04
+ */
+
+const path = require('path');
+const fs = require('fs');
+
+// Determine if we're running from source or built version
+const srcPath = path.join(__dirname, '..', 'src', 'index.ts');
+const distPath = path.join(__dirname, '..', 'dist', 'index.js');
+
+if (fs.existsSync(distPath)) {
+  // Production: Use compiled JavaScript
+  require(distPath);
+} else if (fs.existsSync(srcPath)) {
+  // Development: Use ts-node to run TypeScript directly
+  require('ts-node/register');
+  require('tsconfig-paths/register');
+  require(srcPath);
+} else {
+  console.error('Error: Cannot find application entry point');
+  console.error('Run "npm run build" to compile TypeScript or ensure source files exist');
+  process.exit(1);
+} 

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  imajin-cli-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: imajin-cli-dev
+    volumes:
+      # Mount source code for live development
+      - .:/app
+      # Node modules volume for performance
+      - node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      # Stripe API configuration
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    ports:
+      - "3000:3000"
+    working_dir: /app
+    # Keep container running for interactive use
+    command: ["tail", "-f", "/dev/null"]
+    stdin_open: true
+    tty: true
+
+volumes:
+  node_modules: 
