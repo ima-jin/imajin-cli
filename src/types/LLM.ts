@@ -3,11 +3,11 @@
  * 
  * @package     @imajin/cli
  * @subpackage  types
- * @author      [Developer Name]
+ * @author      VETEZE
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-04
+ * @since       2025-06-08
  *
  * @see        docs/llm-integration.md
  * 

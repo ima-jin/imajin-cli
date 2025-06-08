@@ -19,7 +19,7 @@
 
 import { config } from 'dotenv';
 import 'reflect-metadata';
-import { Application } from './core/Application';
+import { Application } from './core/Application.js';
 
 // Load environment variables
 config();
@@ -33,6 +33,10 @@ async function main(): Promise<void> {
       outputFormat: 'text',
       colorOutput: !process.argv.includes('--no-color'),
     });
+
+    // Register service providers
+    const { StripeServiceProvider } = await import('./providers/StripeServiceProvider.js');
+    app.createProvider(StripeServiceProvider);
 
     // Boot the application (register and initialize services)
     await app.boot();

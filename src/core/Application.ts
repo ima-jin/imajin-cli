@@ -3,11 +3,11 @@
  * 
  * @package     @imajin/cli
  * @subpackage  core
- * @author      [Developer Name]
+ * @author      VETEZE
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-04
+ * @since       2025-06-08
  *
  * @see         docs/architecture.md
  * 
@@ -127,6 +127,17 @@ export class Application {
   }
 
   /**
+   * Create and register a service provider
+   */
+  public createProvider<T extends ServiceProvider>(
+    ProviderClass: new (container: Container, program: Command) => T
+  ): T {
+    const provider = new ProviderClass(this.container, this.program);
+    this.registerProvider(provider);
+    return provider;
+  }
+
+  /**
    * Boot all registered service providers
    */
   public async boot(): Promise<void> {
@@ -148,8 +159,23 @@ export class Application {
       await provider.boot();
     }
 
+    // Register commands from providers
+    this.registerProviderCommands();
+
     this.isBooted = true;
     this.logger.info('Application booted successfully');
+  }
+
+  /**
+   * Register commands from service providers
+   */
+  private registerProviderCommands(): void {
+    for (const provider of this.providers) {
+      if ('registerCommands' in provider && typeof provider.registerCommands === 'function') {
+        provider.registerCommands(this.program);
+        this.logger.debug(`Registered commands for provider: ${provider.getName()}`);
+      }
+    }
   }
 
   /**

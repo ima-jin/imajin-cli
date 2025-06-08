@@ -52,6 +52,7 @@ export interface HeaderTemplate {
   documentation: string;
   integrationPoints: string[];
   typeImports?: string[];
+  currentYMD: Date;
 }
 
 export const generateHeader = (template: HeaderTemplate): string => {
@@ -72,7 +73,7 @@ export const generateHeader = (template: HeaderTemplate): string => {
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-04
+ * @since       ${template.currentYMD}
  *
  * @see        ${template.documentation}
  * 
