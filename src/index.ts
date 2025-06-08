@@ -27,7 +27,17 @@ config();
 // Bootstrap and run the application
 async function main(): Promise<void> {
   try {
-    const app = new Application();
+    const app = new Application({
+      debug: process.env.DEBUG === 'true',
+      logLevel: (process.env.LOG_LEVEL as any) || 'info',
+      outputFormat: 'text',
+      colorOutput: !process.argv.includes('--no-color'),
+    });
+
+    // Boot the application (register and initialize services)
+    await app.boot();
+
+    // Run the CLI
     await app.run();
   } catch (error) {
     console.error('Fatal error:', error);

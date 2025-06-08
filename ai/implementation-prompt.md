@@ -6,7 +6,7 @@ Based on comprehensive architectural analysis and developer ecosystem trends (St
 - **Architecture**: Node.js/TypeScript (most popular & fastest-growing dev ecosystem)
 - **imajin-cli goal**: LLM-powered universal service interface
 - **Target timeline**: 20 weeks to working theory + auto-tooling pattern
-- **First connector**: Notion (task management for AI dev workflow)
+- **First connector**: Stripe (payment processing and subscription management)
 - **Strategic advantage**: Largest developer community + best real-time capabilities
 
 ---
@@ -97,7 +97,7 @@ export class Application {
 ### **2. Service Provider Template:**
 ```typescript
 /**
- * NotionServiceProvider - Service provider for Notion integration
+ * StripeServiceProvider - Service provider for Stripe integration
  * 
  * @package     @imajin/cli
  * @subpackage  providers
@@ -107,20 +107,20 @@ export class Application {
  * @version     0.1.0
  * @since       2025-01-04
  *
- * @see        docs/services/notion.md
+ * @see        docs/services/stripe.md
  * 
  * Integration Points:
- * - NotionService registration with Container
+ * - StripeService registration with Container
  * - Command handler registration
- * - Real-time event subscription
+ * - Webhook event subscription
  * - LLM introspection interfaces
  */
 
 import { ServiceProvider } from '../core/ServiceProvider.js';
-import { NotionService } from '../services/NotionService.js';
+import { StripeService } from '../services/StripeService.js';
 import type { Container } from '../container/Container.js';
 
-export class NotionServiceProvider extends ServiceProvider {
+export class StripeServiceProvider extends ServiceProvider {
   public register(container: Container): void {
     // ... implementation
   }
@@ -134,17 +134,17 @@ export class NotionServiceProvider extends ServiceProvider {
 ### **3. Command Pattern Template:**
 ```typescript
 /**
- * CreatePageCommand - Command for creating Notion pages
+ * CreatePaymentCommand - Command for creating Stripe payments
  * 
  * @package     @imajin/cli
- * @subpackage  commands/notion
+ * @subpackage  commands/stripe
  * @author      [Developer Name]
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-01-04
  *
- * @see        docs/commands/notion.md
+ * @see        docs/commands/stripe.md
  * 
  * Integration Points:
  * - Real-time progress callbacks for LLM interaction
@@ -155,12 +155,12 @@ export class NotionServiceProvider extends ServiceProvider {
 
 import { Command } from 'commander';
 import { BaseCommand } from '../abstracts/BaseCommand.js';
-import type { NotionService } from '../../services/NotionService.js';
+import type { StripeService } from '../../services/StripeService.js';
 import type { LLMProgressCallback } from '../../types/LLM.js';
 
-export class CreatePageCommand extends BaseCommand {
+export class CreatePaymentCommand extends BaseCommand {
   constructor(
-    private notionService: NotionService,
+    private stripeService: StripeService,
     private progressCallback?: LLMProgressCallback
   ) {
     super();
@@ -173,34 +173,34 @@ export class CreatePageCommand extends BaseCommand {
 ### **4. Service Integration Template:**
 ```typescript
 /**
- * NotionService - Core Notion API integration service
+ * StripeService - Core Stripe API integration service
  * 
  * @package     @imajin/cli
- * @subpackage  services/notion
+ * @subpackage  services/stripe
  * @author      [Developer Name]
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-01-04
  *
- * @see        docs/services/notion-api.md
+ * @see        docs/services/stripe-api.md
  * 
  * Integration Points:
  * - HTTP client with automatic retries
- * - WebSocket for real-time updates
+ * - Webhook event handling for real-time updates
  * - Structured logging for debugging
  * - Rate limiting and error handling
  * - Type-safe API responses
  */
 
 import { EventEmitter } from 'events';
-import type { NotionAPI } from '@notionhq/client';
+import type Stripe from 'stripe';
 import type { Logger } from '../logging/Logger.js';
 import type { RateLimiter } from '../utils/RateLimiter.js';
 
-export class NotionService extends EventEmitter {
+export class StripeService extends EventEmitter {
   constructor(
-    private client: NotionAPI,
+    private client: Stripe,
     private logger: Logger,
     private rateLimiter: RateLimiter
   ) {
@@ -243,7 +243,7 @@ export class NotionService extends EventEmitter {
 **Deliverables:**
 - [ ] Event system with real-time capabilities
 - [ ] Type-safe data models and validation (Zod)
-- [ ] Build first Notion connector following all patterns
+- [ ] Build first Stripe connector following all patterns
 - [ ] LLM introspection interfaces (`--describe`, `--json`)
 
 **Code Quality Standards:**
@@ -313,7 +313,7 @@ export class NotionService extends EventEmitter {
 ## 🚀 **DELIVERABLES SUMMARY**
 
 1. **Complete Node.js/TypeScript scaffolding** with imajin header standards
-2. **Notion connector** as reference implementation with real-time capabilities
+2. **Stripe connector** as reference implementation with webhook capabilities
 3. **LLM integration testing** and validation with JSON APIs
 4. **Documentation** of replicable TypeScript patterns for connectors
 5. **Foundation** for auto-tooling/generation capabilities
@@ -331,11 +331,11 @@ Generate a detailed week-by-week implementation plan that leverages modern Node.
 - Create imajin-cli base architecture with type safety
 - Establish service provider templates
 
-### Sprint 2: First Connector (Notion)
-- Implement NotionServiceProvider with TypeScript
-- Create notion task management commands with real-time feedback
+### Sprint 2: First Connector (Stripe)
+- Implement StripeServiceProvider with TypeScript
+- Create stripe payment and subscription commands with webhook feedback
 - Test LLM introspection interface with JSON APIs
-- **Dogfooding**: Use for managing AI dev tasks
+- **Dogfooding**: Use for managing payment processing workflows
 
 ### Sprint 3: Service Orchestration
 - Cross-service workflow patterns
@@ -348,14 +348,14 @@ Generate a detailed week-by-week implementation plan that leverages modern Node.
 ### Discovery Interface
 ```bash
 imajin --list-services --json
-imajin notion --describe --json
-imajin notion --schema  
+imajin stripe --describe --json
+imajin stripe --schema  
 ```
 
 ### Command Execution with Real-time Feedback
 ```bash
-imajin notion create-page --title "Architecture Discussion" --parent "AI Development" --watch
-imajin workflow --source notion --target github --real-time
+imajin stripe create-payment --amount 1000 --currency usd --customer "cus_123" --watch
+imajin workflow --source stripe --target webhook --real-time
 ```
 
 ### Cross-Service Workflows
@@ -399,7 +399,7 @@ imajin workflow --source notion --target github --real-time
 - **Developer Adoption**: Leverage largest programming community
 
 ### Immediate Success Indicators
-- Box this conversation into Notion via real-time CLI
+- Process payment transactions via real-time CLI
 - LLM can discover and execute commands via JSON APIs
 - Cross-service workflows with live progress updates
 - Community adoption through familiar TypeScript patterns

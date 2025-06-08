@@ -1,0 +1,70 @@
+/**
+ * ServiceProvider - Abstract base class for service providers
+ * 
+ * @package     @imajin/cli
+ * @subpackage  providers
+ * @author      [Developer Name]
+ * @copyright   imajin
+ * @license     .fair LICENSING AGREEMENT
+ * @version     0.1.0
+ * @since       2025-01-04
+ *
+ * @see        docs/architecture.md
+ * 
+ * Integration Points:
+ * - Service registration phase
+ * - Service bootstrapping phase
+ * - Container access for dependency registration
+ * - Command registration system
+ */
+
+import type { Command } from 'commander';
+import type { Container } from '../container/Container.js';
+
+export abstract class ServiceProvider {
+    protected container: Container;
+    protected program: Command;
+
+    constructor(container: Container, program: Command) {
+        this.container = container;
+        this.program = program;
+    }
+
+    /**
+     * Register services with the container
+     * This method is called during the registration phase
+     */
+    public abstract register(): void | Promise<void>;
+
+    /**
+     * Bootstrap services after all providers have been registered
+     * This method is called during the boot phase
+     */
+    public abstract boot(): void | Promise<void>;
+
+    /**
+     * Get the service provider name
+     */
+    public abstract getName(): string;
+
+    /**
+     * Get service provider version
+     */
+    public getVersion(): string {
+        return '0.1.0';
+    }
+
+    /**
+     * Check if this provider provides a specific service
+     */
+    public provides(service: string): boolean {
+        return false;
+    }
+
+    /**
+     * Get list of services this provider offers
+     */
+    public getServices(): string[] {
+        return [];
+    }
+} 

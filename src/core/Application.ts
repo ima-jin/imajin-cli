@@ -2,12 +2,12 @@
  * Application - Core application bootstrap and orchestration
  * 
  * @package     @imajin/cli
- * @module      core
- * @author      VETEZE
+ * @subpackage  core
+ * @author      [Developer Name]
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-04
+ * @since       2025-01-04
  *
  * @see         docs/architecture.md
  * 
@@ -15,26 +15,53 @@
  * - Container for dependency injection
  * - ServiceProvider registration and bootstrapping
  * - Console command registration and execution
+ * - Real-time event coordination
  */
 
 import chalk from 'chalk';
 import { Command } from 'commander';
 import figlet from 'figlet';
+import { Container } from '../container/Container.js';
+import { Logger } from '../logging/Logger.js';
+import { ServiceProvider } from '../providers/ServiceProvider.js';
+import { ImajiNConfig, ImajiNConfigSchema } from '../types/Config.js';
+import type { LLMResponse, ServiceIntrospection } from '../types/LLM.js';
 
 export class Application {
-  private program: Command;
-  private version: string = '0.1.0';
+  public static readonly VERSION = '0.1.0';
+  public static readonly NAME = 'Imajin CLI';
 
-  constructor() {
+  private container: Container;
+  private program: Command;
+  private logger: Logger;
+  private config: ImajiNConfig;
+  private providers: ServiceProvider[] = [];
+  private isBooted: boolean = false;
+
+  constructor(config?: Partial<ImajiNConfig>) {
+    // Initialize container and core services
+    this.container = new Container();
     this.program = new Command();
+    this.config = ImajiNConfigSchema.parse(config || {});
+    this.logger = new Logger(this.config.logLevel, this.config.colorOutput);
+
+    // Register core services
+    this.registerCoreServices();
     this.setupProgram();
+  }
+
+  private registerCoreServices(): void {
+    // Register core services in container
+    this.container.singleton('logger', () => this.logger);
+    this.container.singleton('config', () => this.config);
+    this.container.singleton('container', () => this.container);
   }
 
   private setupProgram(): void {
     this.program
       .name('imajin')
       .description('LLM-powered universal service interface')
-      .version(this.version);
+      .version(Application.VERSION);
 
     // Add global options
     this.program
@@ -53,7 +80,7 @@ export class Application {
       .description('Display application banner')
       .action(() => {
         console.log(chalk.cyan(figlet.textSync('IMAJIN CLI', { horizontalLayout: 'full' })));
-        console.log(chalk.gray(`Version: ${this.version}`));
+        console.log(chalk.gray(`Version: ${Application.VERSION}`));
         console.log(chalk.gray('LLM-powered universal service interface\n'));
       });
 
@@ -68,25 +95,161 @@ export class Application {
         console.log(chalk.gray('\n💡 Run service provider setup to configure services'));
       });
 
-    // List services command (placeholder)
+    // List services command with LLM introspection
     this.program
       .command('list-services')
       .description('List available service connectors')
-      .action(() => {
-        console.log(chalk.blue('Available services:'));
-        console.log(chalk.gray('  - stripe (coming soon)'));
-        console.log(chalk.gray('  - contentful (planned)'));
-        console.log(chalk.gray('  - github (planned)'));
-        console.log(chalk.gray('\n💡 Services will be loaded via ServiceProvider system'));
+      .option('--json', 'Output in JSON format for LLM parsing')
+      .option('--describe', 'Include detailed service descriptions')
+      .action((options) => {
+        this.handleListServices(options);
       });
 
-    // TODO: Implement proper task management as a service
-    // This should be handled by:
-    // - TaskManagementService (part of service layer)
-    // - AI-powered task execution from markdown files
-    // - Integration with ServiceProvider system for plugin-based tasks
-    // - Real progress tracking with file updates and git integration
-    // See: docs/IMPLEMENTATION_PROMPTS.md for task definitions
+    // Service introspection command for LLM discovery
+    this.program
+      .command('describe')
+      .argument('<service>', 'Service name to describe')
+      .option('--json', 'Output in JSON format')
+      .option('--schema', 'Include command schemas')
+      .description('Get detailed information about a service')
+      .action((service: string, options) => {
+        this.handleDescribeService(service, options);
+      });
+  }
+
+  /**
+   * Register a service provider
+   */
+  public registerProvider(provider: ServiceProvider): this {
+    this.providers.push(provider);
+    this.logger.info(`Registered service provider: ${provider.getName()}`);
+    return this;
+  }
+
+  /**
+   * Boot all registered service providers
+   */
+  public async boot(): Promise<void> {
+    if (this.isBooted) {
+      return;
+    }
+
+    this.logger.info('Booting application...');
+
+    // Registration phase
+    for (const provider of this.providers) {
+      this.logger.debug(`Registering provider: ${provider.getName()}`);
+      await provider.register();
+    }
+
+    // Boot phase
+    for (const provider of this.providers) {
+      this.logger.debug(`Booting provider: ${provider.getName()}`);
+      await provider.boot();
+    }
+
+    this.isBooted = true;
+    this.logger.info('Application booted successfully');
+  }
+
+  /**
+   * Handle list services command
+   */
+  private handleListServices(options: any): void {
+    const services = this.providers.map(provider => ({
+      name: provider.getName(),
+      version: provider.getVersion(),
+      services: provider.getServices(),
+    }));
+
+    if (options.json) {
+      const response: LLMResponse = {
+        success: true,
+        data: services,
+        timestamp: new Date(),
+        service: 'core',
+        command: 'list-services',
+        executionTime: 0,
+      };
+      console.log(JSON.stringify(response, null, 2));
+    } else {
+      console.log(chalk.blue('Available services:'));
+      if (services.length === 0) {
+        console.log(chalk.gray('  No services registered yet'));
+        console.log(chalk.gray('\n💡 Services will be loaded via ServiceProvider system'));
+      } else {
+        services.forEach(service => {
+          console.log(chalk.green(`  ✓ ${service.name} (v${service.version})`));
+          if (options.describe && service.services.length > 0) {
+            service.services.forEach(s => {
+              console.log(chalk.gray(`    - ${s}`));
+            });
+          }
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle describe service command
+   */
+  private handleDescribeService(serviceName: string, options: any): void {
+    const provider = this.providers.find(p =>
+      p.getName() === serviceName || p.provides(serviceName)
+    );
+
+    if (!provider) {
+      const error = `Service '${serviceName}' not found`;
+      if (options.json) {
+        const response: LLMResponse = {
+          success: false,
+          error,
+          timestamp: new Date(),
+          service: 'core',
+          command: 'describe',
+          executionTime: 0,
+        };
+        console.log(JSON.stringify(response, null, 2));
+      } else {
+        console.log(chalk.red(error));
+      }
+      return;
+    }
+
+    const introspection: ServiceIntrospection = {
+      name: provider.getName(),
+      description: `Service provider for ${provider.getName()}`,
+      version: provider.getVersion(),
+      commands: [], // Will be populated by service providers
+      capabilities: provider.getServices(),
+      realTimeSupported: true,
+      authentication: {
+        required: false, // Will be determined by service providers
+      },
+    };
+
+    if (options.json) {
+      const response: LLMResponse = {
+        success: true,
+        data: introspection,
+        timestamp: new Date(),
+        service: 'core',
+        command: 'describe',
+        executionTime: 0,
+      };
+      console.log(JSON.stringify(response, null, 2));
+    } else {
+      console.log(chalk.blue(`Service: ${introspection.name}`));
+      console.log(chalk.gray(`Version: ${introspection.version}`));
+      console.log(chalk.gray(`Description: ${introspection.description}`));
+      console.log(chalk.gray(`Real-time Support: ${introspection.realTimeSupported ? 'Yes' : 'No'}`));
+      if (introspection.capabilities.length > 0) {
+        console.log(chalk.gray('Capabilities:'));
+        introspection.capabilities.forEach(cap => {
+          console.log(chalk.gray(`  - ${cap}`));
+        });
+      }
+    }
   }
 
   public async run(): Promise<void> {
