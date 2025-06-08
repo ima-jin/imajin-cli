@@ -70,20 +70,24 @@ export class StripeServiceProvider extends ServiceProvider {
         const config = this.container.resolve<ImajiNConfig>('config');
         const logger = this.container.resolve<Logger>('logger');
 
-        // Validate Stripe configuration
-        const stripeConfig = this.validateStripeConfig(config);
+        // Check if we have Stripe configuration - only validate if available
+        const hasStripeConfig = !!(process.env.STRIPE_API_KEY || config.services?.stripe?.apiKey);
 
-        // Register StripeService
-        this.stripeService = new StripeService(stripeConfig, logger);
-        this.container.singleton('stripeService', () => this.stripeService!);
+        if (hasStripeConfig) {
+            // Validate Stripe configuration
+            const stripeConfig = this.validateStripeConfig(config);
 
-        // Register commands
-        this.createPaymentCommand = new CreatePaymentCommand(this.stripeService);
+            // Register StripeService
+            this.stripeService = new StripeService(stripeConfig, logger);
+            this.container.singleton('stripeService', () => this.stripeService!);
 
-        logger.info('StripeServiceProvider registered', {
-            services: this.getServices(),
-            version: this.getVersion(),
-        });
+            // Register commands
+            this.createPaymentCommand = new CreatePaymentCommand(this.stripeService);
+
+            logger.info('StripeServiceProvider registered with API key');
+        } else {
+            logger.info('StripeServiceProvider registered without API key (introspection only)');
+        }
     }
 
     /**
@@ -123,6 +127,16 @@ export class StripeServiceProvider extends ServiceProvider {
     registerCommands(program: any): void {
         if (this.createPaymentCommand) {
             this.createPaymentCommand.register(program);
+        } else {
+            // Register a placeholder command that shows configuration needed
+            program
+                .command('stripe:create-payment')
+                .description('Create a new Stripe payment intent')
+                .action(() => {
+                    console.error('❌ Stripe API key not configured');
+                    console.error('💡 Set STRIPE_API_KEY environment variable or configure in config file');
+                    process.exit(1);
+                });
         }
     }
 

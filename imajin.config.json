@@ -1,0 +1,6 @@
+{
+    "debug": false,
+    "logLevel": "info",
+    "outputFormat": "text",
+    "colorOutput": true
+}

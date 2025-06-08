@@ -43,7 +43,12 @@ export class Application {
     this.container = new Container();
     this.program = new Command();
     this.config = ImajiNConfigSchema.parse(config || {});
-    this.logger = new Logger(this.config.logLevel, this.config.colorOutput);
+
+    // Check if JSON output is requested to suppress logs
+    const isJsonMode = process.argv.includes('--json');
+    const logLevel = isJsonMode ? 'error' : this.config.logLevel;
+
+    this.logger = new Logger(logLevel, this.config.colorOutput);
 
     // Register core services
     this.registerCoreServices();
@@ -179,19 +184,25 @@ export class Application {
   }
 
   /**
-   * Handle list services command
-   */
+ * Handle list services command
+ */
   private handleListServices(options: any): void {
     const services = this.providers.map(provider => ({
       name: provider.getName(),
       version: provider.getVersion(),
-      services: provider.getServices(),
+      capabilities: provider.getServices(),
     }));
 
-    if (options.json) {
+    // Check for JSON flag from both command options and global options
+    const isJsonMode = options.json || this.program.opts().json;
+
+    if (isJsonMode) {
       const response: LLMResponse = {
         success: true,
-        data: services,
+        data: {
+          services,
+          total: services.length,
+        },
         timestamp: new Date(),
         service: 'core',
         command: 'list-services',
@@ -206,8 +217,8 @@ export class Application {
       } else {
         services.forEach(service => {
           console.log(chalk.green(`  ✓ ${service.name} (v${service.version})`));
-          if (options.describe && service.services.length > 0) {
-            service.services.forEach(s => {
+          if (options.describe && service.capabilities.length > 0) {
+            service.capabilities.forEach(s => {
               console.log(chalk.gray(`    - ${s}`));
             });
           }
@@ -226,7 +237,8 @@ export class Application {
 
     if (!provider) {
       const error = `Service '${serviceName}' not found`;
-      if (options.json) {
+      const isJsonMode = options.json || this.program.opts().json;
+      if (isJsonMode) {
         const response: LLMResponse = {
           success: false,
           error,
@@ -242,19 +254,27 @@ export class Application {
       return;
     }
 
-    const introspection: ServiceIntrospection = {
-      name: provider.getName(),
-      description: `Service provider for ${provider.getName()}`,
-      version: provider.getVersion(),
-      commands: [], // Will be populated by service providers
-      capabilities: provider.getServices(),
-      realTimeSupported: true,
-      authentication: {
-        required: false, // Will be determined by service providers
-      },
-    };
+    // Get detailed introspection if available, otherwise use basic info
+    let introspection: ServiceIntrospection;
 
-    if (options.json) {
+    if ('getIntrospection' in provider && typeof provider.getIntrospection === 'function') {
+      introspection = provider.getIntrospection();
+    } else {
+      introspection = {
+        name: provider.getName(),
+        description: `Service provider for ${provider.getName()}`,
+        version: provider.getVersion(),
+        commands: [], // Will be populated by service providers
+        capabilities: provider.getServices(),
+        realTimeSupported: true,
+        authentication: {
+          required: false, // Will be determined by service providers
+        },
+      };
+    }
+
+    const isJsonModeForResponse = options.json || this.program.opts().json;
+    if (isJsonModeForResponse) {
       const response: LLMResponse = {
         success: true,
         data: introspection,
@@ -274,6 +294,12 @@ export class Application {
         introspection.capabilities.forEach(cap => {
           console.log(chalk.gray(`  - ${cap}`));
         });
+      }
+      if (introspection.authentication?.required) {
+        console.log(chalk.yellow(`Authentication: Required (${introspection.authentication.type || 'unknown'})`));
+        if (introspection.authentication.instructions) {
+          console.log(chalk.gray(`  ${introspection.authentication.instructions}`));
+        }
       }
     }
   }
