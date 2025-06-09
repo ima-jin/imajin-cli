@@ -161,10 +161,10 @@ export class AuthCommands {
             console.log(chalk.blue(`📋 Configured Services (${services.length})`));
             console.log();
 
-            for (const service of services) {
-                const isValid = await this.credentialManager.test(service);
+            for (const _service of services) {
+                const isValid = await this.credentialManager.test(_service);
                 const status = isValid ? chalk.green('✅ Valid') : chalk.red('❌ Invalid');
-                console.log(`  ${chalk.cyan(service)} ${status}`);
+                console.log(`  ${chalk.cyan(_service)} ${status}`);
             }
 
             if (options.providerInfo) {

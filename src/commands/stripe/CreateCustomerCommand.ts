@@ -57,7 +57,7 @@ export class CreateCustomerCommand {
     }
 
     public async execute(options: CreateCustomerOptions): Promise<void> {
-        const startTime = Date.now();
+        const _startTime = Date.now();
 
         try {
             // Validate required fields
@@ -96,7 +96,7 @@ export class CreateCustomerCommand {
             // Create customer with progress tracking
             const customer = await this.stripeService.createCustomer(customerData);
 
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
 
             // Prepare response
             const response: LLMResponse = {
@@ -131,7 +131,7 @@ export class CreateCustomerCommand {
             });
 
         } catch (error) {
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
             const errorMessage = error instanceof Error ? error.message : String(error);
 
             this.logger.error('Failed to create customer', error instanceof Error ? error : new Error(errorMessage), { duration });

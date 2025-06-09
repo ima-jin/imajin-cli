@@ -59,7 +59,7 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
         context: ETLContext,
         config?: ETLConfig
     ): Promise<ETLResult<TOutput[]>> {
-        const startTime = Date.now();
+        const _startTime = Date.now();
         const mergedConfig = { ...this.config, ...config } as BaseTransformerConfig;
 
         try {
@@ -84,7 +84,7 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
                 });
             }
 
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
 
             // Validate output if schema provided
             if (this.outputSchema && mergedConfig.validateOutput) {
@@ -109,7 +109,7 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
 
             return result;
         } catch (error) {
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
             const result: ETLResult<TOutput[]> = {
                 success: false,
                 error: error as Error,
@@ -252,7 +252,7 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
         rules: TransformRule[],
         context: ETLContext
     ): Promise<any> {
-        let result = { ...item };
+        const result = { ...item };
 
         for (const rule of rules) {
             // Check condition if specified

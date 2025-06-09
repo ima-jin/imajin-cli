@@ -124,7 +124,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
         event: IEvent<T>,
         options: EmitOptions = {}
     ): Promise<boolean> {
-        const startTime = Date.now();
+        const _startTime = Date.now();
 
         try {
             // Process through middleware pipeline
@@ -134,7 +134,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
             const result = this.emit(event.type, event);
 
             // Update metrics
-            this.metrics.recordEmission(event.type, Date.now() - startTime);
+            this.metrics.recordEmission(event.type, Date.now() - _startTime);
 
             return result;
         } catch (error) {

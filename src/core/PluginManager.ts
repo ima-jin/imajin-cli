@@ -88,14 +88,14 @@ export class PluginManager {
         const pluginModule = await import(resolve(configPath));
 
         // Extract plugin info
-        const config = pluginModule.default || pluginModule;
+        const _config = pluginModule.default || pluginModule;
         const pluginInfo: PluginInfo = {
-            name: config.name || 'unknown',
-            version: config.version || '1.0.0',
-            description: config.description || 'No description',
+            name: _config.name || 'unknown',
+            version: _config.version || '1.0.0',
+            description: _config.description || 'No description',
             path: pluginPath,
             loaded: true,
-            commands: config.commands || []
+            commands: _config.commands || []
         };
 
         // Register commands

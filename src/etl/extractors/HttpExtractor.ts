@@ -67,7 +67,7 @@ export class HttpExtractor<TOutput = any> extends BaseExtractor<TOutput> {
             requestOptions.data = requestBody;
         }
 
-        let url = endpoint;
+        const url = endpoint;
 
         // Handle pagination if configured
         if (config.pagination) {

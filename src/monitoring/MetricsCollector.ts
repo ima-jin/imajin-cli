@@ -223,7 +223,7 @@ export class MetricsCollector extends EventEmitter {
      * Get performance metrics
      */
     public getPerformanceMetrics(): PerformanceMetrics {
-        const now = Date.now();
+        const _now = Date.now();
         const uptime = process.uptime();
         const memUsage = process.memoryUsage();
 

@@ -192,7 +192,7 @@ export class StatusCommand {
     }
 
     private async collectSystemStatus(serviceFilter?: string): Promise<SystemStatus> {
-        const startTime = Date.now();
+        const _startTime = Date.now();
         const memUsage = process.memoryUsage();
         const cpuUsage = process.cpuUsage();
 

@@ -151,7 +151,7 @@ export class {{pluginNamePascal}}Service {
      * Build URL with path parameters
      */
     private buildUrl(path: string, params: any): string {
-        let url = path;
+        const url = path;
         
         // Replace path parameters
         Object.keys(params).forEach(key => {

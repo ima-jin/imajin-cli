@@ -285,7 +285,7 @@ export class EventManager {
         // Logging middleware
         if (this.config.enableMetrics) {
             this.use(async (event: IEvent, next: () => Promise<void>) => {
-                const startTime = Date.now();
+                const _startTime = Date.now();
                 try {
                     await next();
                 } catch (error) {

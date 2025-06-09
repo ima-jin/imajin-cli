@@ -100,13 +100,13 @@ export abstract class BaseCredentialProvider implements CredentialProvider {
         // Check expiration if present
         if (credentials.expiresAt) {
             const expiresAt = new Date(credentials.expiresAt);
-            const now = new Date();
+            const _now = new Date();
 
-            if (expiresAt <= now) {
+            if (expiresAt <= _now) {
                 result.isExpired = true;
                 result.errors.push('Credentials have expired');
             } else {
-                result.expiresIn = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
+                result.expiresIn = Math.floor((expiresAt.getTime() - _now.getTime()) / 1000);
             }
         }
 

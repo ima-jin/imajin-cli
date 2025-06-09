@@ -456,7 +456,7 @@ export class WorkflowOrchestrator extends EventEmitter {
      * Replace variables in a string with context values
      */
     private replaceVariables(template: string, context: WorkflowContext): string {
-        return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+        return template.replace(/{{([^}]+)}}/g, (match, path) => {
             const value = this.getNestedValue(context.data, path.trim());
             return value !== undefined ? String(value) : match;
         });

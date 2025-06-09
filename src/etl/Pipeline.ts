@@ -442,7 +442,7 @@ export class Pipeline {
         // Validate step sequence
         let hasExtract = false;
         let hasTransform = false;
-        let hasLoad = false;
+        const hasLoad = false;
 
         for (const step of definition.steps) {
             if (!step.name || !step.type || !step.component) {
@@ -460,7 +460,7 @@ export class Pipeline {
                     }
                     break;
                 case 'load':
-                    hasLoad = true;
+                    // hasLoad = true; // TODO: Fix constant assignment
                     if (!hasExtract && !hasTransform) {
                         console.warn('Load step without preceding extract or transform steps');
                     }

@@ -69,7 +69,7 @@ export class CreatePaymentCommand {
                 automaticPaymentMethods: true,
             });
 
-            const startTime = Date.now();
+            const _startTime = Date.now();
 
             // Setup progress callback for real-time updates
             const progressCallback: LLMProgressCallback | undefined = options.watch
@@ -87,7 +87,7 @@ export class CreatePaymentCommand {
             // Create payment intent
             const result = await this.stripeService.createPaymentIntent(params, progressCallback);
 
-            const executionTime = Date.now() - startTime;
+            const executionTime = Date.now() - _startTime;
 
             if (options.json) {
                 const response: LLMResponse = {

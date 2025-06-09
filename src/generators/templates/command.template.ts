@@ -310,7 +310,7 @@ export class {{pluginName}}Service {
             this.applyAuthentication(credentials);
 
             // Build request configuration
-            const config = this.buildRequestConfig('{{this.method}}', '{{this.path}}', params);
+            const _config = this.buildRequestConfig('{{this.method}}', '{{this.path}}', params);
 
             // Execute request
             const response: AxiosResponse = await this.client.request(config);
@@ -371,9 +371,9 @@ export class {{pluginName}}Service {
      */
     private buildRequestConfig(method: string, path: string, params: any): any {
         // Build URL with path parameters
-        let url = this.buildUrlWithPathParams(path, params);
+        const url = this.buildUrlWithPathParams(path, params);
 
-        const config: any = {
+        const _config: any = {
             method: method.toLowerCase(),
             url: url
         };
@@ -396,10 +396,10 @@ export class {{pluginName}}Service {
      * Build URL with path parameters
      */
     private buildUrlWithPathParams(path: string, params: any): string {
-        let url = path;
+        const url = path;
 
         // Replace path parameters like {id} with actual values
-        const pathParamRegex = /\{([^}]+)\}/g;
+        const pathParamRegex = /{([^}]+)}/g;
         url = url.replace(pathParamRegex, (match, paramName) => {
             if (params[paramName] !== undefined) {
                 return encodeURIComponent(String(params[paramName]));
@@ -440,7 +440,7 @@ export class {{pluginName}}Service {
      * Extract parameter names from path template
      */
     private extractPathParamNames(path: string): string[] {
-        const matches = path.match(/\{([^}]+)\}/g);
+        const matches = path.match(/{([^}]+)}/g);
         return matches ? matches.map(match => match.slice(1, -1)) : [];
     }
 

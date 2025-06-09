@@ -49,7 +49,7 @@ export abstract class BaseCommand implements ICommand {
      * Execute command with event tracking
      */
     public async executeWithEvents(args: any[], options: any): Promise<any> {
-        const startTime = Date.now();
+        const _startTime = Date.now();
 
         try {
             // Emit command started event
@@ -62,13 +62,13 @@ export abstract class BaseCommand implements ICommand {
             const result = await this.execute(args, options);
 
             // Emit command completed event
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
             await this.emitCommandCompleted(args, options, result, duration);
 
             return result;
         } catch (error) {
             // Emit command failed event
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
             await this.emitCommandFailed(args, options, error as Error, duration);
             throw error;
         }

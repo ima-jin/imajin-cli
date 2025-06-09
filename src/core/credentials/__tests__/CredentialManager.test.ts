@@ -143,8 +143,8 @@ describe('CredentialManager', () => {
 
         beforeEach(async () => {
             // Store test credentials
-            for (const service of testServices) {
-                await credentialManager.store(service, testCredentials);
+            for (const _service of testServices) {
+                await credentialManager.store(_service, testCredentials);
             }
         });
 

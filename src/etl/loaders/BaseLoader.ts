@@ -82,7 +82,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
         context: ETLContext,
         config?: ETLConfig
     ): Promise<ETLResult<any>> {
-        const startTime = Date.now();
+        const _startTime = Date.now();
         const mergedConfig = { ...this.config, ...config } as BaseLoaderConfig;
 
         try {
@@ -136,7 +136,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
                 throw error;
             }
 
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
             const successfulLoads = loadResults.filter(r => r.success);
 
             const result: ETLResult<LoadOperation[]> = {
@@ -159,7 +159,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
 
             return result;
         } catch (error) {
-            const duration = Date.now() - startTime;
+            const duration = Date.now() - _startTime;
             const result: ETLResult<LoadOperation[]> = {
                 success: false,
                 error: error as Error,
