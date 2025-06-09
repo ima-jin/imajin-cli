@@ -136,6 +136,32 @@ export class JobManager extends EventEmitter {
     }
 
     /**
+     * Type guard for safe Bull.js job status mapping
+     */
+    private isBullJobStatus(state: any): state is Bull.JobStatus {
+        return ['completed', 'waiting', 'active', 'delayed', 'failed', 'paused'].includes(state);
+    }
+
+    /**
+     * Map Bull.js status to our BullJobStatus type safely
+     */
+    private mapToBullJobStatus(state: Bull.JobStatus): import('../types/Jobs.js').BullJobStatus {
+        // Map Bull's JobStatus to our BullJobStatus
+        switch (state) {
+            case 'completed':
+            case 'waiting':
+            case 'active':
+            case 'delayed':
+            case 'failed':
+                return state as import('../types/Jobs.js').BullJobStatus;
+            case 'paused':
+                return 'stuck' as import('../types/Jobs.js').BullJobStatus; // Map paused to stuck for compatibility
+            default:
+                return 'stuck' as import('../types/Jobs.js').BullJobStatus; // Fallback for unknown states
+        }
+    }
+
+    /**
      * Get job status by ID
      */
     public async getJobStatus(queueName: string, jobId: string): Promise<JobStatus | null> {
@@ -146,24 +172,35 @@ export class JobManager extends EventEmitter {
             return null;
         }
 
-        const state = await job.getState();
+        const bullState = await job.getState();
+        const safeState = this.isBullJobStatus(bullState) ? this.mapToBullJobStatus(bullState) : 'stuck';
         const progress = job.progress();
 
-        return {
+        const jobStatus: JobStatus = {
             id: job.id!.toString(),
             name: job.name,
             queue: queueName,
-            state,
+            state: safeState,
             progress: typeof progress === 'number' ? progress : 0,
             data: job.data,
             result: job.returnvalue,
-            error: job.failedReason,
             createdAt: new Date(job.timestamp),
-            processedAt: job.processedOn ? new Date(job.processedOn) : undefined,
-            finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
             attempts: job.attemptsMade,
             maxAttempts: job.opts.attempts || 1,
         };
+
+        // Add optional properties only if they exist
+        if (job.failedReason) {
+            jobStatus.error = job.failedReason;
+        }
+        if (job.processedOn) {
+            jobStatus.processedAt = new Date(job.processedOn);
+        }
+        if (job.finishedOn) {
+            jobStatus.finishedAt = new Date(job.finishedOn);
+        }
+
+        return jobStatus;
     }
 
     /**
@@ -180,24 +217,35 @@ export class JobManager extends EventEmitter {
 
         return Promise.all(
             jobs.map(async (job) => {
-                const state = await job.getState();
+                const bullState = await job.getState();
+                const safeState = this.isBullJobStatus(bullState) ? this.mapToBullJobStatus(bullState) : 'stuck';
                 const progress = job.progress();
 
-                return {
+                const jobStatus: JobStatus = {
                     id: job.id!.toString(),
                     name: job.name,
                     queue: queueName,
-                    state,
+                    state: safeState,
                     progress: typeof progress === 'number' ? progress : 0,
                     data: job.data,
                     result: job.returnvalue,
-                    error: job.failedReason,
                     createdAt: new Date(job.timestamp),
-                    processedAt: job.processedOn ? new Date(job.processedOn) : undefined,
-                    finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
                     attempts: job.attemptsMade,
                     maxAttempts: job.opts.attempts || 1,
                 };
+
+                // Add optional properties only if they exist
+                if (job.failedReason) {
+                    jobStatus.error = job.failedReason;
+                }
+                if (job.processedOn) {
+                    jobStatus.processedAt = new Date(job.processedOn);
+                }
+                if (job.finishedOn) {
+                    jobStatus.finishedAt = new Date(job.finishedOn);
+                }
+
+                return jobStatus;
             })
         );
     }

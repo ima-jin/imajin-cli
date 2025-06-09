@@ -89,7 +89,7 @@ Use the imajin TypeScript header template for all files:
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-06
+ * @since       2025-06-09
  *
  * Integration Points:
  * - TSyringe DI container integration
@@ -176,7 +176,145 @@ interface Command {
 - Foundation prepared for service connectors
 ```
 
-### **PROMPT 3: CREDENTIAL MANAGEMENT SYSTEM**
+### **PROMPT 3: TYPE COLLISION PREVENTION SYSTEM**
+
+```markdown
+# 🔧 IMPLEMENT: Type Collision Prevention System
+
+## CONTEXT
+Create a comprehensive type management system that prevents type collisions between multiple services, enables cross-service data transformations, and provides universal entity schemas for seamless integration as the system scales to dozens of service connectors.
+
+## ARCHITECTURAL VISION
+As imajin-cli scales to integrate with many services (Stripe, Salesforce, HubSpot, Shopify, etc.), we need to prevent type name collisions and enable safe cross-service data flows:
+- Universal entity schemas for common business objects
+- Service adapter pattern for bi-directional transformations
+- Type collision detection and namespace management
+- Cross-service workflow type safety
+
+## DELIVERABLES
+1. `src/types/Core.ts` - Universal entity schemas and type management
+2. `src/types/adapters/` - Service adapter interfaces and utilities
+3. `src/services/[service]/adapters/` - Service-specific adapter implementations
+4. Type collision detection and warning system
+5. Integration with ETL Pipeline for automatic transformations
+
+## IMPLEMENTATION REQUIREMENTS
+
+### 1. Universal Entity Schemas
+```typescript
+// Create universal schemas that ALL services map to
+export const UniversalCustomerSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string().optional(),
+  phone: z.string().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  metadata: z.record(z.any()).optional(),
+  serviceData: z.record(z.any()).optional(), // Service-specific fields
+  sourceService: z.string(),
+});
+
+export const UniversalPaymentSchema = z.object({
+  id: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  status: z.enum(['pending', 'completed', 'failed', 'cancelled']),
+  customerId: z.string().optional(),
+  // ... additional universal fields
+});
+```
+
+### 2. Service Adapter Pattern
+```typescript
+export interface ServiceAdapter<TServiceEntity, TUniversalEntity> {
+  toUniversal(serviceEntity: TServiceEntity): TUniversalEntity;
+  fromUniversal(universalEntity: TUniversalEntity): TServiceEntity;
+  validate(entity: unknown): entity is TServiceEntity;
+  getNamespace(): ServiceNamespace;
+}
+```
+
+### 3. Type Collision Detection
+```typescript
+export class TypeRegistry {
+  static register(typeName: string, namespace: ServiceNamespace): void;
+  static hasCollision(typeName: string): boolean;
+  static getServices(typeName: string): ServiceNamespace[];
+}
+```
+
+### 4. Service Namespace System
+- Registered namespace for each service (stripe, salesforce, hubspot, etc.)
+- Automatic collision warnings during development
+- Namespaced type utilities and helpers
+
+## FILE HEADERS
+Use the imajin TypeScript header template for all files:
+```typescript
+/**
+ * [ClassName] - [Brief Description]
+ * 
+ * @package     @imajin/cli
+ * @subpackage  types/core
+ * @author      [Author]
+ * @copyright   imajin
+ * @license     .fair LICENSING AGREEMENT
+ * @version     0.1.0
+ * @since       2025-06-09
+ *
+ * Integration Points:
+ * - Universal entity schemas for cross-service mapping
+ * - Type collision prevention via namespacing
+ * - Service adapter type definitions
+ * - ETL pipeline type transformations
+ */
+```
+
+## INTEGRATION POINTS
+- Must work with existing Service Provider system
+- Should integrate with ETL Pipeline for automatic transformations
+- Prepare for plugin-generated service connectors
+- Support for real-time cross-service workflows
+
+## EXAMPLE IMPLEMENTATION
+Create a Stripe Customer Adapter as reference:
+```typescript
+export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, UniversalCustomer> {
+  toUniversal(stripeCustomer: StripeCustomer): UniversalCustomer {
+    return {
+      id: stripeCustomer.id,
+      email: stripeCustomer.email || '',
+      sourceService: 'stripe',
+      serviceData: {
+        balance: stripeCustomer.balance,
+        delinquent: stripeCustomer.delinquent,
+        // ... other Stripe-specific fields
+      },
+      // ... map other universal fields
+    };
+  }
+  // ... implement other methods
+}
+```
+
+## TESTING REQUIREMENTS
+Create tests for:
+- Universal schema validation with various service data
+- Adapter transformations (to/from universal formats)
+- Type collision detection system
+- Cross-service data flow scenarios
+
+## SUCCESS CRITERIA
+- Universal entity schemas work with multiple service types
+- Service adapters enable bi-directional transformations
+- Type collision system detects and warns about conflicts
+- Ready for unlimited service connector scaling
+- Integration with ETL Pipeline for automatic cross-service workflows
+- Foundation prepared for plugin-generated service adapters
+```
+
+### **PROMPT 4: CREDENTIAL MANAGEMENT SYSTEM**
 
 ```markdown
 # 🔐 IMPLEMENT: Credential Management System
@@ -241,7 +379,7 @@ imajin auth:remove github
 - Ready for plugin generator integration
 ```
 
-### **PROMPT 4: PLUGIN GENERATOR ENGINE (SIMPLIFIED)**
+### **PROMPT 5: PLUGIN GENERATOR ENGINE (SIMPLIFIED)**
 
 ```markdown
 # 🤖 IMPLEMENT: Plugin Generator Engine (Foundation)
@@ -305,7 +443,7 @@ interface GeneratedPlugin {
 - Foundation ready for advanced features in later phases
 ```
 
-### **PROMPT 5: EVENT-DRIVEN SYSTEM**
+### **PROMPT 6: EVENT-DRIVEN SYSTEM**
 
 ```markdown
 # 🚀 IMPLEMENT: Event-Driven System
@@ -358,7 +496,7 @@ Events enable loose coupling and real-time communication:
 
 ## 🔧 **PHASE 2: INFRASTRUCTURE COMPONENTS**
 
-### **PROMPT 5: ETL PIPELINE SYSTEM**
+### **PROMPT 7: ETL PIPELINE SYSTEM**
 
 ```markdown
 # 📊 IMPLEMENT: ETL Pipeline System
@@ -416,7 +554,7 @@ Modern TypeScript ETL patterns:
 - Integrates with Command Pattern for CLI operations
 ```
 
-### **PROMPT 6: EXCEPTION SYSTEM & ERROR HANDLING**
+### **PROMPT 8: EXCEPTION SYSTEM & ERROR HANDLING**
 
 ```markdown
 # ⚠️ IMPLEMENT: Exception System & Error Handling
@@ -472,7 +610,7 @@ interface ImajinException {
 - System can automatically recover from transient failures
 ```
 
-### **PROMPT 7: RATE LIMITING & API MANAGEMENT**
+### **PROMPT 9: RATE LIMITING & API MANAGEMENT**
 
 ```markdown
 # 🚦 IMPLEMENT: Rate Limiting & API Management
@@ -529,7 +667,7 @@ interface RateLimitStrategy {
 - Performance optimization through connection pooling
 ```
 
-### **PROMPT 8: MEDIA PROCESSING SYSTEM**
+### **PROMPT 10: MEDIA PROCESSING SYSTEM**
 
 ```markdown
 # 🎨 IMPLEMENT: Media Processing System
@@ -586,7 +724,7 @@ imajin media batch-optimize ./images/ --output ./optimized/
 - Ready for integration with generated plugins
 ```
 
-### **PROMPT 9: WEBHOOKS & HTTP LAYER**
+### **PROMPT 11: WEBHOOKS & HTTP LAYER**
 
 ```markdown
 # 🔗 IMPLEMENT: Webhooks & HTTP Layer
@@ -640,7 +778,7 @@ interface WebhookServer {
 - Integration with event system enables webhook-driven workflows
 ```
 
-### **PROMPT 10: ETL PIPELINE SYSTEM**
+### **PROMPT 12: ETL PIPELINE SYSTEM**
 
 ```markdown
 # 📊 IMPLEMENT: ETL Pipeline System
@@ -698,7 +836,7 @@ Modern TypeScript ETL patterns:
   - Integrates with Command Pattern for CLI operations
 ```
 
-### **PROMPT 11: SERVICE LAYER**
+### **PROMPT 13: SERVICE LAYER**
 
 ```markdown
 # 🏢 IMPLEMENT: Service Layer
@@ -721,7 +859,7 @@ Create a comprehensive service layer architecture that provides business logic e
 - Proper integration with existing architecture
 ```
 
-### **PROMPT 12: REPOSITORY PATTERN**
+### **PROMPT 14: REPOSITORY PATTERN**
 
 ```markdown
 # 🗄️ IMPLEMENT: Repository Pattern
@@ -742,7 +880,7 @@ Implement the Repository pattern for data access abstraction, enabling clean sep
 - Testable and mockable data layer
 ```
 
-### **PROMPT 13: BACKGROUND JOB PROCESSING**
+### **PROMPT 15: BACKGROUND JOB PROCESSING**
 
 ```markdown
 # ⚙️ IMPLEMENT: Background Job Processing
@@ -763,7 +901,7 @@ Create a background job processing system for long-running operations, ETL pipel
 - Ready for ETL pipeline integration
 ```
 
-### **PROMPT 14: MONITORING & DIAGNOSTICS**
+### **PROMPT 16: MONITORING & DIAGNOSTICS**
 
 ```markdown
 # 📊 IMPLEMENT: Monitoring & Diagnostics
@@ -786,7 +924,7 @@ Create comprehensive monitoring and diagnostics capabilities for system health, 
 - LLM can query system status
 ```
 
-### **PROMPT 15: COMPREHENSIVE LOGGING SYSTEM**
+### **PROMPT 17: COMPREHENSIVE LOGGING SYSTEM**
 
 ```markdown
 # 📝 IMPLEMENT: Comprehensive Logging System
@@ -811,7 +949,7 @@ Create a sophisticated logging infrastructure that supports structured logging, 
 
 ## 🎯 **PHASE 3: SERVICE INTEGRATION**
 
-### **PROMPT 11: STRIPE CONNECTOR**
+### **PROMPT 18: STRIPE CONNECTOR**
 
 ```markdown
 # 💳 IMPLEMENT: Stripe Connector
@@ -834,7 +972,7 @@ Create the first service connector for Stripe integration, serving as the refere
 - Reference implementation for other connectors
 ```
 
-### **PROMPT 12: REAL-TIME PROGRESS TRACKING**
+### **PROMPT 19: REAL-TIME PROGRESS TRACKING**
 
 ```markdown
 # ⚡ IMPLEMENT: Real-time Progress Tracking
@@ -855,7 +993,7 @@ Create comprehensive real-time progress tracking that enables LLM interaction, l
 - Integration with CLI and services
 ```
 
-### **PROMPT 13: LLM INTROSPECTION APIS**
+### **PROMPT 20: LLM INTROSPECTION APIS**
 
 ```markdown
 # 🤖 IMPLEMENT: LLM Introspection APIs
@@ -876,7 +1014,7 @@ Create comprehensive introspection capabilities that enable LLM discovery, inter
 - Self-documenting system capabilities
 ```
 
-### **PROMPT 14: CROSS-SERVICE WORKFLOWS**
+### **PROMPT 21: CROSS-SERVICE WORKFLOWS**
 
 ```markdown
 # 🔄 IMPLEMENT: Cross-service Workflows

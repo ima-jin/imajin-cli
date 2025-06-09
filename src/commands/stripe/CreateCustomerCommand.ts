@@ -112,12 +112,10 @@ export class CreateCustomerCommand {
                         metadata: customer.metadata,
                     },
                 },
-                metadata: {
-                    duration,
-                    timestamp: new Date().toISOString(),
-                    command: 'stripe:create-customer',
-                    service: 'stripe',
-                },
+                timestamp: new Date(),
+                service: 'stripe',
+                command: 'stripe:create-customer',
+                executionTime: duration,
             };
 
             // Output based on format preference
@@ -136,21 +134,15 @@ export class CreateCustomerCommand {
             const duration = Date.now() - startTime;
             const errorMessage = error instanceof Error ? error.message : String(error);
 
-            this.logger.error('Failed to create customer', { error: errorMessage, duration });
+            this.logger.error('Failed to create customer', error instanceof Error ? error : new Error(errorMessage), { duration });
 
             const errorResponse: LLMResponse = {
                 success: false,
-                error: {
-                    message: errorMessage,
-                    code: 'CUSTOMER_CREATION_FAILED',
-                    details: error instanceof Error ? error.stack : undefined,
-                },
-                metadata: {
-                    duration,
-                    timestamp: new Date().toISOString(),
-                    command: 'stripe:create-customer',
-                    service: 'stripe',
-                },
+                error: errorMessage,
+                timestamp: new Date(),
+                service: 'stripe',
+                command: 'stripe:create-customer',
+                executionTime: duration,
             };
 
             if (options.json) {

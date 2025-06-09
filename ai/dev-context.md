@@ -204,7 +204,7 @@ interface ProgressUpdate {
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-06
+ * @since       2025-06-09
  *
  * Integration Points:
  * - [Key integration point 1]

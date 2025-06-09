@@ -142,7 +142,7 @@ export class StatusCommand {
                 timestamp: new Date(),
                 service: 'status',
                 command: 'status',
-                executionTime: Date.now() - Date.now(), // This will be calculated properly in real implementation
+                executionTime: 0,
             };
             console.log(JSON.stringify(response, null, 2));
         } else {

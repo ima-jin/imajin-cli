@@ -253,7 +253,7 @@ export class MetricsCollector extends EventEmitter {
 
         for (const [name, metrics] of groupedMetrics) {
             const metric = metrics[0];
-            if (!metric) continue;
+            if (!metric) continue; // Prevent undefined access
 
             // Add help and type comments
             lines.push(`# HELP ${name} ${this.getMetricDescription(name)}`);

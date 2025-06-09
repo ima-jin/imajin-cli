@@ -124,6 +124,101 @@ export class StripeService extends EventEmitter {
     }
 
     /**
+     * Create a customer with real-time progress
+     */
+    async createCustomer(
+        customerData: Stripe.CustomerCreateParams,
+        progressCallback?: LLMProgressCallback
+    ): Promise<Stripe.Customer> {
+        this.emitProgress(progressCallback, {
+            type: 'start',
+            message: 'Creating customer...',
+            progress: 0,
+            data: { email: customerData.email, name: customerData.name },
+            timestamp: new Date(),
+        });
+
+        try {
+            const customer = await this.client.customers.create(customerData);
+
+            this.emitProgress(progressCallback, {
+                type: 'complete',
+                message: `Customer created: ${customer.id}`,
+                progress: 100,
+                data: { customerId: customer.id },
+                timestamp: new Date(),
+            });
+
+            this.logger.info('Customer created', { customerId: customer.id });
+            return customer;
+
+        } catch (error) {
+            const stripeError = this.handleStripeError(error);
+
+            this.emitProgress(progressCallback, {
+                type: 'error',
+                message: `Failed to create customer: ${stripeError.message}`,
+                progress: 0,
+                data: stripeError,
+                timestamp: new Date(),
+            });
+
+            this.logger.error('Failed to create customer', new Error(stripeError.message), {
+                type: stripeError.type
+            });
+            throw stripeError;
+        }
+    }
+
+    /**
+     * Update a subscription with real-time progress
+     */
+    async updateSubscription(
+        subscriptionId: string,
+        updateData: Stripe.SubscriptionUpdateParams,
+        progressCallback?: LLMProgressCallback
+    ): Promise<Stripe.Subscription> {
+        this.emitProgress(progressCallback, {
+            type: 'start',
+            message: 'Updating subscription...',
+            progress: 0,
+            data: { subscriptionId },
+            timestamp: new Date(),
+        });
+
+        try {
+            const subscription = await this.client.subscriptions.update(subscriptionId, updateData);
+
+            this.emitProgress(progressCallback, {
+                type: 'complete',
+                message: `Subscription updated: ${subscription.id}`,
+                progress: 100,
+                data: { subscriptionId: subscription.id },
+                timestamp: new Date(),
+            });
+
+            this.logger.info('Subscription updated', { subscriptionId: subscription.id });
+            return subscription;
+
+        } catch (error) {
+            const stripeError = this.handleStripeError(error);
+
+            this.emitProgress(progressCallback, {
+                type: 'error',
+                message: `Failed to update subscription: ${stripeError.message}`,
+                progress: 0,
+                data: stripeError,
+                timestamp: new Date(),
+            });
+
+            this.logger.error('Failed to update subscription', new Error(stripeError.message), {
+                type: stripeError.type
+            });
+            throw stripeError;
+        }
+    }
+
+    /**
      * Get service capabilities for LLM introspection
      */
     getCapabilities(): string[] {

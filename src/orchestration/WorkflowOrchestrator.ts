@@ -162,10 +162,9 @@ export class WorkflowOrchestrator extends EventEmitter {
             execution.error = error instanceof Error ? error.message : String(error);
             execution.completedAt = new Date();
 
-            this.logger.error(`Workflow failed`, {
+            this.logger.error(`Workflow failed`, error instanceof Error ? error : new Error(String(error)), {
                 workflowId,
-                executionId,
-                error: execution.error
+                executionId
             });
             this.emit('workflow:failed', { executionId, workflowId, error: execution.error });
         }
@@ -227,6 +226,11 @@ export class WorkflowOrchestrator extends EventEmitter {
         for (let i = 0; i < workflow.steps.length; i++) {
             const step = workflow.steps[i];
 
+            // Ensure step exists
+            if (!step) {
+                throw new Error(`Step at index ${i} is undefined`);
+            }
+
             // Check if execution was cancelled
             if (execution.status === 'cancelled') {
                 throw new Error('Workflow execution was cancelled');
@@ -285,11 +289,10 @@ export class WorkflowOrchestrator extends EventEmitter {
                 stepExecution.error = error instanceof Error ? error.message : String(error);
                 stepExecution.completedAt = new Date();
 
-                this.logger.error(`Step failed: ${step.name}`, {
+                this.logger.error(`Step failed: ${step.name}`, error instanceof Error ? error : new Error(String(error)), {
                     workflowId: workflow.id,
                     executionId: execution.id,
-                    stepIndex: i,
-                    error: stepExecution.error
+                    stepIndex: i
                 });
 
                 this.emit('step:failed', {
@@ -354,14 +357,19 @@ export class WorkflowOrchestrator extends EventEmitter {
             const processedUrl = this.replaceVariables(url, context);
             const processedBody = body ? this.replaceVariables(JSON.stringify(body), context) : undefined;
 
-            const response = await fetch(processedUrl, {
+            const fetchOptions: RequestInit = {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
                     ...headers,
-                },
-                body: processedBody,
-            });
+                }
+            };
+
+            if (processedBody) {
+                fetchOptions.body = processedBody;
+            }
+
+            const response = await fetch(processedUrl, fetchOptions);
 
             if (!response.ok) {
                 throw new Error(`HTTP request failed: ${response.status} ${response.statusText}`);
