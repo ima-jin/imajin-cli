@@ -31,4 +31,3 @@ export type {
     ETLConfig, ETLContext, ETLEvents, ETLProgress, ETLResult, Extractor, Loader,
     PipelineDefinition, PipelineResult, PipelineStep, Transformer
 } from './core/interfaces.js';
-
