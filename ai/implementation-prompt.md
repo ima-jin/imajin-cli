@@ -281,6 +281,7 @@ export class StripeService extends EventEmitter {
 - [ ] Performance monitoring and metrics
 - [ ] Cross-service workflow orchestration
 - [ ] Auto-generation pattern documentation
+- [ ] **Type System Hardening & Integration Fixes**
 
 **Code Quality Standards:**
 
@@ -288,6 +289,7 @@ export class StripeService extends EventEmitter {
 - Document all integration points
 - Ensure LLM introspection capabilities
 - Prepare for connector auto-generation
+- **Resolve all linting errors and type compatibility issues**
 
 **Advanced Features:**
 
@@ -295,6 +297,131 @@ export class StripeService extends EventEmitter {
 - **Metrics**: Prometheus-style metrics for monitoring
 - **Orchestration**: Event-driven service coordination
 - **Hot Reload**: Development-friendly live reloading
+
+### **Phase 3.1: Type System Integration & Linting Resolution**
+
+**Critical Fixes Required:**
+
+**Bull.js Type Compatibility (JobManager.ts):**
+```typescript
+// Fix JobStatus interface compatibility with Bull.JobStatus
+// Current Issue: Type 'JobStatus | "stuck"' not assignable to 'BullJobStatus'
+// Solution: Proper type guards and state mapping
+
+export type BullJobStatus = 'completed' | 'waiting' | 'active' | 'delayed' | 'failed' | 'stuck' | 'paused';
+
+// Add type guard for safe Bull.js integration
+function isBullJobStatus(state: any): state is BullJobStatus {
+    return ['completed', 'waiting', 'active', 'delayed', 'failed', 'stuck', 'paused'].includes(state);
+}
+
+// Fix getJobStatus method with proper type mapping
+public async getJobStatus(queueName: string, jobId: string): Promise<JobStatus | null> {
+    const queue = this.getQueue(queueName);
+    const job = await queue.getJob(jobId);
+    
+    if (!job) return null;
+    
+    const state = await job.getState();
+    const safeState: BullJobStatus = isBullJobStatus(state) ? state : 'stuck';
+    
+    return {
+        id: job.id!.toString(),
+        name: job.name,
+        queue: queueName,
+        state: safeState, // Now properly typed
+        progress: typeof job.progress() === 'number' ? job.progress() : 0,
+        // ... rest of implementation
+    };
+}
+```
+
+**Logger.error Parameter Structure (Multiple Files):**
+```typescript
+// Standard pattern for all logger.error calls
+// WRONG: this.logger.error('Message', { context })
+// CORRECT: this.logger.error('Message', error, { context })
+
+// WebhookManager.ts fix:
+this.logger.error(`Webhook handler failed`, 
+    error instanceof Error ? error : new Error(String(error)), 
+    { eventId, source, eventType }
+);
+
+// JobManager.ts fix:
+this.logger.error(`Job ${jobName} failed`, 
+    error instanceof Error ? error : new Error(String(error)), 
+    { jobId: job.id }
+);
+```
+
+**LLMResponse Interface Compliance (StatusCommand.ts):**
+```typescript
+// Fix LLMResponse structure to match interface requirements
+const response: LLMResponse = {
+    success: true,
+    data: status,
+    timestamp: new Date(),        // Date type, not string
+    service: 'status',           // Required field
+    command: 'status',           // Required field
+    executionTime: 0,            // Required field
+};
+// Remove non-existent 'metadata' property
+```
+
+**Stripe Service Method Completion:**
+```typescript
+// Add missing methods referenced by commands
+export class StripeService {
+    // Missing method causing CreateCustomerCommand.ts error
+    public async createCustomer(customerData: any): Promise<Stripe.Customer> {
+        return await this.client.customers.create(customerData);
+    }
+    
+    // Additional missing methods for Phase 3 completion
+    public async updateSubscription(subscriptionId: string, data: any): Promise<Stripe.Subscription> {
+        return await this.client.subscriptions.update(subscriptionId, data);
+    }
+}
+```
+
+**RedisOptions Type Safety (JobManager.ts):**
+```typescript
+// Fix Redis configuration with conditional password assignment
+this.redisConfig = redisConfig || {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    ...(process.env.REDIS_PASSWORD && { password: process.env.REDIS_PASSWORD }),
+};
+```
+
+**MetricsCollector Null Safety:**
+```typescript
+// Add proper null checks for metric access
+for (const [name, metrics] of groupedMetrics) {
+    const metric = metrics[0];
+    if (!metric) continue; // Prevent undefined access
+    
+    lines.push(`# TYPE ${name} ${metric.type}`);
+}
+```
+
+**Type System Hardening Priorities:**
+
+1. **Bull.js Integration**: Complete JobStatus/BullJobStatus alignment
+2. **Service Method Gaps**: Implement all referenced Stripe methods  
+3. **Logger Pattern**: Standardize error logging across all services
+4. **LLM Response**: Ensure all command outputs follow LLMResponse interface
+5. **Runtime Validation**: Add Zod schemas for critical data flows
+6. **Null Safety**: Add proper type guards and null checks
+
+**Success Criteria for Phase 3.1:**
+- [ ] Zero TypeScript compilation errors
+- [ ] All logger.error calls follow standard pattern
+- [ ] Bull.js integration with proper type safety
+- [ ] Complete Stripe service method implementation
+- [ ] LLMResponse compliance across all commands
+- [ ] Production-ready error handling and type guards
 
 ---
 
