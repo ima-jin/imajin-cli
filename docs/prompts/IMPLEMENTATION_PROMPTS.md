@@ -1138,9 +1138,99 @@ Create a sophisticated logging infrastructure that supports structured logging, 
 
 ---
 
-## 🤖 **PHASE 2.5: AI-ASSISTED CLI GENERATION** *(The Game Changer)*
+## 🎯 **PHASE 2: BASIC GENERATION & SERVICE INTEGRATION**
 
-### **PROMPT 18: AI CONTEXT ANALYSIS ENGINE**
+### **PROMPT 18: STRIPE CONNECTOR**
+
+```markdown
+# 💳 IMPLEMENT: Stripe Connector
+
+## CONTEXT
+Create the first service connector for Stripe integration, serving as the reference implementation for the imajin-cli pattern and enabling payment processing, subscription management, and financial workflow automation.
+
+## DELIVERABLES
+1. `src/services/stripe/StripeService.ts` - Core Stripe integration
+2. `src/services/stripe/commands/` - Stripe-specific commands
+3. `src/services/stripe/models/` - Stripe data models (Customer, Payment, Subscription)
+4. `src/services/stripe/StripeServiceProvider.ts` - Service provider
+5. CLI commands for Stripe operations
+
+## SUCCESS CRITERIA
+- Can create customers, process payments, manage subscriptions
+- ETL pipeline can sync data to/from Stripe
+- Real-time webhook event processing works
+- LLM can interact with Stripe data through CLI
+- Reference implementation for other connectors
+```
+
+### **PROMPT 19: REAL-TIME PROGRESS TRACKING**
+
+```markdown
+# ⚡ IMPLEMENT: Real-time Progress Tracking
+
+## CONTEXT
+Create comprehensive real-time progress tracking that enables LLM interaction, live operation monitoring, and responsive user experience.
+
+## DELIVERABLES
+1. `src/realtime/ProgressTracker.ts` - Progress tracking service
+2. `src/realtime/WebSocketServer.ts` - Real-time communication
+3. `src/realtime/ProgressEmitter.ts` - Progress event emission
+4. Integration with all operations and ETL pipelines
+
+## SUCCESS CRITERIA
+- Operations can be tracked in real-time
+- LLM can receive live progress updates
+- WebSocket communication works reliably
+- Integration with CLI and services
+```
+
+### **PROMPT 20: LLM INTROSPECTION APIS**
+
+```markdown
+# 🤖 IMPLEMENT: LLM Introspection APIs
+
+## CONTEXT
+Create comprehensive introspection capabilities that enable LLM discovery, interaction, and automation of the imajin-cli system.
+
+## DELIVERABLES
+1. `src/introspection/SchemaIntrospector.ts` - Schema discovery
+2. `src/introspection/CommandIntrospector.ts` - Command discovery
+3. `src/introspection/ServiceIntrospector.ts` - Service discovery
+4. JSON APIs for LLM interaction
+
+## SUCCESS CRITERIA
+- LLM can discover all available commands and services
+- JSON schemas are available for all operations
+- Interactive help and documentation
+- Self-documenting system capabilities
+```
+
+### **PROMPT 21: CROSS-SERVICE WORKFLOWS**
+
+```markdown
+# 🔄 IMPLEMENT: Cross-service Workflows
+
+## CONTEXT
+Create workflow orchestration capabilities that enable complex, multi-service operations and automated business processes.
+
+## DELIVERABLES
+1. `src/workflows/Workflow.ts` - Workflow definition and execution
+2. `src/workflows/WorkflowOrchestrator.ts` - Workflow management
+3. `src/workflows/steps/` - Workflow step implementations
+4. Integration with all services and ETL pipelines
+
+## SUCCESS CRITERIA
+- Multi-service workflows can be defined and executed
+- Error handling and recovery mechanisms
+- Progress tracking through entire workflows
+- LLM can trigger and monitor workflows
+```
+
+---
+
+## 🤖 **PHASE 2.5: AI-ENHANCED CLI GENERATION** *(After Basic Service Integration)*
+
+### **PROMPT 22: AI CONTEXT ANALYSIS ENGINE**
 
 ```markdown
 # 🧠 IMPLEMENT: AI Context Analysis Engine
@@ -1262,7 +1352,7 @@ interface AIProvider {
 - Foundation ready for intelligent CLI generation
 ```
 
-### **PROMPT 19: INTELLIGENT COMMAND GENERATOR**
+### **PROMPT 23: INTELLIGENT COMMAND GENERATOR**
 
 ```markdown
 # ⚡ IMPLEMENT: Intelligent Command Generator
@@ -1394,7 +1484,7 @@ stripe customer:onboard \
 - Ready for domain-specific optimizations
 ```
 
-### **PROMPT 20: ADAPTIVE CLI OPTIMIZER**
+### **PROMPT 24: ADAPTIVE CLI OPTIMIZER**
 
 ```markdown
 # 🔄 IMPLEMENT: Adaptive CLI Optimizer
@@ -1528,7 +1618,7 @@ interface AdaptiveUpdater {
 - System learns domain-specific optimizations
 ```
 
-### **PROMPT 21: BUSINESS WORKFLOW DETECTOR**
+### **PROMPT 25: BUSINESS WORKFLOW DETECTOR**
 
 ```markdown
 # 🔍 IMPLEMENT: Business Workflow Detector
@@ -1725,96 +1815,6 @@ const contentMarketingWorkflow = {
 - Enforces business rules and compliance requirements
 - Optimizes workflow execution based on performance data
 - Enables business users to automate complex processes with simple commands
-```
-
----
-
-## 🎯 **PHASE 3: SERVICE INTEGRATION**
-
-### **PROMPT 22: STRIPE CONNECTOR**
-
-```markdown
-# 💳 IMPLEMENT: Stripe Connector
-
-## CONTEXT
-Create the first service connector for Stripe integration, serving as the reference implementation for the imajin-cli pattern and enabling payment processing, subscription management, and financial workflow automation.
-
-## DELIVERABLES
-1. `src/services/stripe/StripeService.ts` - Core Stripe integration
-2. `src/services/stripe/commands/` - Stripe-specific commands
-3. `src/services/stripe/models/` - Stripe data models (Customer, Payment, Subscription)
-4. `src/services/stripe/StripeServiceProvider.ts` - Service provider
-5. CLI commands for Stripe operations
-
-## SUCCESS CRITERIA
-- Can create customers, process payments, manage subscriptions
-- ETL pipeline can sync data to/from Stripe
-- Real-time webhook event processing works
-- LLM can interact with Stripe data through CLI
-- Reference implementation for other connectors
-```
-
-### **PROMPT 23: REAL-TIME PROGRESS TRACKING**
-
-```markdown
-# ⚡ IMPLEMENT: Real-time Progress Tracking
-
-## CONTEXT
-Create comprehensive real-time progress tracking that enables LLM interaction, live operation monitoring, and responsive user experience.
-
-## DELIVERABLES
-1. `src/realtime/ProgressTracker.ts` - Progress tracking service
-2. `src/realtime/WebSocketServer.ts` - Real-time communication
-3. `src/realtime/ProgressEmitter.ts` - Progress event emission
-4. Integration with all operations and ETL pipelines
-
-## SUCCESS CRITERIA
-- Operations can be tracked in real-time
-- LLM can receive live progress updates
-- WebSocket communication works reliably
-- Integration with CLI and services
-```
-
-### **PROMPT 24: LLM INTROSPECTION APIS**
-
-```markdown
-# 🤖 IMPLEMENT: LLM Introspection APIs
-
-## CONTEXT
-Create comprehensive introspection capabilities that enable LLM discovery, interaction, and automation of the imajin-cli system.
-
-## DELIVERABLES
-1. `src/introspection/SchemaIntrospector.ts` - Schema discovery
-2. `src/introspection/CommandIntrospector.ts` - Command discovery
-3. `src/introspection/ServiceIntrospector.ts` - Service discovery
-4. JSON APIs for LLM interaction
-
-## SUCCESS CRITERIA
-- LLM can discover all available commands and services
-- JSON schemas are available for all operations
-- Interactive help and documentation
-- Self-documenting system capabilities
-```
-
-### **PROMPT 25: CROSS-SERVICE WORKFLOWS**
-
-```markdown
-# 🔄 IMPLEMENT: Cross-service Workflows
-
-## CONTEXT
-Create workflow orchestration capabilities that enable complex, multi-service operations and automated business processes.
-
-## DELIVERABLES
-1. `src/workflows/Workflow.ts` - Workflow definition and execution
-2. `src/workflows/WorkflowOrchestrator.ts` - Workflow management
-3. `src/workflows/steps/` - Workflow step implementations
-4. Integration with all services and ETL pipelines
-
-## SUCCESS CRITERIA
-- Multi-service workflows can be defined and executed
-- Error handling and recovery mechanisms
-- Progress tracking through entire workflows
-- LLM can trigger and monitor workflows
 ```
 
 ---
