@@ -37,9 +37,11 @@ async function main(): Promise<void> {
     // Register service providers
     const { StripeServiceProvider } = await import('./providers/StripeServiceProvider.js');
     const { CredentialServiceProvider } = await import('./core/credentials/CredentialServiceProvider.js');
+    const { PluginGeneratorServiceProvider } = await import('./providers/PluginGeneratorServiceProvider.js');
 
     app.createProvider(CredentialServiceProvider);
     app.createProvider(StripeServiceProvider);
+    app.createProvider(PluginGeneratorServiceProvider);
 
     // Boot the application (register and initialize services)
     await app.boot();
