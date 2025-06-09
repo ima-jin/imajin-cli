@@ -21,7 +21,7 @@
 import { z } from 'zod';
 
 // Base configuration schema
-export const ImajiNConfigSchema = z.object({
+export const ImajinConfigSchema = z.object({
     debug: z.boolean().default(false),
     logLevel: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
     outputFormat: z.enum(['json', 'text', 'table']).default('text'),
@@ -45,7 +45,7 @@ export const ImajiNConfigSchema = z.object({
     services: z.record(z.any()).default({}),
 });
 
-export type ImajiNConfig = z.infer<typeof ImajiNConfigSchema>;
+export type ImajinConfig = z.infer<typeof ImajinConfigSchema>;
 
 // Environment configuration
 export const EnvironmentConfigSchema = z.object({

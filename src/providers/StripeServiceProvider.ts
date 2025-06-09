@@ -22,7 +22,7 @@ import { CreatePaymentCommand } from '../commands/stripe/CreatePaymentCommand.js
 import { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
 import { StripeService } from '../services/StripeService.js';
-import type { ImajiNConfig } from '../types/Config.js';
+import type { ImajinConfig } from '../types/Config.js';
 import type { CommandIntrospection, ServiceIntrospection } from '../types/LLM.js';
 import { StripeCapabilities, StripeConfigSchema } from '../types/Stripe.js';
 import { ServiceProvider } from './ServiceProvider.js';
@@ -67,7 +67,7 @@ export class StripeServiceProvider extends ServiceProvider {
      * Register services with the container
      */
     async register(): Promise<void> {
-        const config = this.container.resolve<ImajiNConfig>('config');
+        const config = this.container.resolve<ImajinConfig>('config');
         const logger = this.container.resolve<Logger>('logger');
 
         // Check if we have Stripe configuration - only validate if available
@@ -227,7 +227,7 @@ export class StripeServiceProvider extends ServiceProvider {
     /**
      * Validate Stripe configuration
      */
-    private validateStripeConfig(config: ImajiNConfig): any {
+    private validateStripeConfig(config: ImajinConfig): any {
         const stripeConfig = {
             apiKey: process.env.STRIPE_API_KEY || config.services?.stripe?.apiKey,
             webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || config.services?.stripe?.webhookSecret,

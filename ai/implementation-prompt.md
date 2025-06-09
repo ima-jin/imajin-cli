@@ -79,7 +79,7 @@ import type {} from /* Type imports */ "./types";
 import { Command } from "commander";
 import { Container } from "./container/Container.js";
 import { ServiceProvider } from "./providers/ServiceProvider.js";
-import type { ImajiNConfig } from "./types/Config.js";
+import type { ImajinConfig } from "./types/Config.js";
 
 export class Application {
   public static readonly VERSION = "0.1.0";
@@ -88,7 +88,7 @@ export class Application {
   private container: Container;
   private program: Command;
 
-  constructor(config: ImajiNConfig) {
+  constructor(config: ImajinConfig) {
     this.container = new Container();
     this.program = new Command();
     // ... implementation

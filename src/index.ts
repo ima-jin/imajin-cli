@@ -20,14 +20,17 @@
 import { config } from 'dotenv';
 import 'reflect-metadata';
 import { Application } from './core/Application.js';
+import { ExceptionUtils, SystemError } from './exceptions';
 
 // Load environment variables
 config();
 
 // Bootstrap and run the application
 async function main(): Promise<void> {
+  let app: Application | undefined;
+
   try {
-    const app = new Application({
+    app = new Application({
       debug: process.env.DEBUG === 'true',
       logLevel: (process.env.LOG_LEVEL as any) || 'info',
       outputFormat: 'text',
@@ -49,22 +52,30 @@ async function main(): Promise<void> {
     // Run the CLI
     await app.run();
   } catch (error) {
-    console.error('Fatal error:', error);
-    process.exit(1);
+    // If we have an app instance, use its error handler
+    if (app && (app as any).errorHandler) {
+      const normalizedError = ExceptionUtils.normalize(error, {
+        source: 'main',
+        phase: 'bootstrap'
+      });
+
+      await (app as any).errorHandler.handleError(normalizedError);
+    } else {
+      // Fallback to basic error handling if app isn't initialized
+      const systemError = SystemError.processError(
+        process.pid,
+        1,
+        { originalError: error, source: 'main', phase: 'bootstrap' }
+      );
+
+      console.error(systemError.getFormattedError());
+      process.exit(1);
+    }
   }
 }
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  process.exit(1);
-});
+// Note: Global error handlers are now set up in Application.ts
+// This provides better integration with the error handling system
 
 // Start the application
 main(); 

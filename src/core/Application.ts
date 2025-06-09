@@ -22,10 +22,13 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import figlet from 'figlet';
 import { Container } from '../container/Container.js';
+import { ExceptionUtils } from '../exceptions';
 import { Logger } from '../logging/Logger.js';
 import { ServiceProvider } from '../providers/ServiceProvider.js';
-import { ImajiNConfig, ImajiNConfigSchema } from '../types/Config.js';
+import { ImajinConfig, ImajinConfigSchema } from '../types/Config.js';
 import type { LLMResponse, ServiceIntrospection } from '../types/LLM.js';
+import { ErrorHandler } from './ErrorHandler';
+import { ErrorRecovery } from './ErrorRecovery';
 
 export class Application {
   public static readonly VERSION = '0.1.0';
@@ -34,15 +37,17 @@ export class Application {
   private container: Container;
   private program: Command;
   private logger: Logger;
-  private config: ImajiNConfig;
+  private config: ImajinConfig;
   private providers: ServiceProvider[] = [];
   private isBooted: boolean = false;
+  private errorHandler: ErrorHandler;
+  private errorRecovery: ErrorRecovery;
 
-  constructor(config?: Partial<ImajiNConfig>) {
+  constructor(config?: Partial<ImajinConfig>) {
     // Initialize container and core services
     this.container = new Container();
     this.program = new Command();
-    this.config = ImajiNConfigSchema.parse(config || {});
+    this.config = ImajinConfigSchema.parse(config || {});
 
     // Check if JSON output is requested to suppress logs
     const isJsonMode = process.argv.includes('--json');
@@ -50,9 +55,54 @@ export class Application {
 
     this.logger = new Logger(logLevel, this.config.colorOutput);
 
+    // Initialize error handling system
+    this.errorHandler = new ErrorHandler({
+      enableConsoleOutput: !isJsonMode,
+      enableLogging: true,
+      enableEventEmission: true,
+      exitOnCritical: true,
+      jsonOutput: isJsonMode,
+      verbose: process.argv.includes('--debug')
+    });
+
+    this.errorRecovery = new ErrorRecovery();
+
+    // Set up global error handling
+    this.setupGlobalErrorHandling();
+
     // Register core services
     this.registerCoreServices();
     this.setupProgram();
+  }
+
+  /**
+   * Set up global error handling for unhandled errors
+   */
+  private setupGlobalErrorHandling(): void {
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', async (reason, promise) => {
+      const error = ExceptionUtils.normalize(reason, {
+        source: 'unhandledRejection',
+        promise
+      });
+
+      await this.errorHandler.handleError(error);
+    });
+
+    // Handle uncaught exceptions
+    process.on('uncaughtException', async (error) => {
+      const normalizedError = ExceptionUtils.normalize(error, {
+        source: 'uncaughtException'
+      });
+
+      await this.errorHandler.handleError(normalizedError);
+    });
+
+    // Handle SIGINT (Ctrl+C) gracefully
+    process.on('SIGINT', () => {
+      console.log('\n👋 Gracefully shutting down...');
+      process.exit(0);
+    });
   }
 
   private registerCoreServices(): void {
@@ -60,6 +110,8 @@ export class Application {
     this.container.singleton('logger', () => this.logger);
     this.container.singleton('config', () => this.config);
     this.container.singleton('container', () => this.container);
+    this.container.singleton('errorHandler', () => this.errorHandler);
+    this.container.singleton('errorRecovery', () => this.errorRecovery);
   }
 
   private setupProgram(): void {
