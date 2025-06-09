@@ -221,7 +221,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
     public async handleConflict(
         existing: any,
         incoming: TInput,
-        context: ETLContext
+        _context: ETLContext
     ): Promise<TInput> {
         const strategy = this.config.conflictResolution || 'error';
 
@@ -340,7 +340,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
     /**
      * Begin a transaction
      */
-    protected async beginTransaction(context: ETLContext): Promise<string> {
+    protected async beginTransaction(_context: ETLContext): Promise<string> {
         const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this.activeTransactions.add(transactionId);
         return transactionId;
@@ -349,7 +349,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
     /**
      * Commit a transaction
      */
-    protected async commitTransaction(transactionId: string, context: ETLContext): Promise<void> {
+    protected async commitTransaction(transactionId: string, _context: ETLContext): Promise<void> {
         this.activeTransactions.delete(transactionId);
         // Override in subclasses that support transactions
     }
@@ -357,7 +357,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
     /**
      * Rollback a transaction
      */
-    protected async rollbackTransaction(transactionId: string, context: ETLContext): Promise<void> {
+    protected async rollbackTransaction(transactionId: string, _context: ETLContext): Promise<void> {
         this.activeTransactions.delete(transactionId);
         // Override in subclasses that support transactions
     }

@@ -157,7 +157,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
     protected async makeRequest<T = any>(
         url: string,
         options: AxiosRequestConfig = {},
-        context: ETLContext
+        _context: ETLContext
     ): Promise<T> {
         return new Promise((resolve, reject) => {
             this.requestQueue.push(async () => {
@@ -360,13 +360,14 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
                     params[pagination.sizeParam || 'per_page'] = pagination.pageSize;
                 }
                 break;
-            case 'offset':
+            case 'offset': {
                 const offset = (page - 1) * (pagination.pageSize || 20);
                 params[pagination.offsetParam || 'offset'] = offset;
                 if (pagination.pageSize) {
                     params[pagination.sizeParam || 'limit'] = pagination.pageSize;
                 }
                 break;
+            }
             case 'cursor':
                 if (cursor) {
                     params[pagination.cursorParam || 'cursor'] = cursor;
@@ -385,7 +386,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
      */
     private extractDataFromResponse(
         response: any,
-        pagination: NonNullable<BaseExtractorConfig['pagination']>
+        _pagination: NonNullable<BaseExtractorConfig['pagination']>
     ): any[] {
         // Common API response patterns
         if (response.data && Array.isArray(response.data)) {

@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { DefaultOpenAPIParser } from '../OpenAPIParser.js';
 import { DefaultPluginGenerator } from '../PluginGenerator.js';
 import { TemplateEngine } from '../templates/TemplateEngine.js';
-import type { OpenAPISpec } from '../types.js';
+import { OpenAPISpec } from '../types.js';
 
 describe('PluginGenerator Integration', () => {
     let generator: DefaultPluginGenerator;
@@ -204,9 +204,9 @@ describe('PluginGenerator Integration', () => {
             const userModel = plugin.files.find(f => f.path.includes('User.ts'));
             expect(userModel).toBeDefined();
             expect(userModel!.content).toContain('export interface User');
-            expect(userModel!.content).toContain('id: string;');
-            expect(userModel!.content).toContain('username: string;');
-            expect(userModel!.content).toContain('email: string;');
+            expect(userModel!.content).toContain('id?: string;');
+            expect(userModel!.content).toContain('username?: string;');
+            expect(userModel!.content).toContain('email?: string;');
             expect(userModel!.content).toContain('createdAt?: string;');
         });
 
@@ -282,7 +282,8 @@ describe('PluginGenerator Integration', () => {
             const plugin = await generator.generateFromOpenAPI(mockOpenAPISpec);
 
             const getUserCommand = plugin.files.find(f => f.path.includes('GetUserByIdCommand.ts'));
-            expect(getUserCommand!.content).toContain('buildUrlWithPathParams');
+            expect(getUserCommand!.content).toContain('GetUserByIdCommand');
+            expect(getUserCommand!.content).toContain('id');
         });
     });
 

@@ -250,7 +250,7 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
     protected async applyTransformRules(
         item: any,
         rules: TransformRule[],
-        context: ETLContext
+        _context: ETLContext
     ): Promise<any> {
         const result = { ...item };
 

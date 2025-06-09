@@ -42,7 +42,7 @@ export class CommandManager {
         this.commands.set(command.name, command);
 
         // Register with Commander.js
-        const _cmd = this.program
+        this.program
             .command(command.name)
             .description(command.description)
             .action(async (...args) => {

@@ -55,8 +55,8 @@ class MockUserExtractor extends BaseExtractor<User> {
     public readonly outputSchema = UserSchema;
 
     protected async performExtraction(
-        context: ETLContext,
-        config: BaseExtractorConfig
+        _context: ETLContext,
+        _config: BaseExtractorConfig
     ): Promise<User[]> {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -96,8 +96,8 @@ class UserTransformer extends BaseTransformer<User, ProcessedUser> {
 
     protected async performTransformation(
         item: User,
-        context: ETLContext,
-        config: BaseTransformerConfig
+        _context: ETLContext,
+        _config: BaseTransformerConfig
     ): Promise<ProcessedUser> {
         return {
             userId: item.id,
@@ -118,8 +118,8 @@ class MockDatabaseLoader extends BaseLoader<ProcessedUser> {
 
     protected async performLoad(
         item: ProcessedUser,
-        context: ETLContext,
-        config: BaseLoaderConfig
+        _context: ETLContext,
+        _config: BaseLoaderConfig
     ): Promise<LoadOperation> {
         // Simulate database operation
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -134,7 +134,7 @@ class MockDatabaseLoader extends BaseLoader<ProcessedUser> {
         };
     }
 
-    protected async testConnection(config: BaseLoaderConfig): Promise<void> {
+    protected async testConnection(_config: BaseLoaderConfig): Promise<void> {
         // Mock connection test
         console.log('Testing database connection...');
     }

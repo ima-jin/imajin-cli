@@ -26,8 +26,18 @@ export { BaseTransformer, BaseTransformerConfig, TransformRule } from './transfo
 // Main pipeline orchestration
 export { Pipeline, PipelineExecutionOptions, PipelineExecutionState } from './Pipeline.js';
 
+// Graph translation system
+export { BridgeRegistry } from './bridges/BridgeRegistry.js';
+export { GraphTranslationEngine } from './graphs/GraphTranslationEngine.js';
+export { GraphLoader } from './loaders/GraphLoader.js';
+export { GraphTransformer } from './transformers/GraphTransformer.js';
+
+// Graph models and schemas
+export * from './graphs/models.js';
+
 // Re-export for convenience
 export type {
-    ETLConfig, ETLContext, ETLEvents, ETLProgress, ETLResult, Extractor, Loader,
+    BridgeConfiguration, ETLConfig, ETLContext, ETLEvents, ETLProgress, ETLResult, Extractor, GraphExtractionConfig, GraphExtractor, GraphLoadingConfig, GraphModel, GraphTransformationConfig, GraphTranslationResult, GraphTranslator, GraphLoader as IGraphLoader, GraphTransformer as IGraphTransformer, Loader,
     PipelineDefinition, PipelineResult, PipelineStep, Transformer
 } from './core/interfaces.js';
+

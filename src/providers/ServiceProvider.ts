@@ -57,7 +57,7 @@ export abstract class ServiceProvider {
     /**
      * Check if this provider provides a specific service
      */
-    public provides(service: string): boolean {
+    public provides(_service: string): boolean {
         return false;
     }
 

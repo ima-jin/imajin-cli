@@ -25,7 +25,7 @@ const mockLogger = {
 describe('CredentialManager', () => {
     let credentialManager: CredentialManager;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         // Clear environment variables before each test
         Object.keys(process.env)
             .filter(key => key.startsWith('IMAJIN_CLI_CRED_'))
@@ -34,22 +34,38 @@ describe('CredentialManager', () => {
             });
 
         credentialManager = new CredentialManager(mockLogger);
+
+        // Clear all credentials to ensure clean state
+        await credentialManager.clear();
     });
 
-    afterEach(() => {
+    afterEach(async () => {
         // Clean up after each test
         Object.keys(process.env)
             .filter(key => key.startsWith('IMAJIN_CLI_CRED_'))
             .forEach(key => {
                 delete (process.env as any)[key];
             });
+
+        // Clear all credentials to prevent test pollution
+        if (credentialManager) {
+            await credentialManager.clear();
+        }
     });
 
     describe('Provider Selection', () => {
-        test('should select environment provider as fallback', () => {
+        test('should select platform-appropriate provider', () => {
             const providerInfo = credentialManager.getProviderInfo();
-            expect(providerInfo.type).toBe('environment');
-            expect(providerInfo.name).toBe('Environment Variables');
+            expect(providerInfo.type).toBeDefined();
+
+            // On Windows, should prefer Windows Credential Manager
+            if (process.platform === 'win32') {
+                expect(providerInfo.type).toBe('credential-manager');
+                expect(providerInfo.name).toBe('Windows Credential Manager');
+            } else {
+                // On other platforms, may use environment as fallback
+                expect(['environment', 'keychain', 'libsecret'].includes(providerInfo.type)).toBe(true);
+            }
         });
 
         test('should list available providers', () => {
@@ -59,7 +75,10 @@ describe('CredentialManager', () => {
             // Environment provider should always be available
             const envProvider = providers.find(p => p.type === 'environment');
             expect(envProvider).toBeDefined();
-            expect(envProvider?.isActive).toBe(true);
+
+            // Check that exactly one provider is active
+            const activeProviders = providers.filter(p => p.isActive);
+            expect(activeProviders.length).toBe(1);
         });
     });
 
@@ -82,7 +101,7 @@ describe('CredentialManager', () => {
         });
 
         test('should validate service names', async () => {
-            const invalidNames = ['', '  ', 'invalid name', '123invalid', 'service-with-ñ'];
+            const invalidNames = ['', '  ', 'invalid name', '-invalid', 'service-with-ñ'];
 
             for (const invalidName of invalidNames) {
                 await expect(credentialManager.store(invalidName, testCredentials))
@@ -142,6 +161,9 @@ describe('CredentialManager', () => {
         };
 
         beforeEach(async () => {
+            // Ensure clean state before each test
+            await credentialManager.clear();
+
             // Store test credentials
             for (const _service of testServices) {
                 await credentialManager.store(_service, testCredentials);

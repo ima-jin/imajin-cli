@@ -387,7 +387,7 @@ export class WorkflowOrchestrator extends EventEmitter {
         });
 
         // Delay step processor
-        this.registerStepProcessor('delay', async (step, context) => {
+        this.registerStepProcessor('delay', async (step, _context) => {
             const delay = step.config.duration || 1000;
             await new Promise(resolve => setTimeout(resolve, delay));
 
@@ -513,9 +513,10 @@ export class WorkflowOrchestrator extends EventEmitter {
                 return data.length;
             case 'sum':
                 return data.reduce((sum, item) => sum + (this.getNestedValue(item, field) || 0), 0);
-            case 'avg':
+            case 'avg': {
                 const sum = data.reduce((sum, item) => sum + (this.getNestedValue(item, field) || 0), 0);
                 return data.length > 0 ? sum / data.length : 0;
+            }
             case 'min':
                 return Math.min(...data.map(item => this.getNestedValue(item, field) || 0));
             case 'max':

@@ -30,12 +30,6 @@ import type {
 } from './types.js';
 
 // Simplified OpenAPI types to avoid complex imports
-interface OpenAPIInfo {
-    title: string;
-    version: string;
-    description?: string;
-}
-
 interface OpenAPIOperation {
     operationId?: string;
     summary?: string;
@@ -250,7 +244,7 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
             return undefined;
         }
 
-        const [schemeName, scheme] = firstScheme;
+        const [, scheme] = firstScheme;
         if (!scheme || typeof scheme !== 'object') {
             return undefined;
         }

@@ -72,7 +72,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         const logger = this.container.resolve<Logger>('logger');
 
         // Generate plugin command with dependency injection
-        const _generateCommand = this.program
+        this.program
             .command('generate:plugin')
             .description('Generate a plugin from an OpenAPI specification')
             .argument('<spec>', 'Path to OpenAPI specification file')
@@ -90,7 +90,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
             });
 
         // List plugins command
-        const _listCommand = this.program
+        this.program
             .command('plugin:list')
             .description('List all loaded plugins')
             .option('--json', 'Output in JSON format')
@@ -114,7 +114,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
             });
 
         // Load plugins command
-        const _loadCommand = this.program
+        this.program
             .command('plugin:load')
             .description('Load all plugins from the plugins directory')
             .action(async () => {

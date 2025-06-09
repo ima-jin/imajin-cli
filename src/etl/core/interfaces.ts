@@ -198,9 +198,225 @@ export interface ETLEvents {
     'step:complete': (step: string, result: ETLResult, context: ETLContext) => void;
     'step:error': (step: string, error: Error, context: ETLContext) => void;
     'pipeline:start': (pipelineId: string, context: ETLContext) => void;
-    'pipeline:complete': (pipelineId: string, result: PipelineResult) => void;
+    'pipeline:complete': (pipelineId: string, result: PipelineResult, context: ETLContext) => void;
     'pipeline:error': (pipelineId: string, error: Error, context: ETLContext) => void;
     'data:extracted': (count: number, context: ETLContext) => void;
     'data:transformed': (count: number, context: ETLContext) => void;
     'data:loaded': (count: number, context: ETLContext) => void;
+}
+
+/**
+ * Graph schema definition for standard models
+ */
+export interface GraphSchema {
+    readonly version: string;
+    readonly entities: Record<string, z.ZodSchema>;
+    readonly relationships: Record<string, z.ZodSchema>;
+    readonly constraints: Record<string, any>;
+}
+
+/**
+ * Compatibility matrix between graph models
+ */
+export interface CompatibilityMatrix {
+    readonly directCompatible: string[];
+    readonly translatableFrom: string[];
+    readonly translatableTo: string[];
+    readonly bridgeRequired: string[];
+}
+
+/**
+ * Base graph model interface
+ */
+export interface GraphModel {
+    readonly modelType: 'social-commerce' | 'creative-portfolio' | 'professional-network' | 'community-hub' | 'custom';
+    readonly version: string;
+    readonly schema: GraphSchema;
+    readonly compatibilityMap: CompatibilityMatrix;
+    readonly metadata: Record<string, any>;
+}
+
+/**
+ * Graph translation result
+ */
+export interface GraphTranslationResult<T extends GraphModel = GraphModel> {
+    readonly success: boolean;
+    readonly translatedGraph?: T;
+    readonly translationMap: Record<string, string>;
+    readonly lossyFields: string[];
+    readonly addedFields: string[];
+    readonly confidence: number; // 0-1, how confident the translation is
+    readonly metadata: Record<string, any>;
+    readonly error?: Error;
+}
+
+/**
+ * Graph translator interface
+ */
+export interface GraphTranslator<TSource extends GraphModel = GraphModel, TTarget extends GraphModel = GraphModel> {
+    readonly name: string;
+    readonly sourceModel: string;
+    readonly targetModel: string;
+    readonly version: string;
+
+    /**
+     * Translate from source graph model to target graph model
+     */
+    translate(sourceGraph: TSource, context: ETLContext): Promise<GraphTranslationResult<TTarget>>;
+
+    /**
+     * Check if this translator can handle the given model pair
+     */
+    canTranslate(sourceModel: string, targetModel: string): boolean;
+
+    /**
+     * Get bridge configuration for this translation
+     */
+    getBridgeConfig(): BridgeConfiguration;
+
+    /**
+     * Get efficiency score (higher = less transformation needed)
+     */
+    getEfficiencyScore(sourceModel: string, targetModel: string): number;
+
+    /**
+     * Validate translation configuration
+     */
+    validate?(sourceGraph: TSource): Promise<boolean>;
+}
+
+/**
+ * Bridge configuration for graph translation
+ */
+export interface BridgeConfiguration {
+    readonly id: string;
+    readonly sourceModel: string;
+    readonly targetModel: string;
+    readonly mappings: FieldMapping[];
+    readonly transformations: TransformationRule[];
+    readonly efficiency: number;
+    readonly lossyFields: string[];
+    readonly metadata: Record<string, any>;
+}
+
+/**
+ * Field mapping for graph translation
+ */
+export interface FieldMapping {
+    readonly sourceField: string;
+    readonly targetField: string;
+    readonly transformation?: string;
+    readonly required: boolean;
+    readonly defaultValue?: any;
+}
+
+/**
+ * Transformation rule for field mapping
+ */
+export interface TransformationRule {
+    readonly name: string;
+    readonly sourceFields: string[];
+    readonly targetField: string;
+    readonly rule: (sourceData: any) => any;
+    readonly validation?: z.ZodSchema;
+}
+
+/**
+ * Graph extraction configuration
+ */
+export interface GraphExtractionConfig extends ETLConfig {
+    readonly endpoint: string;
+    readonly modelType?: string;
+    readonly autoDetectModel?: boolean;
+    readonly authentication?: {
+        type: 'bearer' | 'api-key' | 'oauth';
+        credentials: Record<string, string>;
+    };
+}
+
+/**
+ * Graph extractor interface
+ */
+export interface GraphExtractor<TOutput extends GraphModel = GraphModel> extends Extractor<TOutput> {
+    /**
+     * Extract graph data from external source
+     */
+    extractGraph(config: GraphExtractionConfig, context: ETLContext): Promise<ETLResult<TOutput>>;
+
+    /**
+     * Detect the graph model type of the source
+     */
+    detectModel(config: GraphExtractionConfig): Promise<string>;
+
+    /**
+     * Get compatibility information for the source
+     */
+    getCompatibility(config: GraphExtractionConfig): Promise<CompatibilityMatrix>;
+}
+
+/**
+ * Graph transformation configuration  
+ */
+export interface GraphTransformationConfig extends ETLConfig {
+    readonly targetModel: string;
+    readonly preserveMetadata?: boolean;
+    readonly allowLossyTranslation?: boolean;
+    readonly customMappings?: FieldMapping[];
+}
+
+/**
+ * Graph transformer interface
+ */
+export interface GraphTransformer<TInput extends GraphModel = GraphModel, TOutput extends GraphModel = GraphModel>
+    extends Transformer<TInput, TOutput> {
+
+    /**
+     * Transform graph from one model to another
+     */
+    transformGraph(
+        sourceGraph: TInput,
+        config: GraphTransformationConfig,
+        context: ETLContext
+    ): Promise<GraphTranslationResult<TOutput>>;
+
+    /**
+     * Normalize external graph to target context
+     */
+    normalizeToContext(
+        externalGraph: unknown,
+        targetModel: string,
+        context: ETLContext
+    ): Promise<GraphTranslationResult<TOutput>>;
+}
+
+/**
+ * Graph loading configuration
+ */
+export interface GraphLoadingConfig extends ETLConfig {
+    readonly endpoint: string;
+    readonly mergeStrategy: 'replace' | 'merge' | 'append';
+    readonly conflictResolution: 'error' | 'skip' | 'overwrite';
+    readonly authentication?: {
+        type: 'bearer' | 'api-key' | 'oauth';
+        credentials: Record<string, string>;
+    };
+}
+
+/**
+ * Graph loader interface
+ */
+export interface GraphLoader<TInput extends GraphModel = GraphModel> extends Loader<TInput> {
+    /**
+     * Load graph data to target destination
+     */
+    loadGraph(graph: TInput, config: GraphLoadingConfig, context: ETLContext): Promise<ETLResult<any>>;
+
+    /**
+     * Handle graph merge conflicts
+     */
+    handleGraphConflict(
+        existing: TInput,
+        incoming: TInput,
+        context: ETLContext
+    ): Promise<TInput>;
 } 

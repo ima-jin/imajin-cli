@@ -182,21 +182,24 @@ export class SystemError extends BaseException {
             case 'permission_denied':
                 return `Permission denied: ${details.resource || details.path || 'system resource'}`;
 
-            case 'disk_space':
+            case 'disk_space': {
                 const spaceMsg = details.requiredSpace && details.availableSpace
                     ? ` (need ${details.requiredSpace}MB, have ${details.availableSpace}MB)`
                     : '';
                 return `Insufficient disk space${spaceMsg}`;
+            }
 
-            case 'memory_limit':
+            case 'memory_limit': {
                 const memoryMsg = details.memoryLimit
                     ? ` (limit: ${details.memoryLimit}MB)`
                     : '';
                 return `Memory limit exceeded${memoryMsg}`;
+            }
 
-            case 'process_error':
+            case 'process_error': {
                 const exitMsg = details.exitCode ? ` (exit code: ${details.exitCode})` : '';
                 return `Process failed${exitMsg}`;
+            }
 
             case 'config_error':
                 return `Configuration error: ${details.configFile || 'unknown file'}`;

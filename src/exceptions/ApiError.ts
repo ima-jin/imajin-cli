@@ -133,7 +133,7 @@ export class ApiError extends BaseException {
      * Generate user-friendly message
      */
     private static generateUserMessage(details: ApiErrorDetails): string {
-        const { statusCode, statusText, endpoint, method } = details;
+        const { statusCode, endpoint, method } = details;
 
         if (statusCode === 401) {
             return 'Authentication failed. Please check your credentials.';

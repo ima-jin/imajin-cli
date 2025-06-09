@@ -77,7 +77,7 @@ export abstract class BaseCommand implements ICommand {
     /**
      * Validate command arguments and options
      */
-    protected validate(args: any[], options: any): void {
+    protected validate(_args: any[], _options: any): void {
         // Default implementation - can be overridden
     }
 

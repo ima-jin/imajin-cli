@@ -20,7 +20,7 @@
 
 import 'reflect-metadata';
 
-export type ServiceIdentifier<T = any> = string | symbol | Function;
+export type ServiceIdentifier<T = unknown> = string | symbol | Function;
 export type ServiceFactory<T = any> = (container: Container) => T;
 
 interface ServiceBinding<T = any> {
@@ -30,8 +30,8 @@ interface ServiceBinding<T = any> {
 }
 
 export class Container {
-    private bindings = new Map<ServiceIdentifier, ServiceBinding>();
-    private instances = new Map<ServiceIdentifier, any>();
+    private bindings = new Map<ServiceIdentifier<any>, ServiceBinding>();
+    private instances = new Map<ServiceIdentifier<any>, any>();
 
     /**
      * Register a service with the container
@@ -99,14 +99,14 @@ export class Container {
     /**
      * Check if a service is registered
      */
-    public has(identifier: ServiceIdentifier): boolean {
+    public has(identifier: ServiceIdentifier<any>): boolean {
         return this.bindings.has(identifier) || this.instances.has(identifier);
     }
 
     /**
      * Get all registered service identifiers
      */
-    public getServiceIdentifiers(): ServiceIdentifier[] {
+    public getServiceIdentifiers(): ServiceIdentifier<any>[] {
         return [
             ...Array.from(this.bindings.keys()),
             ...Array.from(this.instances.keys()),

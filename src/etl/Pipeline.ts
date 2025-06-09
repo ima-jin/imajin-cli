@@ -495,11 +495,11 @@ export class Pipeline {
             console.log(`Starting step: ${step} (Pipeline: ${context.pipelineId})`);
         });
 
-        this.events.on('step:complete', (step: string, result: ETLResult, context: ETLContext) => {
+        this.events.on('step:complete', (step: string, result: ETLResult, _context: ETLContext) => {
             console.log(`Completed step: ${step} - Processed: ${result.processed} items in ${result.duration}ms`);
         });
 
-        this.events.on('step:error', (step: string, error: Error, context: ETLContext) => {
+        this.events.on('step:error', (step: string, error: Error, _context: ETLContext) => {
             console.error(`Error in step: ${step} - ${error.message}`);
         });
 
@@ -513,20 +513,20 @@ export class Pipeline {
             console.log(`Pipeline ${pipelineId} completed: ${status} - ${result.totalProcessed} items processed in ${result.duration}ms`);
         });
 
-        this.events.on('pipeline:error', (pipelineId: string, error: Error, context: ETLContext) => {
+        this.events.on('pipeline:error', (pipelineId: string, error: Error, _context: ETLContext) => {
             console.error(`Pipeline ${pipelineId} failed: ${error.message}`);
         });
 
         // Data flow tracking
-        this.events.on('data:extracted', (count: number, context: ETLContext) => {
+        this.events.on('data:extracted', (count: number, _context: ETLContext) => {
             console.log(`Extracted ${count} items`);
         });
 
-        this.events.on('data:transformed', (count: number, context: ETLContext) => {
+        this.events.on('data:transformed', (count: number, _context: ETLContext) => {
             console.log(`Transformed ${count} items`);
         });
 
-        this.events.on('data:loaded', (count: number, context: ETLContext) => {
+        this.events.on('data:loaded', (count: number, _context: ETLContext) => {
             console.log(`Loaded ${count} items`);
         });
     }

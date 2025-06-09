@@ -122,7 +122,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
      */
     public async emitEvent<T = any>(
         event: IEvent<T>,
-        options: EmitOptions = {}
+        _options: EmitOptions = {}
     ): Promise<boolean> {
         const _startTime = Date.now();
 

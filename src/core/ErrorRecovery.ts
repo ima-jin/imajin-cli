@@ -295,7 +295,7 @@ export class ErrorRecovery extends EventEmitter {
         if (error instanceof AuthenticationError) {
             console.log('\n🔑 Authentication Help:');
             const instructions = error.getLoginInstructions();
-            instructions.forEach((instruction, index) => {
+            instructions.forEach((instruction, _index) => {
                 console.log(`   • ${instruction}`);
             });
         }

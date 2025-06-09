@@ -12,7 +12,7 @@
 
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { TemplateEngine } from '../templates/TemplateEngine.js';
-import type { TemplateContext } from '../types.js';
+import { TemplateContext } from '../types.js';
 
 describe('TemplateEngine', () => {
     let engine: TemplateEngine;
