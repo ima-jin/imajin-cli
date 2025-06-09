@@ -77,7 +77,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
             context.events.emit('step:start', this.name, context);
 
             const data = await this.performExtraction(context, mergedConfig);
-            const duration = Date.now() - Date.now(); // TODO: Fix timing
+            const duration = Date.now() - _startTime;
 
             // Validate output if schema provided
             if (this.outputSchema && mergedConfig.validateOutput) {

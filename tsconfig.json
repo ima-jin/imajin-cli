@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "ES2022",
     "lib": [
       "ES2022"
     ],
@@ -58,6 +58,7 @@
   "ts-node": {
     "require": [
       "tsconfig-paths/register"
-    ]
+    ],
+    "esm": true
   }
 }

@@ -17,7 +17,7 @@
 
 import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException';
 
-export type SystemErrorType = 'file_not_found' | 'permission_denied' | 'disk_space' | 'memory_limit' | 'process_error' | 'config_error' | 'dependency_missing';
+export type SystemErrorType = 'file_not_found' | 'permission_denied' | 'disk_space' | 'memory_limit' | 'process_error' | 'config_error' | 'dependency_missing' | 'provider_not_found';
 
 export interface SystemErrorDetails {
     type: SystemErrorType;

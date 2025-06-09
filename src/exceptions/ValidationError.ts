@@ -60,7 +60,7 @@ export class ValidationError extends BaseException {
      * Generate user-friendly message from validation details
      */
     private static generateUserMessage(details: ValidationErrorDetails[]): string {
-        if (details.length === 0) {
+        if (!Array.isArray(details) || details.length === 0) {
             return 'Input validation failed';
         }
 
@@ -81,7 +81,7 @@ export class ValidationError extends BaseException {
             return message;
         }
 
-        return `Validation failed for ${details.length} fields: ${details.map(d => d.field).join(', ')}`;
+        return `Validation failed for ${details.length} fields: ${details.map(d => d?.field || 'unknown').join(', ')}`;
     }
 
     /**
@@ -89,6 +89,10 @@ export class ValidationError extends BaseException {
      */
     private static generateManualSteps(details: ValidationErrorDetails[]): string[] {
         const steps: string[] = [];
+
+        if (!Array.isArray(details)) {
+            return ['Check input validation requirements'];
+        }
 
         details.forEach(detail => {
             if (detail.allowedValues && detail.allowedValues.length > 0) {

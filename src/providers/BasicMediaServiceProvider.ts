@@ -1,0 +1,66 @@
+/**
+ * BasicMediaServiceProvider - Register basic media processing services
+ * 
+ * @package     @imajin/cli
+ * @subpackage  providers
+ * @author      Generated
+ * @copyright   imajin
+ * @license     .fair LICENSING AGREEMENT
+ * @version     0.1.0
+ * @since       2025-01-22
+ *
+ * @see        docs/providers/media.md
+ * 
+ * Integration Points:
+ * - Basic media command registration
+ * - Simple file operations
+ * - CLI integration
+ */
+
+
+import { MediaCommand } from '../commands/media/MediaCommand.js';
+import { ServiceProvider } from './ServiceProvider.js';
+
+export class BasicMediaServiceProvider extends ServiceProvider {
+    /**
+     * Register services with the container
+     */
+    public register(): void {
+        // Register basic media command
+        this.container.singleton('MediaCommand', () => {
+            return new MediaCommand(this.container);
+        });
+    }
+
+    /**
+     * Bootstrap services after all providers have been registered
+     */
+    public boot(): void {
+        // Register CLI commands
+        this.registerCommands();
+    }
+
+    /**
+     * Get the service provider name
+     */
+    public getName(): string {
+        return 'BasicMediaServiceProvider';
+    }
+
+    /**
+     * Get list of services this provider offers
+     */
+    public getServices(): string[] {
+        return [
+            'MediaCommand'
+        ];
+    }
+
+    /**
+     * Register CLI commands
+     */
+    private registerCommands(): void {
+        const mediaCommand = this.container.resolve('MediaCommand') as MediaCommand;
+        mediaCommand.register(this.program);
+    }
+} 

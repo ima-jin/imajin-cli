@@ -206,4 +206,14 @@ export abstract class BaseException extends Error {
             this.recoveryStrategy
         );
     }
+
+    /**
+     * Create BaseException from any error type
+     * Static factory method for backwards compatibility
+     */
+    public static from(error: any, context: ErrorContext = {}): BaseException {
+        // Delegate to ExceptionUtils.normalize for consistent behavior
+        const { ExceptionUtils } = require('./index.js');
+        return ExceptionUtils.normalize(error, context);
+    }
 } 
