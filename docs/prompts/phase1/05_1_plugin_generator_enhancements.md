@@ -1,32 +1,41 @@
-## **PROMPT 5.1: PLUGIN GENERATOR ENGINE FIXES & ENHANCEMENTS**
+# 🤖 IMPLEMENT: Plugin Generator Fixes & Enhancements
 
-```markdown
-# 🔧 IMPLEMENT: Plugin Generator Engine Fixes & Enhancements
+**Status:** ⏳ **COMPLETE**  
+**Phase:** 1 - Core Architecture Patterns  
+**Estimated Time:** 10-12 hours  
+**Dependencies:** Service Providers, Command Pattern, Type System, Credentials
+
+---
 
 ## CONTEXT
+
 Address specific issues identified in the Plugin Generator Engine implementation from Prompt 5, including template engine improvements, better error handling, integration fixes, and enhanced testing.
 
 ## IDENTIFIED ISSUES TO FIX
 
 ### 1. Template Engine Context Issues
+
 - Template context access patterns need refinement
 - Complex nested property access in templates
 - Date generation in templates causing issues
 - Loop context (`{{this.property}}`) needs better handling
 
 ### 2. Command Template Integration
+
 - Generated commands need better BaseCommand integration
 - Parameter extraction logic needs improvement
 - Missing import resolution for complex models
 - Authentication integration needs standardization
 
 ### 3. Service Template Issues
+
 - HTTP client configuration needs enhancement
 - URL building with path parameters needs fixing
 - Query parameter extraction logic improvements
 - Better error handling and response transformation
 
 ### 4. Plugin Structure & File Organization
+
 - Index file generation needs completion
 - Plugin configuration template needs enhancement
 - Missing plugin loading mechanism
@@ -35,6 +44,7 @@ Address specific issues identified in the Plugin Generator Engine implementation
 ## DELIVERABLES
 
 ### 1. Enhanced Template Engine (`src/generators/templates/TemplateEngine.ts`)
+
 Fix template context handling and add advanced features:
 
 ```typescript
@@ -75,12 +85,13 @@ private handleExpressions(template: string, context: TemplateContext): string {
 ```
 
 ### 2. Improved Command Template (`src/generators/templates/command.template.ts`)
+
 Fix command generation issues:
 
 ```typescript
 export const COMMAND_TEMPLATE = `/**
  * {{this.name}}Command - {{this.description}}
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  plugins/{{pluginName}}/commands
  * @author      Generated
@@ -104,7 +115,7 @@ import type { {{this}} } from '../models/{{this}}.js';
 export class {{this.name}}Command extends BaseCommand {
     public readonly name = '{{pluginName}}:{{this.name}}';
     public readonly description = '{{this.description}}';
-    
+
     // Define command arguments and options
     public readonly arguments = [
         {{#each this.parameters}}
@@ -149,7 +160,7 @@ export class {{this.name}}Command extends BaseCommand {
 
             // Get and validate credentials
             const credentials = await this.getCredentials('{{pluginName}}');
-            
+
             // Extract and validate parameters
             const params = this.extractParameters(args, options);
 
@@ -167,7 +178,7 @@ export class {{this.name}}Command extends BaseCommand {
         } catch (error) {
             const errorMessage = \`{{this.name}} failed: \${error instanceof Error ? error.message : 'Unknown error'}\`;
             this.logError(errorMessage, error as Error);
-            
+
             return {
                 success: false,
                 error: error as Error,
@@ -181,6 +192,7 @@ export class {{this.name}}Command extends BaseCommand {
 ```
 
 ### 3. Enhanced Service Template
+
 Fix HTTP client and API integration issues:
 
 ```typescript
@@ -233,7 +245,7 @@ export class {{pluginName}}Service {
 
             // Execute request
             const response: AxiosResponse = await this.client.request(config);
-            
+
             return this.processResponse(response);
 
         } catch (error) {
@@ -248,6 +260,7 @@ export class {{pluginName}}Service {
 ```
 
 ### 4. Plugin Generator Improvements (`src/generators/PluginGenerator.ts`)
+
 Add missing functionality and fix integration issues:
 
 ```typescript
@@ -256,7 +269,7 @@ Add missing functionality and fix integration issues:
  */
 private async generateFiles(plugin: GeneratedPlugin): Promise<PluginFile[]> {
     const files: PluginFile[] = [];
-    
+
     // Enhanced template context with utilities
     const baseContext: TemplateContext = {
         pluginName: this.pascalCase(plugin.name),
@@ -297,74 +310,83 @@ private kebabCase(str: string): string {
 ### 5. Integration & Testing Improvements
 
 #### A. Enhanced Service Provider Integration
+
 ```typescript
 // src/providers/PluginGeneratorServiceProvider.ts
 export class PluginGeneratorServiceProvider extends ServiceProvider {
-    async register(container: DependencyContainer): Promise<void> {
-        // Register with proper dependencies
-        container.singleton('pluginGenerator', () => {
-            const parser = container.resolve<OpenAPIParser>('openApiParser');
-            const templateEngine = container.resolve<TemplateEngine>('templateEngine');
-            return new DefaultPluginGenerator(parser, templateEngine);
-        });
+  async register(container: DependencyContainer): Promise<void> {
+    // Register with proper dependencies
+    container.singleton("pluginGenerator", () => {
+      const parser = container.resolve<OpenAPIParser>("openApiParser");
+      const templateEngine =
+        container.resolve<TemplateEngine>("templateEngine");
+      return new DefaultPluginGenerator(parser, templateEngine);
+    });
 
-        // Register template engine
-        container.singleton('templateEngine', () => new TemplateEngine());
-        
-        // Register parser
-        container.singleton('openApiParser', () => new DefaultOpenAPIParser());
-    }
+    // Register template engine
+    container.singleton("templateEngine", () => new TemplateEngine());
+
+    // Register parser
+    container.singleton("openApiParser", () => new DefaultOpenAPIParser());
+  }
 }
 ```
 
 #### B. Command Integration Fix
+
 ```typescript
 // src/commands/GeneratePluginCommand.ts
 export class GeneratePluginCommand extends BaseCommand {
-    // Fix dependency injection
-    constructor(
-        @inject('pluginGenerator') private generator: PluginGenerator,
-        @inject('credentialManager') private credentialManager: CredentialManager,
-        logger?: Logger
-    ) {
-        super(logger);
-    }
+  // Fix dependency injection
+  constructor(
+    @inject("pluginGenerator") private generator: PluginGenerator,
+    @inject("credentialManager") private credentialManager: CredentialManager,
+    logger?: Logger
+  ) {
+    super(logger);
+  }
 }
 ```
 
 ## IMPLEMENTATION REQUIREMENTS
 
 ### 1. Template Engine Enhancements
+
 - Fix JavaScript expression evaluation in templates
 - Improve context handling for nested properties
 - Add utility functions to template context
 - Better error handling for template rendering failures
 
 ### 2. Command Template Fixes
+
 - Complete argument and option definitions
 - Fix parameter extraction and validation
 - Improve error handling and logging
 - Better integration with BaseCommand
 
 ### 3. Service Template Improvements
+
 - Enhanced HTTP client configuration
 - Better URL building with path parameters
 - Improved error handling and response processing
 - Proper authentication integration
 
 ### 4. Plugin Structure Completion
+
 - Complete index file generation
 - Enhanced plugin configuration
 - Better directory structure management
 - Improved file organization
 
 ### 5. Testing & Validation
+
 - Add comprehensive unit tests for template engine
 - Test plugin generation with real OpenAPI specs
 - Validate generated code compiles and runs
 - Integration tests with command system
 
 ## SUCCESS CRITERIA
+
 - Template engine handles complex expressions correctly
 - Generated plugins compile without TypeScript errors
 - Commands integrate properly with the Command Pattern framework
@@ -374,7 +396,12 @@ export class GeneratePluginCommand extends BaseCommand {
 - Generated plugins can be loaded and executed successfully
 
 ## NEXT STEPS AFTER COMPLETION
+
 - Test with real-world OpenAPI specifications (Stripe, GitHub, etc.)
 - Validate end-to-end plugin generation workflow
 - Prepare for advanced features (auto-healing, plugin management)
 - Ready for Phase 2 service integrations
+
+```
+
+```
