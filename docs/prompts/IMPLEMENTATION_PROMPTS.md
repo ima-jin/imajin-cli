@@ -497,62 +497,252 @@ Events enable loose coupling and real-time communication:
 
 ## 🔧 **PHASE 2: INFRASTRUCTURE COMPONENTS**
 
-### **PROMPT 7: ETL PIPELINE SYSTEM**
+### **PROMPT 7: ETL PIPELINE SYSTEM WITH GRAPH TRANSLATION**
 
 ```markdown
-# 📊 IMPLEMENT: ETL Pipeline System
+# 📊 IMPLEMENT: Enhanced ETL Pipeline System with Graph-to-Graph Translation
 
 ## CONTEXT
-Create a modern TypeScript ETL (Extract, Transform, Load) architecture for imajin-cli that enables data processing workflows, service integrations, and automated data transformations between different API services.
+Create a modern TypeScript ETL (Extract, Transform, Load) architecture for imajin-cli that enables:
+1. **Traditional data processing** workflows and service integrations
+2. **Graph-to-Graph translation** between standard graph models (social-commerce, creative-portfolio, professional-network)
+3. **Context normalization** where users can translate any external graph into their chosen model
+4. **Universal communication** between nodes using the same standard models
 
 ## ARCHITECTURAL VISION
-Modern TypeScript ETL patterns:
-- Composable Extract → Transform → Load pipeline
-- Async/await patterns for API operations
-- Type-safe data transformations with Zod
-- Stream processing for large datasets
-- Pluggable architecture for different data sources
+**Dual-Purpose ETL System:**
+- **Service ETL**: Traditional API service data transformations (Stripe → Internal, etc.)
+- **Graph ETL**: Translation between standard graph models for user-to-user communication
+- **Context ETL**: Normalize external graphs into user's chosen context/model
+- **Bridge ETL**: Efficient communication paths between compatible models
 
 ## DELIVERABLES
-1. `src/etl/core/` - ETL base abstractions
-2. `src/etl/extractors/` - Data extraction components
-3. `src/etl/transformers/` - Data transformation logic
-4. `src/etl/loaders/` - Data loading components
-5. `src/etl/Pipeline.ts` - ETL orchestration system
-6. Integration with Command Pattern and Event System
+1. `src/etl/core/` - ETL base abstractions (enhanced)
+2. `src/etl/extractors/` - Data extraction components (services + graphs)
+3. `src/etl/transformers/` - Data transformation logic (enhanced with graph translation)
+4. `src/etl/loaders/` - Data loading components (enhanced)
+5. `src/etl/Pipeline.ts` - ETL orchestration system (enhanced)
+6. `src/etl/graphs/` - **NEW**: Graph model definitions and translators
+7. `src/etl/bridges/` - **NEW**: Graph-to-graph bridge configurations
+8. Integration with Command Pattern and Event System
 
 ## IMPLEMENTATION REQUIREMENTS
 
-### 1. ETL Abstractions
-- Generic Extractor, Transformer, Loader interfaces
-- Pipeline composition and execution
-- Data validation and error handling
-- Progress tracking through events
+### 1. Enhanced ETL Abstractions
+```typescript
+// Base ETL interfaces (existing)
+interface Extractor<TInput, TOutput> {
+  extract(input: TInput): Promise<TOutput>;
+  validate(input: TInput): boolean;
+}
 
-### 2. Extractor System
-- HTTP API data extraction
-- Rate limiting and authentication
-- Data pagination and streaming
-- Error recovery and retries
+interface Transformer<TInput, TOutput> {
+  transform(input: TInput): Promise<TOutput>;
+  getSchema(): TransformationSchema;
+}
 
-### 3. Transformer System
-- Data mapping and transformation rules
-- Field-level transformation functions
-- Validation and sanitization
-- Business logic processing
+interface Loader<TInput> {
+  load(data: TInput): Promise<LoadResult>;
+  getBatchSize(): number;
+}
 
-### 4. Loader System
-- Multi-target data loading
-- Batch and streaming operations
-- Conflict resolution and upserts
-- Transaction management
+// NEW: Graph translation interfaces
+interface GraphTranslator<TSource extends GraphModel, TTarget extends GraphModel> {
+  translate(sourceGraph: TSource): Promise<TTarget>;
+  canTranslate(sourceModel: string, targetModel: string): boolean;
+  getBridgeConfig(): BridgeConfiguration;
+  getEfficiencyScore(): number; // Higher = less transformation needed
+}
+
+interface GraphModel {
+  readonly modelType: 'social-commerce' | 'creative-portfolio' | 'professional-network' | 'community-hub';
+  readonly version: string;
+  readonly schema: GraphSchema;
+  readonly compatibilityMap: CompatibilityMatrix;
+}
+```
+
+### 2. Standard Graph Model System
+```typescript
+// Define standard graph models
+interface SocialCommerceGraph extends GraphModel {
+  identity: PersonalProfile;
+  catalog: {
+    products: Product[];
+    services: Service[];
+    events: Event[];
+  };
+  social: {
+    connections: Connection[];
+    reputation: ReputationScore;
+  };
+  commerce: {
+    payments: PaymentMethod[];
+    transactions: Transaction[];
+  };
+}
+
+interface CreativePortfolioGraph extends GraphModel {
+  identity: ArtistProfile;
+  portfolio: {
+    artworks: Artwork[];
+    collections: Collection[];
+    exhibitions: Exhibition[];
+  };
+  professional: {
+    commissions: Commission[];
+    availability: Availability;
+  };
+}
+
+interface ProfessionalNetworkGraph extends GraphModel {
+  identity: ProfessionalProfile;
+  experience: {
+    positions: Position[];
+    skills: Skill[];
+    certifications: Certification[];
+  };
+  network: {
+    connections: ProfessionalConnection[];
+    recommendations: Recommendation[];
+  };
+}
+```
+
+### 3. Graph Translation Engine
+```typescript
+export class GraphTranslationEngine {
+  // Direct communication (same models - no ETL needed)
+  canCommunicateDirectly(modelA: string, modelB: string): boolean;
+  
+  // Translation required (different models)
+  async translateGraph<T extends GraphModel, U extends GraphModel>(
+    sourceGraph: T, 
+    targetModel: string
+  ): Promise<U>;
+  
+  // Bridge generation for common translation paths
+  generateBridge(sourceModel: string, targetModel: string): BridgeConfig;
+  
+  // Context normalization - translate ANY external graph to user's model
+  async normalizeToContext<T extends GraphModel>(
+    externalGraph: unknown,
+    userContextModel: string
+  ): Promise<T>;
+}
+```
+
+### 4. Enhanced Extractor System
+- **Service Extractors**: HTTP API data extraction (existing)
+- **Graph Extractors**: Extract data from user graph endpoints
+- **Model Detectors**: Automatically detect which standard model a graph uses
+- **Compatibility Analyzers**: Determine translation requirements
+
+### 5. Enhanced Transformer System
+- **Service Transformers**: Data mapping for API services (existing)
+- **Graph Transformers**: Transform between standard graph models
+- **Context Normalizers**: Normalize external graphs to user's chosen context
+- **Bridge Optimizers**: Optimize translation paths for efficiency
+
+### 6. Enhanced Loader System
+- **Service Loaders**: Load to external API services (existing)
+- **Graph Loaders**: Load translated data into user's graph context
+- **Bridge Loaders**: Efficiently load between compatible models
+- **Context Loaders**: Load normalized external data
+
+## FILE HEADERS
+Use the imajin TypeScript header template:
+```typescript
+/**
+ * [ClassName] - [Brief Description]
+ * 
+ * @package     @imajin/cli
+ * @subpackage  etl/graphs
+ * @author      Generated
+ * @copyright   imajin
+ * @license     .fair LICENSING AGREEMENT
+ * @version     0.1.0
+ * @since       2025-06-09
+ *
+ * Integration Points:
+ * - Graph-to-graph translation for user communication
+ * - Standard model compatibility and bridging
+ * - Context normalization for external graphs
+ * - Service ETL integration for traditional workflows
+ */
+```
+
+## GRAPH TRANSLATION EXAMPLES
+
+### Example 1: Same Model Communication (No ETL)
+```typescript
+// John and Sarah both use social-commerce model
+const johnGraph: SocialCommerceGraph = await extractUserGraph('john.example.com');
+const sarahGraph: SocialCommerceGraph = await extractUserGraph('sarah.example.com');
+
+// Direct communication - no translation needed
+const compatibility = engine.canCommunicateDirectly('social-commerce', 'social-commerce'); // true
+const events = await johnGraph.social.connections.getEvents(sarahGraph.identity.id);
+```
+
+### Example 2: Cross-Model Translation (ETL Required)
+```typescript
+// Mike uses creative-portfolio, John uses social-commerce
+const mikeGraph: CreativePortfolioGraph = await extractUserGraph('mike.example.com');
+
+// Translation required
+const mikeInJohnsContext: SocialCommerceGraph = await engine.translateGraph(
+  mikeGraph, 
+  'social-commerce'
+);
+
+// Now John can see Mike's exhibitions as "events" in his social-commerce context
+const mikeEvents = mikeInJohnsContext.catalog.events; // Mike's exhibitions → John's events
+```
+
+### Example 3: Context Normalization
+```typescript
+// External graph with unknown/custom model
+const externalGraph = await extractUserGraph('linda.example.com'); // Custom model
+
+// Normalize to John's social-commerce context
+const lindaInJohnsContext: SocialCommerceGraph = await engine.normalizeToContext(
+  externalGraph,
+  'social-commerce'
+);
+```
+
+## CLI INTEGRATION EXAMPLES
+```bash
+# Traditional service ETL
+imajin etl extract stripe-customers | transform to-universal | load my-crm
+
+# NEW: Graph translation
+imajin graph:translate mikes-portfolio --to social-commerce --output events
+imajin graph:normalize lindas-custom-api --context my-social-commerce  
+imajin graph:bridge creative-portfolio social-commerce --optimize
+
+# Discovery based on model compatibility
+imajin discover --model social-commerce --direct-compatible
+imajin discover --model creative-portfolio --translatable-to social-commerce
+```
+
+## INTEGRATION POINTS
+- Must work with existing Service Provider system
+- Should integrate with Type Collision Prevention system
+- Prepare for user API exposition capabilities
+- Support for real-time graph synchronization
+- Foundation for social graph discovery and networking
 
 ## SUCCESS CRITERIA
-- ETL pipelines can be composed and executed
-- Data flows through Extract → Transform → Load stages
-- Progress is tracked and reported via events
-- Ready for Stripe integration and other connectors
-- Integrates with Command Pattern for CLI operations
+- **Traditional ETL**: Service data flows work (existing functionality preserved)
+- **Graph Translation**: Can translate between all standard graph models
+- **Direct Communication**: Same-model graphs communicate without ETL overhead
+- **Context Normalization**: External graphs can be normalized to user's context
+- **Bridge Optimization**: Common translation paths are optimized for efficiency
+- **CLI Integration**: Graph operations are accessible via intuitive commands
+- **Real-time Capable**: Graph translations can happen in real-time for live workflows
+- **Foundation Ready**: Prepared for user API exposition and social graph features
 ```
 
 ### **PROMPT 8: EXCEPTION SYSTEM & ERROR HANDLING**
@@ -948,9 +1138,600 @@ Create a sophisticated logging infrastructure that supports structured logging, 
 
 ---
 
+## 🤖 **PHASE 2.5: AI-ASSISTED CLI GENERATION** *(The Game Changer)*
+
+### **PROMPT 18: AI CONTEXT ANALYSIS ENGINE**
+
+```markdown
+# 🧠 IMPLEMENT: AI Context Analysis Engine
+
+## CONTEXT
+Create an AI-powered context analysis system that understands business domains, API relationships, and user workflows to generate intelligent, business-aware CLI commands instead of generic CRUD operations.
+
+## ARCHITECTURAL VISION
+**The breakthrough insight:** Professional CLIs aren't just API wrappers - they're business workflow tools that understand context, relationships, and user intent.
+
+**AI-Powered Analysis:**
+- Business domain understanding from API documentation
+- Workflow pattern recognition across endpoint relationships
+- Context-aware command naming and organization
+- Intent-driven parameter inference and validation
+- Intelligent error handling with business context
+
+## DELIVERABLES
+1. `src/ai/ContextAnalyzer.ts` - Core AI context analysis
+2. `src/ai/BusinessDomainDetector.ts` - Industry/domain classification
+3. `src/ai/WorkflowDiscoverer.ts` - Multi-step process identification
+4. `src/ai/ContextPromptBuilder.ts` - Dynamic AI prompt generation
+5. `src/ai/providers/` - LLM provider integrations (OpenAI, Claude, etc.)
+
+## IMPLEMENTATION REQUIREMENTS
+
+### 1. Business Context Analysis
+```typescript
+interface BusinessContext {
+  domain: 'ecommerce' | 'fintech' | 'saas' | 'healthcare' | 'creative' | 'general';
+  workflows: BusinessWorkflow[];
+  entities: BusinessEntity[];
+  relationships: EntityRelationship[];
+  terminology: DomainTerminology;
+}
+
+interface ContextAnalyzer {
+  analyzeAPI(spec: OpenAPISpec, hints?: string[]): Promise<BusinessContext>;
+  identifyWorkflows(endpoints: APIEndpoint[]): Promise<BusinessWorkflow[]>;
+  generateCommandNames(workflow: BusinessWorkflow): Promise<string[]>;
+  optimizeForDomain(context: BusinessContext): Promise<OptimizationSuggestions>;
+}
+```
+
+### 2. Workflow Discovery System
+```typescript
+interface BusinessWorkflow {
+  name: string;
+  description: string;
+  steps: WorkflowStep[];
+  triggers: WorkflowTrigger[];
+  commonParameters: Parameter[];
+  errorScenarios: ErrorScenario[];
+  businessValue: string;
+}
+
+// Example: Instead of separate API calls for customer creation
+// AI identifies the "Customer Onboarding" workflow:
+// 1. Create customer record
+// 2. Set up billing
+// 3. Send welcome email
+// 4. Notify sales team
+// → Single command: customer:onboard
+```
+
+### 3. Intelligence Integration
+```typescript
+interface AIProvider {
+  analyzeBusinessContext(apiSpec: string, domain?: string): Promise<BusinessContext>;
+  generateCommandDescriptions(workflow: BusinessWorkflow): Promise<CommandDocumentation>;
+  improveErrorMessages(error: APIError, context: BusinessContext): Promise<string>;
+  suggestWorkflowOptimizations(usage: UsageAnalytics): Promise<OptimizationSuggestions>;
+}
+```
+
+### 4. Context-Aware Command Generation
+- **Smart naming**: `customer:onboard` not `POST /customers`
+- **Parameter inference**: Auto-detect required vs optional based on business context
+- **Validation rules**: Business-logic validation beyond just schema validation
+- **Help generation**: Context-aware examples and documentation
+
+## AI INTEGRATION EXAMPLES
+
+### Example 1: Stripe Context Analysis
+```typescript
+// Input: Stripe OpenAPI spec
+// AI Analysis Output:
+{
+  domain: 'fintech',
+  workflows: [
+    {
+      name: 'Customer Onboarding',
+      steps: ['create_customer', 'setup_payment_method', 'create_subscription'],
+      command: 'customer:onboard',
+      description: 'Complete customer setup with billing and subscription'
+    },
+    {
+      name: 'Payment Processing',
+      steps: ['create_payment_intent', 'confirm_payment', 'handle_webhook'],
+      command: 'payment:process',
+      description: 'Process payment with automatic confirmation and webhook handling'
+    }
+  ]
+}
+```
+
+### Example 2: Context-Aware Error Messages
+```typescript
+// Instead of: "HTTP 402 Payment Required"
+// AI generates: "Customer's payment method has expired. Update it with: stripe billing:update-card --customer cus_123"
+```
+
+## SUCCESS CRITERIA
+- Can analyze OpenAPI specs and identify business workflows
+- Generated commands use business language, not technical endpoints
+- AI understands domain context (fintech vs ecommerce vs healthcare)
+- Workflow discovery finds meaningful multi-step processes
+- Context-aware error messages and help text
+- Foundation ready for intelligent CLI generation
+```
+
+### **PROMPT 19: INTELLIGENT COMMAND GENERATOR**
+
+```markdown
+# ⚡ IMPLEMENT: Intelligent Command Generator
+
+## CONTEXT
+Transform the basic Plugin Generator into an AI-powered intelligent system that creates professional, workflow-aware CLI commands based on business context analysis and user domain understanding.
+
+## ARCHITECTURAL VISION
+**Beyond Basic CRUD:** Generate commands that match how business users actually think and work, not just mirror API endpoints.
+
+**Intelligence Features:**
+- Business workflow automation in single commands
+- Smart parameter defaults and inference
+- Context-aware validation and error handling
+- Progressive enhancement based on usage patterns
+- Domain-specific terminology and conventions
+
+## DELIVERABLES
+1. `src/generators/IntelligentGenerator.ts` - AI-enhanced CLI generation
+2. `src/generators/WorkflowCommandBuilder.ts` - Multi-step workflow automation
+3. `src/generators/SmartParameterEngine.ts` - Intelligent parameter handling
+4. `src/generators/templates/intelligent/` - AI-generated command templates
+5. Enhanced Plugin Generator with AI integration
+
+## IMPLEMENTATION REQUIREMENTS
+
+### 1. Intelligent Command Generation
+```typescript
+interface IntelligentGenerator extends PluginGenerator {
+  generateFromContext(
+    spec: OpenAPISpec, 
+    context: BusinessContext
+  ): Promise<IntelligentPlugin>;
+  
+  optimizeWorkflows(
+    workflows: BusinessWorkflow[]
+  ): Promise<WorkflowCommand[]>;
+  
+  enhanceWithAI(
+    basicPlugin: GeneratedPlugin,
+    context: BusinessContext
+  ): Promise<IntelligentPlugin>;
+}
+
+interface IntelligentPlugin extends GeneratedPlugin {
+  workflowCommands: WorkflowCommand[];
+  smartValidation: ValidationRule[];
+  contextualHelp: ContextualDocumentation;
+  errorRecovery: ErrorRecoveryStrategy[];
+}
+```
+
+### 2. Workflow Command Builder
+```typescript
+interface WorkflowCommand extends Command {
+  workflow: BusinessWorkflow;
+  automatedSteps: AutomatedStep[];
+  progressTracking: ProgressDefinition;
+  rollbackCapability: RollbackStrategy;
+  
+  // Example: customer:onboard command that:
+  // 1. Creates customer
+  // 2. Sets up billing
+  // 3. Sends welcome email
+  // 4. Notifies sales team
+  // All in one intelligent command
+}
+```
+
+### 3. Smart Parameter Engine
+```typescript
+interface SmartParameterEngine {
+  inferDefaults(context: BusinessContext, command: Command): Promise<ParameterDefaults>;
+  validateBusinessRules(params: any, context: BusinessContext): Promise<ValidationResult>;
+  suggestParameters(partialInput: any, context: BusinessContext): Promise<ParameterSuggestion[]>;
+  
+  // Examples:
+  // - Auto-infer customer timezone from email domain
+  // - Suggest product SKUs based on category
+  // - Validate business hours for appointment scheduling
+}
+```
+
+### 4. Progressive Enhancement
+```typescript
+interface UsageAnalytics {
+  commandUsage: Map<string, UsageStats>;
+  errorPatterns: ErrorPattern[];
+  workflowEfficiency: EfficiencyMetrics;
+}
+
+interface CommandOptimizer {
+  analyzeUsage(analytics: UsageAnalytics): Promise<OptimizationOpportunities>;
+  suggestNewWorkflows(patterns: UsagePattern[]): Promise<WorkflowSuggestion[]>;
+  improveErrorHandling(errorPatterns: ErrorPattern[]): Promise<ErrorImprovement[]>;
+}
+```
+
+## GENERATED CLI EXAMPLES
+
+### Before (Basic Generator):
+```bash
+stripe create-customer --email user@example.com
+stripe create-payment-method --customer cus_123 --type card
+stripe create-subscription --customer cus_123 --items '[{"price":"price_123"}]'
+stripe send-webhook --endpoint webhook_url --event customer.created
+```
+
+### After (Intelligent Generator):
+```bash
+# Single intelligent command handles entire workflow
+stripe customer:onboard \
+  --email "user@example.com" \
+  --name "Jane Doe" \
+  --plan "pro-monthly" \
+  --notify-sales \
+  --send-welcome-email
+
+# AI infers missing parameters and handles complex workflows
+# Provides real-time progress: "Creating customer... Setting up billing... Sending notifications..."
+```
+
+## SUCCESS CRITERIA
+- Generated CLIs feel professionally crafted, not auto-generated
+- Commands match business workflows, not just API endpoints
+- Smart parameter inference reduces user typing
+- Error messages are helpful and actionable
+- CLI evolves and improves based on usage patterns
+- Ready for domain-specific optimizations
+```
+
+### **PROMPT 20: ADAPTIVE CLI OPTIMIZER**
+
+```markdown
+# 🔄 IMPLEMENT: Adaptive CLI Optimizer
+
+## CONTEXT
+Create a learning system that continuously improves generated CLIs based on usage patterns, error analysis, and user feedback to evolve from good tools into indispensable business workflow automation.
+
+## ARCHITECTURAL VISION
+**CLIs that get smarter over time:** Learn from real usage to optimize workflows, reduce errors, and automate common patterns that emerge from actual business operations.
+
+**Adaptive Intelligence:**
+- Usage pattern analysis for workflow optimization
+- Error pattern recognition for improved handling
+- Parameter optimization based on common values
+- Automatic workflow discovery from usage sequences
+- Performance optimization through predictive caching
+
+## DELIVERABLES
+1. `src/optimization/UsageAnalyzer.ts` - Usage pattern analysis
+2. `src/optimization/WorkflowOptimizer.ts` - Automatic workflow improvements
+3. `src/optimization/ErrorLearningEngine.ts` - Error pattern learning
+4. `src/optimization/PredictiveEngine.ts` - Parameter and workflow prediction
+5. `src/optimization/AdaptiveUpdater.ts` - Safe automatic CLI improvements
+
+## IMPLEMENTATION REQUIREMENTS
+
+### 1. Usage Pattern Analysis
+```typescript
+interface UsageAnalyzer {
+  trackCommandUsage(command: string, params: any, result: CommandResult): Promise<void>;
+  identifyWorkflowPatterns(timeWindow: TimeRange): Promise<WorkflowPattern[]>;
+  analyzeParameterUsage(command: string): Promise<ParameterAnalytics>;
+  detectInefficiencies(workflows: WorkflowPattern[]): Promise<OptimizationOpportunity[]>;
+}
+
+interface WorkflowPattern {
+  commands: string[];
+  frequency: number;
+  averageDuration: number;
+  commonParameters: ParameterPattern[];
+  errorRate: number;
+  suggestedOptimization: WorkflowOptimization;
+}
+```
+
+### 2. Intelligent Error Learning
+```typescript
+interface ErrorLearningEngine {
+  analyzeErrorPatterns(errors: CommandError[]): Promise<ErrorInsight[]>;
+  generateBetterErrorMessages(error: CommandError): Promise<string>;
+  suggestPreventiveValidation(errorPatterns: ErrorPattern[]): Promise<ValidationRule[]>;
+  learnRecoveryStrategies(recoveryActions: RecoveryAction[]): Promise<AutoRecoveryRule[]>;
+}
+
+// Example: Learning that "invalid API key" errors are often due to
+// expired credentials → auto-suggest credential refresh workflow
+```
+
+### 3. Predictive Optimization
+```typescript
+interface PredictiveEngine {
+  predictNextCommand(context: CommandContext): Promise<CommandSuggestion[]>;
+  suggestParameterValues(command: string, context: any): Promise<ParameterSuggestion[]>;
+  optimizeWorkflowOrder(workflow: BusinessWorkflow): Promise<OptimizedWorkflow>;
+  cacheCommonOperations(usage: UsageAnalytics): Promise<CacheStrategy>;
+}
+```
+
+### 4. Safe Adaptive Updates
+```typescript
+interface AdaptiveUpdater {
+  proposeOptimizations(analysis: UsageAnalysis): Promise<OptimizationProposal[]>;
+  testOptimizations(proposals: OptimizationProposal[]): Promise<TestResult[]>;
+  rolloutImprovements(tested: TestResult[]): Promise<UpdateResult>;
+  rollbackIfNeeded(metrics: PerformanceMetrics): Promise<RollbackResult>;
+}
+```
+
+## OPTIMIZATION EXAMPLES
+
+### Example 1: Workflow Discovery
+```typescript
+// AI notices this common sequence:
+// 1. stripe customer:create
+// 2. stripe subscription:create  
+// 3. slack notify:sales
+// 4. hubspot contact:create
+
+// Suggests new compound command:
+// stripe customer:onboard-with-crm --slack-channel sales --hubspot-pipeline new-customers
+```
+
+### Example 2: Parameter Optimization
+```typescript
+// Learns that 90% of customers use "pro-monthly" plan
+// Auto-suggests as default: stripe customer:create --plan [pro-monthly]
+
+// Learns common email domains → auto-infer company names
+// user@acme.com → suggests --company "Acme Corp"
+```
+
+### Example 3: Error Prevention
+```typescript
+// Learns that attempts to create customers with duplicate emails fail
+// Adds automatic duplicate check: "Customer with this email exists. Update instead? [Y/n]"
+```
+
+## ADAPTIVE FEATURES
+
+### 1. Smart Defaults Evolution
+- Parameters become smarter based on usage patterns
+- Context-aware suggestions improve over time
+- Common workflows get streamlined automatically
+
+### 2. Proactive Error Prevention
+- Validate common failure scenarios before API calls
+- Suggest fixes based on previous successful recoveries
+- Auto-retry with learned parameters
+
+### 3. Workflow Automation Discovery
+- Identify repeated command sequences
+- Propose new compound commands
+- Optimize multi-step processes
+
+## SUCCESS CRITERIA
+- CLIs improve automatically based on real usage
+- Error rates decrease over time through learning
+- New workflow optimizations emerge from usage patterns
+- Parameter defaults become more intelligent
+- User efficiency increases measurably over time
+- System learns domain-specific optimizations
+```
+
+### **PROMPT 21: BUSINESS WORKFLOW DETECTOR**
+
+```markdown
+# 🔍 IMPLEMENT: Business Workflow Detector
+
+## CONTEXT
+Create an advanced system that discovers, maps, and optimizes real business workflows by analyzing API usage patterns, business documentation, and cross-service integrations to automatically generate sophisticated workflow automation commands.
+
+## ARCHITECTURAL VISION
+**Beyond Single-Service Commands:** Detect and automate complex business processes that span multiple services, understand business timing and dependencies, and create intelligent workflow orchestration.
+
+**Cross-Service Intelligence:**
+- Multi-service workflow pattern recognition
+- Business process timing and dependency mapping
+- Intelligent workflow orchestration and error handling
+- Cross-platform integration workflow automation
+- Business rule extraction and enforcement
+
+## DELIVERABLES
+1. `src/workflows/WorkflowDetector.ts` - Cross-service workflow discovery
+2. `src/workflows/BusinessProcessMapper.ts` - Business logic flow mapping
+3. `src/workflows/CrossServiceOrchestrator.ts` - Multi-service workflow execution
+4. `src/workflows/WorkflowTemplateGenerator.ts` - Reusable workflow templates
+5. `src/workflows/BusinessRuleEngine.ts` - Workflow business rule enforcement
+
+## IMPLEMENTATION REQUIREMENTS
+
+### 1. Cross-Service Workflow Detection
+```typescript
+interface WorkflowDetector {
+  analyzeMultiServicePatterns(
+    services: GeneratedPlugin[],
+    usageData: CrossServiceUsage[]
+  ): Promise<BusinessWorkflow[]>;
+  
+  mapBusinessProcesses(
+    workflows: BusinessWorkflow[],
+    businessContext: BusinessContext
+  ): Promise<BusinessProcess[]>;
+  
+  detectIntegrationOpportunities(
+    services: ServiceIntegration[]
+  ): Promise<IntegrationWorkflow[]>;
+}
+
+interface BusinessProcess {
+  name: string;
+  description: string;
+  services: string[];
+  steps: ProcessStep[];
+  businessRules: BusinessRule[];
+  successCriteria: SuccessCriteria[];
+  rollbackStrategy: RollbackStrategy;
+}
+```
+
+### 2. Intelligent Workflow Orchestration
+```typescript
+interface CrossServiceOrchestrator {
+  executeWorkflow(
+    workflow: BusinessProcess,
+    parameters: WorkflowParameters
+  ): Promise<WorkflowResult>;
+  
+  handleFailures(
+    failedStep: ProcessStep,
+    context: WorkflowContext
+  ): Promise<RecoveryAction>;
+  
+  optimizeExecution(
+    workflow: BusinessProcess
+  ): Promise<OptimizedWorkflow>;
+}
+
+// Example: "Customer Churn Prevention" workflow
+// 1. Detect at-risk customer (analytics service)
+// 2. Create personalized offer (pricing service)
+// 3. Send targeted email (marketing service)
+// 4. Schedule follow-up call (CRM service)
+// 5. Track engagement (analytics service)
+```
+
+### 3. Business Rule Engine
+```typescript
+interface BusinessRuleEngine {
+  extractRules(
+    businessDocumentation: string[],
+    workflowHistory: WorkflowExecution[]
+  ): Promise<BusinessRule[]>;
+  
+  validateWorkflow(
+    workflow: BusinessProcess,
+    rules: BusinessRule[]
+  ): Promise<ValidationResult>;
+  
+  enforceCompliance(
+    execution: WorkflowExecution,
+    complianceRules: ComplianceRule[]
+  ): Promise<ComplianceResult>;
+}
+```
+
+### 4. Workflow Template Generation
+```typescript
+interface WorkflowTemplateGenerator {
+  generateTemplate(
+    workflow: BusinessProcess,
+    industry: string
+  ): Promise<WorkflowTemplate>;
+  
+  customizeForDomain(
+    template: WorkflowTemplate,
+    domainContext: DomainContext
+  ): Promise<CustomizedWorkflow>;
+  
+  createReusablePatterns(
+    workflows: BusinessProcess[]
+  ): Promise<WorkflowPattern[]>;
+}
+```
+
+## DETECTED WORKFLOW EXAMPLES
+
+### Example 1: E-commerce Order Fulfillment
+```typescript
+// Detected workflow across multiple services:
+const orderFulfillmentWorkflow = {
+  name: "Complete Order Fulfillment",
+  services: ["shopify", "stripe", "shipstation", "slack", "hubspot"],
+  steps: [
+    { service: "shopify", action: "order:validate", timing: "immediate" },
+    { service: "stripe", action: "payment:authorize", timing: "immediate" },
+    { service: "shipstation", action: "shipment:create", timing: "after_payment" },
+    { service: "slack", action: "notify:fulfillment-team", timing: "after_shipping" },
+    { service: "hubspot", action: "deal:update-stage", timing: "after_delivery" }
+  ],
+  businessRules: [
+    "High-value orders require manual approval",
+    "International orders need customs documentation",
+    "Subscription orders follow different fulfillment rules"
+  ]
+};
+
+// Generated command:
+// commerce order:fulfill --order-id 12345 --auto-approve-under 500 --notify-team fulfillment
+```
+
+### Example 2: SaaS Customer Onboarding
+```typescript
+const customerOnboardingWorkflow = {
+  name: "Complete Customer Onboarding",
+  services: ["stripe", "intercom", "notion", "slack", "mixpanel"],
+  steps: [
+    { service: "stripe", action: "customer:create-with-trial" },
+    { service: "intercom", action: "user:create-and-tag" },
+    { service: "notion", action: "customer-page:create" },
+    { service: "slack", action: "notify:success-team" },
+    { service: "mixpanel", action: "track:onboarding-complete" }
+  ],
+  timing: {
+    trial_reminder: "day_7_before_expiry",
+    success_check: "day_3_after_signup",
+    upsell_opportunity: "day_14_if_active"
+  }
+};
+
+// Generated command:
+// saas customer:onboard --email user@company.com --plan pro-trial --assign-to sarah --auto-followup
+```
+
+### Example 3: Content Marketing Workflow
+```typescript
+const contentMarketingWorkflow = {
+  name: "Content Creation and Distribution",
+  services: ["notion", "canva", "twitter", "linkedin", "mailchimp"],
+  steps: [
+    { service: "notion", action: "content:plan-and-write" },
+    { service: "canva", action: "graphics:create-social-variants" },
+    { service: "twitter", action: "post:schedule-thread" },
+    { service: "linkedin", action: "post:schedule-professional" },
+    { service: "mailchimp", action: "newsletter:add-to-next-edition" }
+  ],
+  optimization: "schedule_for_peak_engagement_times"
+};
+
+// Generated command:
+// marketing content:publish --topic "API Integration Best Practices" --channels all --optimize-timing
+```
+
+## SUCCESS CRITERIA
+- Detects complex multi-service business workflows automatically
+- Generates intelligent workflow orchestration commands
+- Handles cross-service dependencies and error scenarios
+- Creates reusable workflow templates for common business processes
+- Enforces business rules and compliance requirements
+- Optimizes workflow execution based on performance data
+- Enables business users to automate complex processes with simple commands
+```
+
+---
+
 ## 🎯 **PHASE 3: SERVICE INTEGRATION**
 
-### **PROMPT 18: STRIPE CONNECTOR**
+### **PROMPT 22: STRIPE CONNECTOR**
 
 ```markdown
 # 💳 IMPLEMENT: Stripe Connector
@@ -973,7 +1754,7 @@ Create the first service connector for Stripe integration, serving as the refere
 - Reference implementation for other connectors
 ```
 
-### **PROMPT 19: REAL-TIME PROGRESS TRACKING**
+### **PROMPT 23: REAL-TIME PROGRESS TRACKING**
 
 ```markdown
 # ⚡ IMPLEMENT: Real-time Progress Tracking
@@ -994,7 +1775,7 @@ Create comprehensive real-time progress tracking that enables LLM interaction, l
 - Integration with CLI and services
 ```
 
-### **PROMPT 20: LLM INTROSPECTION APIS**
+### **PROMPT 24: LLM INTROSPECTION APIS**
 
 ```markdown
 # 🤖 IMPLEMENT: LLM Introspection APIs
@@ -1015,7 +1796,7 @@ Create comprehensive introspection capabilities that enable LLM discovery, inter
 - Self-documenting system capabilities
 ```
 
-### **PROMPT 21: CROSS-SERVICE WORKFLOWS**
+### **PROMPT 25: CROSS-SERVICE WORKFLOWS**
 
 ```markdown
 # 🔄 IMPLEMENT: Cross-service Workflows
@@ -1035,6 +1816,39 @@ Create workflow orchestration capabilities that enable complex, multi-service op
 - Progress tracking through entire workflows
 - LLM can trigger and monitor workflows
 ```
+
+---
+
+## 🚀 **FUTURE PHASES** *(Post-Foundation)*
+
+### **PHASE 4: INTERFACE LAYER** *(Separate Project)*
+**Purpose:** User-friendly interface above generated CLIs
+- **imajin-ui**: Web/Desktop application for CLI interaction
+- Form-based interfaces that generate and execute CLI commands
+- Visual workflow builders for complex multi-service operations
+- Dashboard for monitoring and managing all services
+- Template marketplace for common business workflows
+- Real-time progress visualization for operations
+
+### **PHASE 5: NETWORK COMMUNICATION LAYER** *(Separate Project)*
+**Purpose:** Inter-node communication and networking
+- **imajin-network**: Webhook receiving and processing infrastructure
+- Graph discovery and node networking protocols
+- Real-time communication between user nodes
+- Social graph management and relationship tracking
+- Distributed event coordination across user networks
+- P2P communication protocols for direct node interaction
+
+### **PHASE 6: SOCIAL DISCOVERY ECOSYSTEM** *(Separate Project)*
+**Purpose:** Community and marketplace features
+- **imajin-social**: User graph discovery and compatibility matching
+- Reputation and trust systems for node networks
+- API marketplace for user-generated services and data
+- Community templates and workflow sharing
+- Decentralized social commerce features
+- Cross-node workflow orchestration and collaboration
+
+**Note:** These future phases will be **separate complementary projects** that use imajin-cli as their foundation, maintaining our focus on excellent CLI generation with universal transformation capabilities.
 
 ---
 

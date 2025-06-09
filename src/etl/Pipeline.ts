@@ -397,20 +397,23 @@ export class Pipeline {
             let result: ETLResult;
 
             switch (step.type) {
-                case 'extract':
+                case 'extract': {
                     const extractor = step.component as Extractor;
                     result = await extractor.extract(context, mergedConfig);
                     break;
+                }
 
-                case 'transform':
+                case 'transform': {
                     const transformer = step.component as Transformer;
                     result = await transformer.transform(data, context, mergedConfig);
                     break;
+                }
 
-                case 'load':
+                case 'load': {
                     const loader = step.component as Loader;
                     result = await loader.load(data, context, mergedConfig);
                     break;
+                }
 
                 default:
                     throw new Error(`Unknown step type: ${step.type}`);
@@ -442,7 +445,6 @@ export class Pipeline {
         // Validate step sequence
         let hasExtract = false;
         let hasTransform = false;
-        const hasLoad = false;
 
         for (const step of definition.steps) {
             if (!step.name || !step.type || !step.component) {
@@ -460,7 +462,6 @@ export class Pipeline {
                     }
                     break;
                 case 'load':
-                    // hasLoad = true; // TODO: Fix constant assignment
                     if (!hasExtract && !hasTransform) {
                         console.warn('Load step without preceding extract or transform steps');
                     }
