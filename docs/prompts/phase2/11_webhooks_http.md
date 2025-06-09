@@ -18,6 +18,35 @@ Production-ready HTTP infrastructure:
 - Security features (signature validation, CORS)
 - Integration with event system for webhook processing
 
+## 🧹 **CLEANUP PHASE - BEFORE IMPLEMENTATION**
+
+**CRITICAL: Address foundation issues before adding HTTP infrastructure:**
+
+### **Fix Compilation Errors:**
+1. **BaseException.from() method** - Already fixed in BaseException.ts
+2. **SystemErrorType missing values** - Already fixed in SystemError.ts  
+3. **ETL timing bug** - Already fixed in BaseExtractor.ts
+4. **Verify project builds:** Ensure `npm run build` succeeds before proceeding
+
+### **Remove Stubs & TODOs:**
+1. Fix TODO items in `src/generators/templates/simple.template.ts:81,90`
+2. Remove placeholder logging code in `src/core/ErrorHandler.ts:180`
+3. Clean up any placeholder HTTP client implementations in ETL extractors
+
+### **Service Provider Consistency:**
+1. **Add missing interface method:** Add `registerCommands?(program: Command): void` to base ServiceProvider
+2. **Standardize HTTP patterns:** Ensure consistent HTTP client usage across components
+3. **Fix integration points:** Verify event system integration works properly
+
+### **Clean Up Existing Webhook Code:**
+1. Review existing WebhookManager.ts for consistency
+2. Remove any duplicate HTTP client configurations
+3. Ensure event system properly handles webhook events
+
+**SUCCESS CRITERIA:** Project must compile successfully and existing HTTP/webhook code must be clean.
+
+---
+
 ## DELIVERABLES
 1. `src/http/WebhookServer.ts` - Webhook receiving server
 2. `src/http/HttpClient.ts` - Enhanced HTTP client

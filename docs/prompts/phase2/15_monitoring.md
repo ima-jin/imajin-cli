@@ -18,6 +18,29 @@ Production-ready monitoring:
 - Diagnostic tools for troubleshooting
 - Integration with external monitoring services
 
+## 🧹 **CLEANUP PHASE - BEFORE IMPLEMENTATION**
+
+**CRITICAL: Simplify over-engineered monitoring first:**
+
+### **Rationalize StatusCommand:**
+1. **Reduce scope:** Current StatusCommand (482 lines) monitors systems that don't exist yet
+2. **Focus on reality:** Only monitor implemented systems (service providers, ETL, exceptions)
+3. **Remove premature features:** Eliminate job queue, workflow, webhook monitoring until those systems exist
+
+### **Clean Up Monitoring References:**
+1. Fix placeholder monitoring code in existing components
+2. Remove monitoring imports that reference non-existent systems
+3. Ensure monitoring integrates with actually implemented services
+
+### **Standardize Health Checks:**
+1. Create simple health checks for existing components first
+2. Build monitoring foundation that matches current architecture
+3. Plan for future expansion rather than implementing everything now
+
+**SUCCESS CRITERIA:** Simplified, working monitoring for existing systems only.
+
+---
+
 ## DELIVERABLES
 1. `src/diagnostics/HealthCheck.ts` - System health monitoring
 2. `src/diagnostics/MetricsCollector.ts` - Performance metrics

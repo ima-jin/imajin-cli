@@ -7,6 +7,31 @@
 
 ---
 
+## 📋 **IMPORTANT: SERVICE REFACTORING PLAN**
+
+**After completing this Stripe integration, plan to refactor hardcoded services to follow the modular pattern:**
+
+### **Post-Stripe Refactoring Tasks:**
+1. **Cloudinary → Service Integration**
+   - Move `src/media/providers/CloudinaryProvider.ts` to `src/services/cloudinary/`
+   - Create `CloudinaryServiceProvider.ts` following Stripe pattern
+   - Remove `cloudinary: ^2.6.1` from core dependencies
+   - Make Cloudinary an optional service plugin
+
+2. **Redis/Bull → Modular Job Queue**
+   - Move `src/jobs/JobManager.ts` to support multiple queue backends
+   - Create `src/services/redis-queue/` as optional service
+   - Add in-memory queue fallback for core functionality
+   - Remove `bull: ^4.16.3` and `ioredis: ^5.4.1` from core dependencies
+
+3. **Service Architecture Consistency**
+   - External business services → Modular plugins (following Stripe pattern)
+   - Core infrastructure → Built-in (Winston, Keytar, UUID, etc.)
+
+**Goal:** Use this Stripe implementation as the reference pattern for all future service integrations and existing service refactoring.
+
+---
+
 ## CONTEXT
 Create the first service connector for Stripe integration, serving as the reference implementation for the imajin-cli pattern and enabling payment processing, subscription management, and financial workflow automation.
 
@@ -17,6 +42,29 @@ Reference implementation that demonstrates:
 - Real-time webhook processing and event handling
 - ETL pipeline integration for data synchronization
 - Foundation pattern for all future service connectors
+
+## 🧹 **CLEANUP PHASE - BEFORE IMPLEMENTATION**
+
+**CRITICAL: Replace Stripe placeholder implementations first:**
+
+### **Remove Existing Stubs:**
+1. **StripeServiceProvider placeholder:** Remove "Register a placeholder command" and replace with real implementation
+2. **Clean up existing StripeService:** Fix any incomplete implementations in current StripeService.ts
+3. **Fix command registration:** Ensure Stripe commands properly integrate with command system
+
+### **Resolve Integration Issues:**
+1. Fix credential management for Stripe API keys
+2. Ensure error handling works with Stripe API responses
+3. Clean up any circular dependencies in service registration
+
+### **Prepare Foundation:**
+1. Verify all infrastructure dependencies are working (logging, error handling, events)
+2. Test service provider pattern works correctly
+3. Ensure ETL pipeline can handle Stripe data structures
+
+**SUCCESS CRITERIA:** Remove all placeholder Stripe code and verify infrastructure is ready.
+
+---
 
 ## DELIVERABLES
 1. `src/services/stripe/StripeService.ts` - Core Stripe integration

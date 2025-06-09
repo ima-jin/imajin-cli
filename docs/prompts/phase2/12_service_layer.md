@@ -10,6 +10,29 @@
 ## CONTEXT
 Create a comprehensive service layer architecture that provides business logic encapsulation, dependency management, and integration capabilities.
 
+## 🧹 **CLEANUP PHASE - BEFORE IMPLEMENTATION**
+
+**CRITICAL: Clean up service provider inconsistencies first:**
+
+### **Service Provider Pattern Fixes:**
+1. **Add missing interface method:** Add `registerCommands?(program: Command): void` to base ServiceProvider
+2. **Fix integration points:** Ensure Application.ts properly handles optional methods
+3. **Standardize patterns:** Make all providers follow consistent registration patterns
+
+### **Clean Up Existing Services:**
+1. Remove placeholder implementations in StripeServiceProvider
+2. Fix credential service provider references that don't exist
+3. Ensure HTTP client configurations are consistent across services
+
+### **Resolve Integration Issues:**
+1. Fix service discovery and registration flow
+2. Clean up circular dependency concerns
+3. Standardize error handling across all services
+
+**SUCCESS CRITERIA:** All existing services work properly before adding new service layer.
+
+---
+
 ## DELIVERABLES
 1. `src/services/BaseService.ts` - Base service abstraction
 2. `src/services/interfaces/` - Service interfaces and contracts

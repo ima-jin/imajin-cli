@@ -18,6 +18,29 @@ Enterprise-grade logging:
 - Context-aware logging with correlation IDs
 - Integration with monitoring and alerting
 
+## 🧹 **CLEANUP PHASE - BEFORE IMPLEMENTATION**
+
+**CRITICAL: Complete logging integration gaps first:**
+
+### **Fix Placeholder Logging:**
+1. **ErrorHandler.ts placeholder:** Replace "Log error (placeholder for logging integration)" with real implementation
+2. **Complete Logger integration:** Ensure all components use consistent logging patterns
+3. **Remove console.log calls:** Replace with proper structured logging throughout codebase
+
+### **Standardize Logging Patterns:**
+1. Fix inconsistent logging imports across components
+2. Ensure all services use the same logging interface
+3. Clean up duplicate logging setup in different parts of the system
+
+### **Integration Points:**
+1. Connect logging with exception system properly
+2. Ensure event system logs are structured consistently
+3. Fix any circular dependencies between logging and other core systems
+
+**SUCCESS CRITERIA:** Consistent logging throughout existing codebase before enhancing.
+
+---
+
 ## DELIVERABLES
 1. `src/logging/Logger.ts` - Main logging service
 2. `src/logging/LoggerConfig.ts` - Logging configuration
