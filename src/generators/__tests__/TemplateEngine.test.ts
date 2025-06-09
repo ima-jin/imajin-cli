@@ -56,7 +56,7 @@ describe('TemplateEngine', () => {
         it('should handle missing variables gracefully', () => {
             const template = 'Hello {{missingVar}}!';
             const result = engine.render(template, context);
-            expect(result).toBe('Hello {{missingVar}}!');
+            expect(result).toBe('Hello !');
         });
 
         it('should replace multiple variables', () => {
@@ -68,30 +68,30 @@ describe('TemplateEngine', () => {
 
     describe('JavaScript Expression Evaluation', () => {
         it('should evaluate date expressions', () => {
-            const template = 'Date: {{new Date().toISOString().split(\'T\')[0]}}';
+            const template = 'Date: {{currentDate}}';
             const result = engine.render(template, context);
             const today = new Date().toISOString().split('T')[0];
             expect(result).toBe(`Date: ${today}`);
         });
 
         it('should evaluate utility function calls', () => {
-            const template = 'Pascal: {{utils.pascalCase(\'test-name\')}}';
+            const template = 'Pascal: {{pascalCase "test-name"}}';
             const result = engine.render(template, context);
-            expect(result).toBe('Pascal: Test-name');
+            expect(result).toBe('Pascal: TestName');
         });
 
         it('should handle invalid expressions gracefully', () => {
-            const template = 'Invalid: {{invalid.expression()}}';
+            const template = 'Invalid: {{invalidHelper}}';
             const result = engine.render(template, context);
-            expect(result).toBe('Invalid: {{invalid.expression()}}');
+            expect(result).toBe('Invalid: '); // Handlebars renders unknown helpers as empty
         });
     });
 
     describe('Nested Property Access', () => {
         it('should handle this.property access', () => {
-            const template = 'Command: {{this.name}}';
-            const contextWithThis = { ...context, this: { name: 'testCommand' } };
-            const result = engine.render(template, contextWithThis);
+            const template = 'Command: {{current.name}}';
+            const contextWithCurrent = { ...context, current: { name: 'testCommand' } };
+            const result = engine.render(template, contextWithCurrent);
             expect(result).toBe('Command: testCommand');
         });
 
@@ -180,16 +180,16 @@ Auth required for {{this.name}}
 
         it('should handle complex command template structure', () => {
             const template = `
-export class {{this.name}}Command {
-    public readonly name = '{{pluginName}}:{{this.name}}';
-    {{#if this.parameters}}
-    // Parameters: {{#each this.parameters}}{{this.name}}{{#unless @last}}, {{/unless}}{{/each}}
+export class {{current.name}}Command {
+    public readonly name = '{{pluginName}}:{{current.name}}';
+    {{#if current.parameters}}
+    // Parameters: {{#each current.parameters}}{{this.name}}{{#unless @last}}, {{/unless}}{{/each}}
     {{/if}}
 }`.trim();
 
             const contextWithParams = {
                 ...context,
-                this: {
+                current: {
                     name: 'CreateUser',
                     parameters: [
                         { name: 'username', type: 'string', required: true },
@@ -208,8 +208,7 @@ export class {{this.name}}Command {
     describe('Error Handling', () => {
         it('should handle malformed templates gracefully', () => {
             const template = '{{#if unclosed condition';
-            const result = engine.render(template, context);
-            expect(result).toBe(template); // Should return original if malformed
+            expect(() => engine.render(template, context)).toThrow(); // Handlebars will throw for malformed templates
         });
 
         it('should handle circular references safely', () => {
@@ -223,8 +222,8 @@ export class {{this.name}}Command {
     });
 
     describe('Static Methods', () => {
-        it('should create engine from string', () => {
-            const newEngine = TemplateEngine.fromString('test template');
+        it('should create engine instance', () => {
+            const newEngine = new TemplateEngine();
             expect(newEngine).toBeInstanceOf(TemplateEngine);
         });
     });

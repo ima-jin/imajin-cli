@@ -11,7 +11,7 @@
  */
 
 export const COMMAND_TEMPLATE = `/**
- * {{this.name}}Command - {{this.description}}
+ * {{current.name}}Command - {{current.description}}
  * 
  * @package     @imajin/cli
  * @subpackage  plugins/{{pluginName}}/commands
@@ -22,10 +22,10 @@ export const COMMAND_TEMPLATE = `/**
  * @since       {{currentDate}}
  */
 
-import { BaseCommand } from '../../../core/commands/BaseCommand.js';
-import type { CommandResult } from '../../../core/commands/interfaces.js';
-import type { Logger } from '../../../logging/Logger.js';
-import type { CredentialManager } from '../../../core/credentials/CredentialManager.js';
+import { BaseCommand } from '../../../src/core/commands/BaseCommand.js';
+import type { CommandResult } from '../../../src/core/commands/interfaces.js';
+import type { Logger } from '../../../src/logging/Logger.js';
+import type { CredentialManager } from '../../../src/core/credentials/CredentialManager.js';
 import { {{pluginName}}Service } from '../{{pluginName}}Service.js';
 {{#if imports}}
 {{#each imports}}
@@ -33,13 +33,13 @@ import type { {{this}} } from '../models/{{this}}.js';
 {{/each}}
 {{/if}}
 
-export class {{this.name}}Command extends BaseCommand {
-    public readonly name = '{{pluginName}}:{{this.name}}';
-    public readonly description = '{{this.description}}';
+export class {{pascalCase current.name}}Command extends BaseCommand {
+    public readonly name = '{{pluginName}}:{{current.name}}';
+    public readonly description = '{{current.description}}';
     
     // Define command arguments and options
     public readonly arguments = [
-        {{#each this.parameters}}
+        {{#each current.parameters}}
         {{#if this.required}}
         {
             name: '{{this.name}}',
@@ -53,7 +53,7 @@ export class {{this.name}}Command extends BaseCommand {
     ];
 
     public readonly options = [
-        {{#each this.parameters}}
+        {{#each current.parameters}}
         {{#unless this.required}}
         {
             name: '{{this.name}}',
@@ -86,18 +86,18 @@ export class {{this.name}}Command extends BaseCommand {
             const params = this.extractParameters(args, options);
 
             // Execute service call
-            const result = await this.service.{{this.name}}(params, credentials);
+            const result = await this.service.{{current.name}}(params, credentials);
 
-            this.logSuccess('{{this.name}} completed successfully', { result });
+            this.logSuccess('{{current.name}} completed successfully', { result });
 
             return {
                 success: true,
                 data: result,
-                message: '{{this.name}} completed successfully'
+                message: '{{current.name}} completed successfully'
             };
 
         } catch (error) {
-            const errorMessage = \`{{this.name}} failed: \${error instanceof Error ? error.message : 'Unknown error'}\`;
+            const errorMessage = \`{{current.name}} failed: \${error instanceof Error ? error.message : 'Unknown error'}\`;
             this.logError(errorMessage, error as Error);
             
             return {
@@ -126,7 +126,7 @@ export class {{this.name}}Command extends BaseCommand {
         const params: any = {};
         let argIndex = 0;
 
-        {{#each this.parameters}}
+        {{#each current.parameters}}
         // {{this.description}}
         {{#if this.required}}
         // Required parameter: {{this.name}}
@@ -155,7 +155,7 @@ export class {{this.name}}Command extends BaseCommand {
 
         {{/each}}
 
-        {{#if this.requestBody}}
+        {{#if current.requestBody}}
         // Handle request body
         if (options.data) {
             try {
@@ -243,7 +243,7 @@ export class {{this.name}}Command extends BaseCommand {
      */
     private logError(message: string, error: Error): void {
         if (this.logger) {
-            this.logger.error(message, { error: error.message, stack: error.stack });
+            this.logger.error(message, error);
         }
     }
 
@@ -270,7 +270,7 @@ export const SERVICE_TEMPLATE = `/**
  */
 
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import type { CredentialData } from '../../core/credentials/interfaces.js';
+import type { CredentialData } from '../../../src/core/credentials/interfaces.js';
 {{#if imports}}
 {{#each imports}}
 import type { {{this}} } from './models/{{this}}.js';
@@ -282,7 +282,7 @@ export class {{pluginName}}Service {
     private readonly baseUrl: string;
 
     constructor(baseUrl: string = '{{baseUrl}}') {
-        this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+        this.baseUrl = baseUrl.replace(/\\/$/, ''); // Remove trailing slash
         this.client = this.createHttpClient();
     }
 
@@ -501,7 +501,7 @@ export class {{pluginName}}Service {
 }`;
 
 export const MODEL_TEMPLATE = `/**
- * {{this.name}} - {{this.description}}
+ * {{current.name}} - {{current.description}}
  * 
  * @package     @imajin/cli
  * @subpackage  plugins/{{pluginName}}/models
@@ -512,8 +512,8 @@ export const MODEL_TEMPLATE = `/**
  * @since       {{currentDate}}
  */
 
-export interface {{this.name}} {
-    {{#each this.properties}}
+export interface {{current.name}} {
+    {{#each current.properties}}
     {{#if this.description}}
     /**
      * {{this.description}}

@@ -38,6 +38,7 @@
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
     "figlet": "^1.7.0",
+    "handlebars": "^4.7.8",
     "inquirer": "^9.2.12",
     "ioredis": "^5.4.1",
     "keytar": "^7.9.0",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@types/figlet": "^1.5.8",
+    "@types/handlebars": "^4.0.40",
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.8",
     "@types/node": "^20.19.0",

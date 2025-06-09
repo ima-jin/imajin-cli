@@ -133,7 +133,7 @@ export class DefaultPluginGenerator implements IPluginGenerator {
 
         // Generate service file
         files.push({
-            path: `${plugin.name}Service.ts`,
+            path: `${this.pascalCase(plugin.name)}Service.ts`,
             content: this.templateEngine.render(SERVICE_TEMPLATE, baseContext),
             type: 'service'
         });
@@ -142,7 +142,7 @@ export class DefaultPluginGenerator implements IPluginGenerator {
         for (const command of plugin.commands) {
             const commandContext = {
                 ...baseContext,
-                this: command
+                current: command
             };
 
             files.push({
@@ -156,7 +156,7 @@ export class DefaultPluginGenerator implements IPluginGenerator {
         for (const model of plugin.models) {
             const modelContext = {
                 ...baseContext,
-                this: model
+                current: model
             };
 
             files.push({
@@ -174,7 +174,7 @@ export class DefaultPluginGenerator implements IPluginGenerator {
         };
 
         files.push({
-            path: `${plugin.name}Config.ts`,
+            path: `${this.pascalCase(plugin.name)}Config.ts`,
             content: this.templateEngine.render(PLUGIN_CONFIG_TEMPLATE, configContext),
             type: 'config'
         });
@@ -304,7 +304,7 @@ export { ${plugin.name}Config } from './${plugin.name}Config.js';
  */
 
 // Service
-export { ${pluginNamePascal}Service } from './${plugin.name}Service.js';
+export { ${pluginNamePascal}Service } from './${pluginNamePascal}Service.js';
 
 // Commands
 ${plugin.commands.map(cmd =>
@@ -317,7 +317,7 @@ ${plugin.models.map(model =>
         ).join('\n')}
 
 // Configuration
-export { ${plugin.name}Config } from './${plugin.name}Config.js';
+export { ${pluginNamePascal}Config } from './${pluginNamePascal}Config.js';
 `;
     }
 
