@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-27
+ * @since       2025-06-09
  *
  * Integration Points:
  * - Complete ETL system for data processing workflows
@@ -31,3 +31,4 @@ export type {
     ETLConfig, ETLContext, ETLEvents, ETLProgress, ETLResult, Extractor, Loader,
     PipelineDefinition, PipelineResult, PipelineStep, Transformer
 } from './core/interfaces.js';
+

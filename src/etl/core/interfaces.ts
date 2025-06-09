@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-27
+ * @since       2025-06-09
  *
  * Integration Points:
  * - Event system for progress tracking
