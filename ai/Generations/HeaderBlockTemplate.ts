@@ -3,7 +3,7 @@
  * 
  * @package     @imajin/cli
  * @subpackage  generation
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -25,7 +25,7 @@
  *  * 
  *  * @package     @imajin/cli
  *  * @subpackage  [ServiceName]
- *  * @author      VETEZE
+ *  * @author      Generated
  *  * @copyright   imajin
  *  * @license     .fair LICENSING AGREEMENT
  *  * @version     0.1.0
@@ -59,8 +59,8 @@ export const generateHeader = (template: HeaderTemplate): string => {
   const integrationPointsList = template.integrationPoints
     .map(point => ` * - ${point}`)
     .join('\n');
-    
-  const typeImports = template.typeImports?.length 
+
+  const typeImports = template.typeImports?.length
     ? `import type { ${template.typeImports.join(', ')} } from './types/index.js';`
     : `// No type imports needed`;
 
@@ -69,7 +69,7 @@ export const generateHeader = (template: HeaderTemplate): string => {
  * 
  * @package     @imajin/cli
  * @subpackage  ${template.subpackage}
- * @author      ${template.author}
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0

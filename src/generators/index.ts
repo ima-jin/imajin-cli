@@ -3,7 +3,7 @@
  * 
  * @package     @imajin/cli
  * @subpackage  generators
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -28,3 +28,4 @@ export type {
     AuthConfig, CommandDefinition, GeneratedPlugin, ModelDefinition, OAuth2FlowConfig, OpenAPIParser, OpenAPISpec, ParameterDefinition, ParsedOpenAPI, PluginFile, PluginGenerator, PropertyDefinition, RequestBodyDefinition,
     ResponseDefinition, TemplateContext, ValidationResult
 } from './types.js';
+

@@ -200,7 +200,7 @@ interface ProgressUpdate {
  * 
  * @package     @imajin/cli
  * @subpackage  [subdirectory]
- * @author      [Author Name]
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0

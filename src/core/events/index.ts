@@ -3,7 +3,7 @@
  * 
  * @package     @imajin/cli
  * @subpackage  core/events
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -52,3 +52,4 @@ export type {
 export {
     EventServiceProvider
 } from './EventServiceProvider.js';
+

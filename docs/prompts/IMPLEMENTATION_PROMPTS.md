@@ -85,7 +85,7 @@ Use the imajin TypeScript header template for all files:
  * 
  * @package     @imajin/cli
  * @subpackage  core/providers
- * @author      [Author]
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -257,7 +257,7 @@ Use the imajin TypeScript header template for all files:
  * 
  * @package     @imajin/cli
  * @subpackage  types/core
- * @author      [Author]
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0

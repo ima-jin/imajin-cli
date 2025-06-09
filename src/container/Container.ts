@@ -3,7 +3,7 @@
  * 
  * @package     @imajin/cli
  * @subpackage  container
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0

@@ -22,7 +22,7 @@ Based on comprehensive architectural analysis and developer ecosystem trends (St
  *
  * @package     @imajin/cli
  * @subpackage  [ServiceName]
- * @author      [Author]
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -61,7 +61,7 @@ import type {} from /* Type imports */ "./types";
  *
  * @package     @imajin/cli
  * @subpackage  core
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -106,7 +106,7 @@ export class Application {
  *
  * @package     @imajin/cli
  * @subpackage  providers
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -144,7 +144,7 @@ export class StripeServiceProvider extends ServiceProvider {
  *
  * @package     @imajin/cli
  * @subpackage  commands/stripe
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
@@ -184,7 +184,7 @@ export class CreatePaymentCommand extends BaseCommand {
  *
  * @package     @imajin/cli
  * @subpackage  services/stripe
- * @author      VETEZE
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
