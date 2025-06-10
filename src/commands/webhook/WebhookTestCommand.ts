@@ -118,6 +118,8 @@ export class WebhookTestCommand extends BaseCommand {
                     results: testResults.length
                 });
 
+
+
                 return result;
 
             } finally {
