@@ -67,8 +67,8 @@ docs/prompts/
 | 12 | `phase2/12_service_layer.md` | ✅ Complete | Business logic service layer |
 | 13 | `phase2/13_repository_pattern.md` | ✅ Complete | Data access abstraction |
 | 14 | `phase2/14_background_jobs.md` | ✅ Complete | Background job processing |
-| 15 | `phase2/15_monitoring.md` | 🔄 **CURRENT** | System monitoring & diagnostics |
-| 16 | `phase2/16_logging_system.md` | ⏳ Pending | Comprehensive logging |
+| 15 | `phase2/15_monitoring.md` | ✅ Complete | System monitoring & diagnostics |
+| 16 | `phase2/16_logging_system.md` | 🔄 **CURRENT** | Comprehensive logging |
 | 17 | `phase2/17_stripe_connector.md` | ⏳ Pending | First service connector (reference) |
 
 ---

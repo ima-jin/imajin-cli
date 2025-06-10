@@ -25,7 +25,7 @@ export class WebhookTestCommand extends BaseCommand {
     public readonly description = 'Test webhook processing with sample data';
 
     constructor(
-        private webhookManager: WebhookManager,
+        private readonly webhookManager: WebhookManager,
         logger?: Logger
     ) {
         super(logger);
@@ -39,7 +39,7 @@ export class WebhookTestCommand extends BaseCommand {
             this.validate(args, options);
 
             const source = args[0];
-            const eventType = args[1] || 'test';
+            const eventType = args[1] ?? 'test';
 
             if (!source) {
                 throw new Error('Source parameter is required. Usage: webhook:test <source> [eventType]');
@@ -142,7 +142,7 @@ export class WebhookTestCommand extends BaseCommand {
             try {
                 return JSON.parse(options.payload);
             } catch (error) {
-                throw new Error('Invalid JSON payload provided');
+                throw new Error(`Invalid JSON payload provided: ${error instanceof Error ? error.message : String(error)}`);
             }
         }
 

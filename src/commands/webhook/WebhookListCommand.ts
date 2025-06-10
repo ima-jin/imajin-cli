@@ -25,7 +25,7 @@ export class WebhookListCommand extends BaseCommand {
     public readonly description = 'List all configured webhooks and their status';
 
     constructor(
-        private webhookManager: WebhookManager,
+        private readonly webhookManager: WebhookManager,
         logger?: Logger
     ) {
         super(logger);

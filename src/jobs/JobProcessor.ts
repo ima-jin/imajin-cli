@@ -66,20 +66,20 @@ export interface ProcessingContext {
  * Job execution engine with advanced features
  */
 export class JobProcessor extends EventEmitter {
-    private queues: Map<string, JobQueue> = new Map();
-    private processingJobs: Map<string, ProcessingContext> = new Map();
+    private readonly queues: Map<string, JobQueue> = new Map();
+    private readonly processingJobs: Map<string, ProcessingContext> = new Map();
     private healthCheckTimer?: NodeJS.Timeout;
-    private startTime: Date;
+    private readonly startTime: Date;
     private isShuttingDown = false;
 
-    private stats = {
+    private readonly stats = {
         totalJobsProcessed: 0,
         successfulJobs: 0,
         failedJobs: 0,
         totalProcessingTime: 0
     };
 
-    constructor(private config: ProcessorConfig) {
+    constructor(private readonly config: ProcessorConfig) {
         super();
         this.startTime = new Date();
 
@@ -240,10 +240,10 @@ export class JobProcessor extends EventEmitter {
                     {
                         jobId: job.id,
                         jobType: job.type,
-                        step: progressData.step || 'Processing',
-                        current: progressData.current || 0,
-                        total: progressData.total || 100,
-                        percent: progressData.percent || 0,
+                        step: progressData.step ?? 'Processing',
+                        current: progressData.current ?? 0,
+                        total: progressData.total ?? 100,
+                        percent: progressData.percent ?? 0,
                         message: progressData.message,
                         data: progressData.data
                     },
@@ -398,7 +398,7 @@ export class JobProcessor extends EventEmitter {
      * Start health check monitoring
      */
     private startHealthChecks(): void {
-        const interval = this.config.healthCheckInterval || 30000; // 30 seconds
+        const interval = this.config.healthCheckInterval ?? 30000; // 30 seconds
 
         this.healthCheckTimer = setInterval(() => {
             this.performHealthCheck();
