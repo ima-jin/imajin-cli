@@ -64,9 +64,9 @@ docs/prompts/
 | 9 | `phase2/09_rate_limiting.md` | ✅ Complete | API management & rate limiting |
 | 10 | `phase2/10_media_processing_system.md` | ✅ Complete | Image/video processing system |
 | 11 | `phase2/11_webhooks_http.md` | ✅ Complete | Webhook & HTTP infrastructure |
-| 12 | `phase2/12_service_layer.md` | 🔄 **CURRENT** | Business logic service layer |
-| 13 | `phase2/13_repository_pattern.md` | ⏳ Pending | Data access abstraction |
-| 14 | `phase2/14_background_jobs.md` | ⏳ Pending | Background job processing |
+| 12 | `phase2/12_service_layer.md` | ✅ Complete | Business logic service layer |
+| 13 | `phase2/13_repository_pattern.md` | ✅ Complete | Data access abstraction |
+| 14 | `phase2/14_background_jobs.md` | 🔄 **CURRENT** | Background job processing |
 | 15 | `phase2/15_monitoring.md` | ⏳ Pending | System monitoring & diagnostics |
 | 16 | `phase2/16_logging_system.md` | ⏳ Pending | Comprehensive logging |
 | 17 | `phase2/17_stripe_connector.md` | ⏳ Pending | First service connector (reference) |

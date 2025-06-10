@@ -25,6 +25,18 @@ import { z } from 'zod';
 // =============================================================================
 
 /**
+ * Base interface for all universal elements
+ */
+export interface UniversalElement {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    metadata: Record<string, any>;
+    serviceData: Record<string, any>;
+    sourceService: string;
+}
+
+/**
  * Universal Customer schema - All services map to this
  */
 export const UniversalCustomerSchema = z.object({
@@ -34,9 +46,9 @@ export const UniversalCustomerSchema = z.object({
     phone: z.string().optional(),
     createdAt: z.date(),
     updatedAt: z.date(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.any()).default({}),
     // Service-specific data stored here
-    serviceData: z.record(z.any()).optional(),
+    serviceData: z.record(z.any()).default({}),
     // Source service identifier
     sourceService: z.string(),
 });

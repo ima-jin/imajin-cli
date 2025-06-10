@@ -57,14 +57,14 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, Uni
             phone: stripeCustomer.phone || undefined,
             createdAt: new Date(stripeCustomer.created * 1000),
             updatedAt: new Date(stripeCustomer.updated * 1000),
-            metadata: stripeCustomer.metadata || undefined,
+            metadata: stripeCustomer.metadata || {},
             sourceService: 'stripe',
             // Store Stripe-specific data that doesn't map to universal schema
             serviceData: {
-                balance: stripeCustomer.balance,
-                delinquent: stripeCustomer.delinquent,
-                default_source: stripeCustomer.default_source,
-                invoice_prefix: stripeCustomer.invoice_prefix,
+                balance: stripeCustomer.balance || 0,
+                delinquent: stripeCustomer.delinquent || false,
+                default_source: stripeCustomer.default_source || null,
+                invoice_prefix: stripeCustomer.invoice_prefix || null,
             },
         };
     }
@@ -135,7 +135,7 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, Uni
             phone: apiCustomer.phone ?? null,
             created: apiCustomer.created,
             updated: Date.now() / 1000, // Stripe doesn't provide updated field
-            metadata: apiCustomer.metadata,
+            metadata: apiCustomer.metadata || {},
             balance: apiCustomer.balance,
             delinquent: apiCustomer.delinquent ?? false,
             default_source: typeof apiCustomer.default_source === 'string' ? apiCustomer.default_source : null,
