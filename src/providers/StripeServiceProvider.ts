@@ -71,7 +71,7 @@ export class StripeServiceProvider extends ServiceProvider {
         const logger = this.container.resolve<Logger>('logger');
 
         // Check if we have Stripe configuration - only validate if available
-        const hasStripeConfig = !!(process.env.STRIPE_API_KEY || config.services?.stripe?.apiKey);
+        const hasStripeConfig = !!(process.env.STRIPE_API_KEY ?? config.services?.stripe?.apiKey);
 
         if (hasStripeConfig) {
             // Validate Stripe configuration
@@ -229,8 +229,8 @@ export class StripeServiceProvider extends ServiceProvider {
      */
     private validateStripeConfig(config: ImajinConfig): any {
         const stripeConfig = {
-            apiKey: process.env.STRIPE_API_KEY || config.services?.stripe?.apiKey,
-            webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || config.services?.stripe?.webhookSecret,
+            apiKey: process.env.STRIPE_API_KEY ?? config.services?.stripe?.apiKey,
+            webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? config.services?.stripe?.webhookSecret,
             ...config.services?.stripe,
         };
 
