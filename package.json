@@ -29,6 +29,7 @@
   "author": "imajin",
   "license": ".fair LICENSING AGREEMENT",
   "dependencies": {
+    "@types/express": "^5.0.3",
     "@types/glob": "^8.1.0",
     "@types/keytar": "^4.4.0",
     "@types/ws": "^8.18.1",
@@ -40,6 +41,7 @@
     "cloudinary": "^2.6.1",
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
+    "express": "^5.1.0",
     "figlet": "^1.7.0",
     "glob": "^11.0.2",
     "handlebars": "^4.7.8",

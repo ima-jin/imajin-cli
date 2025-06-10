@@ -48,6 +48,12 @@ export abstract class ServiceProvider {
     public abstract getName(): string;
 
     /**
+     * Register CLI commands (optional)
+     * This method is called to register commands with the CLI program
+     */
+    public registerCommands?(program: Command): void;
+
+    /**
      * Get service provider version
      */
     public getVersion(): string {

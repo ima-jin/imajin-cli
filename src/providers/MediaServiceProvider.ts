@@ -107,7 +107,7 @@ export class MediaServiceProvider extends ServiceProvider {
     /**
      * Register CLI commands
      */
-    private registerCommands(): void {
+    public registerCommands(): void {
         const uploadCommand = this.container.resolve('MediaUploadCommand') as any;
         uploadCommand.register(this.program);
     }

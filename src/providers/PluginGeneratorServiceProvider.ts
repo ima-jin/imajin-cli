@@ -68,7 +68,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
     /**
      * Register commands with the CLI program
      */
-    private registerCommands(): void {
+    public registerCommands(): void {
         const logger = this.container.resolve<Logger>('logger');
 
         // Generate plugin command with dependency injection

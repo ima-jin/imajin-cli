@@ -63,8 +63,8 @@ docs/prompts/
 | 8 | `phase2/08_exception_system.md` | ✅ Complete | Comprehensive error handling |
 | 9 | `phase2/09_rate_limiting.md` | ✅ Complete | API management & rate limiting |
 | 10 | `phase2/10_media_processing_system.md` | ✅ Complete | Image/video processing system |
-| 11 | `phase2/11_webhooks_http.md` | 🔄 **CURRENT** | Webhook & HTTP infrastructure |
-| 12 | `phase2/12_service_layer.md` | ⏳ Pending | Business logic service layer |
+| 11 | `phase2/11_webhooks_http.md` | ✅ Complete | Webhook & HTTP infrastructure |
+| 12 | `phase2/12_service_layer.md` | 🔄 **CURRENT** | Business logic service layer |
 | 13 | `phase2/13_repository_pattern.md` | ⏳ Pending | Data access abstraction |
 | 14 | `phase2/14_background_jobs.md` | ⏳ Pending | Background job processing |
 | 15 | `phase2/15_monitoring.md` | ⏳ Pending | System monitoring & diagnostics |
