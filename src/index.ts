@@ -20,7 +20,7 @@
 import { config } from 'dotenv';
 import 'reflect-metadata';
 import { Application } from './core/Application.js';
-import { ExceptionUtils, SystemError } from './exceptions';
+import { ExceptionUtils, SystemError } from './exceptions/index.js';
 
 // Load environment variables
 config();
@@ -40,10 +40,12 @@ async function main(): Promise<void> {
     // Register service providers
     const { StripeServiceProvider } = await import('./providers/StripeServiceProvider.js');
     const { CredentialServiceProvider } = await import('./core/credentials/CredentialServiceProvider.js');
+    const { ServiceLayerProvider } = await import('./providers/ServiceLayerProvider.js');
     const { PluginGeneratorServiceProvider } = await import('./providers/PluginGeneratorServiceProvider.js');
     const { MediaServiceProvider } = await import('./providers/MediaServiceProvider.js');
 
     app.createProvider(CredentialServiceProvider);
+    app.createProvider(ServiceLayerProvider);
     app.createProvider(StripeServiceProvider);
     app.createProvider(PluginGeneratorServiceProvider);
     app.createProvider(MediaServiceProvider);

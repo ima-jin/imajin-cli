@@ -22,13 +22,13 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import figlet from 'figlet';
 import { Container } from '../container/Container.js';
-import { ExceptionUtils } from '../exceptions';
+import { ExceptionUtils } from '../exceptions/index.js';
 import { Logger } from '../logging/Logger.js';
 import { ServiceProvider } from '../providers/ServiceProvider.js';
 import { ImajinConfig, ImajinConfigSchema } from '../types/Config.js';
 import type { LLMResponse, ServiceIntrospection } from '../types/LLM.js';
-import { ErrorHandler } from './ErrorHandler';
-import { ErrorRecovery } from './ErrorRecovery';
+import { ErrorHandler } from './ErrorHandler.js';
+import { ErrorRecovery } from './ErrorRecovery.js';
 
 export class Application {
   public static readonly VERSION = '0.1.0';
