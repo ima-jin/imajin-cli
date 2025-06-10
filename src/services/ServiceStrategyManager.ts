@@ -42,10 +42,10 @@ export interface StrategySelectionCriteria {
 }
 
 export class ServiceStrategyManager<T = any> implements IServiceStrategyManager<T> {
-    private strategies: Map<string, IServiceStrategy<T>> = new Map();
+    private readonly strategies: Map<string, IServiceStrategy<T>> = new Map();
     private strategiesByPriority: IServiceStrategy<T>[] = [];
-    private container: Container;
-    private logger: Logger;
+    private readonly container: Container;
+    private readonly logger: Logger;
     private defaultCriteria: StrategySelectionCriteria = {
         priority: true,
         firstMatch: false,
@@ -288,7 +288,7 @@ export class ServiceStrategyManager<T = any> implements IServiceStrategyManager<
         // Try fallback if no strategy found
         if (!strategy && criteria.fallback) {
             const fallbackStrategy = this.strategies.get(criteria.fallback);
-            if (fallbackStrategy && fallbackStrategy.canHandle(input)) {
+            if (fallbackStrategy?.canHandle(input)) {
                 strategy = fallbackStrategy;
                 this.logger.debug(`Using fallback strategy: ${criteria.fallback}`);
             }

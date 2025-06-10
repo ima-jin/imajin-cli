@@ -136,7 +136,7 @@ export interface ServiceAdapter<TServiceEntity, TUniversalEntity> {
  * Type registry to detect naming conflicts
  */
 export class TypeRegistry {
-    private static registry: Map<string, ServiceNamespace[]> = new Map();
+    private static readonly registry: Map<string, ServiceNamespace[]> = new Map();
 
     /**
      * Register a type name with its service namespace

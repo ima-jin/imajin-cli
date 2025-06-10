@@ -26,8 +26,8 @@ import type { QueryFilter, QueryOptions, RepositoryOptions } from '../Repository
  * In-memory repository implementation for testing and development
  */
 export class MemoryRepository<T extends UniversalElement, TKey = string> extends BaseRepository<T, TKey> {
-    private storage: Map<TKey, T>;
-    private repositoryName: string;
+    private readonly storage: Map<TKey, T>;
+    private readonly repositoryName: string;
 
     constructor(
         name: string,
@@ -61,7 +61,7 @@ export class MemoryRepository<T extends UniversalElement, TKey = string> extends
 
     protected async _findById(id: TKey, _options?: { include?: string[] }): Promise<T | null> {
         const entity = this.storage.get(id);
-        return entity || null;
+        return entity ?? null;
     }
 
     protected async _findAll(options?: QueryOptions): Promise<T[]> {

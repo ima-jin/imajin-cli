@@ -84,7 +84,7 @@ export class CustomerRepository extends MemoryRepository<UniversalCustomer> {
         for (const customer of allCustomers) {
             // Count by service
             const service = customer.sourceService;
-            customersByService[service] = (customersByService[service] || 0) + 1;
+            customersByService[service] = (customersByService[service] ?? 0) + 1;
 
             // Count recent customers
             if (customer.createdAt > oneDayAgo) {

@@ -49,10 +49,10 @@ export interface WebhookConfig {
 }
 
 export class WebhookManager extends EventEmitter {
-    private handlers: Map<string, WebhookHandler[]> = new Map();
-    private configs: Map<string, WebhookConfig> = new Map();
-    private logger: Logger;
-    private processedEvents: Set<string> = new Set();
+    private readonly handlers: Map<string, WebhookHandler[]> = new Map();
+    private readonly configs: Map<string, WebhookConfig> = new Map();
+    private readonly logger: Logger;
+    private readonly processedEvents: Set<string> = new Set();
 
     constructor(logger: Logger) {
         super();

@@ -52,19 +52,19 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, Uni
     toUniversal(stripeCustomer: StripeCustomer): UniversalCustomer {
         return {
             id: stripeCustomer.id,
-            email: stripeCustomer.email || '',
-            name: stripeCustomer.name || undefined,
-            phone: stripeCustomer.phone || undefined,
+            email: stripeCustomer.email ?? '',
+            name: stripeCustomer.name ?? undefined,
+            phone: stripeCustomer.phone ?? undefined,
             createdAt: new Date(stripeCustomer.created * 1000),
             updatedAt: new Date(stripeCustomer.updated * 1000),
-            metadata: stripeCustomer.metadata || {},
+            metadata: stripeCustomer.metadata ?? {},
             sourceService: 'stripe',
             // Store Stripe-specific data that doesn't map to universal schema
             serviceData: {
-                balance: stripeCustomer.balance || 0,
-                delinquent: stripeCustomer.delinquent || false,
-                default_source: stripeCustomer.default_source || null,
-                invoice_prefix: stripeCustomer.invoice_prefix || null,
+                balance: stripeCustomer.balance ?? 0,
+                delinquent: stripeCustomer.delinquent ?? false,
+                default_source: stripeCustomer.default_source ?? null,
+                invoice_prefix: stripeCustomer.invoice_prefix ?? null,
             },
         };
     }
@@ -78,16 +78,16 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, Uni
         return {
             id: universalCustomer.id,
             email: universalCustomer.email,
-            name: universalCustomer.name || null,
-            phone: universalCustomer.phone || null,
+            name: universalCustomer.name ?? null,
+            phone: universalCustomer.phone ?? null,
             created: Math.floor(universalCustomer.createdAt.getTime() / 1000),
             updated: Math.floor(universalCustomer.updatedAt.getTime() / 1000),
             metadata: universalCustomer.metadata as Stripe.Metadata,
             // Restore Stripe-specific fields
-            balance: serviceData.balance || 0,
-            delinquent: serviceData.delinquent || false,
-            default_source: serviceData.default_source || null,
-            invoice_prefix: serviceData.invoice_prefix || null,
+            balance: serviceData.balance ?? 0,
+            delinquent: serviceData.delinquent ?? false,
+            default_source: serviceData.default_source ?? null,
+            invoice_prefix: serviceData.invoice_prefix ?? null,
         };
     }
 

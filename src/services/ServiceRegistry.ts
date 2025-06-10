@@ -30,12 +30,12 @@ import {
 } from './interfaces/ServiceInterface.js';
 
 export class ServiceRegistry implements IServiceRegistry {
-    private services: Map<string, IService> = new Map();
-    private serviceOptions: Map<string, ServiceRegistrationOptions> = new Map();
-    private dependencyGraph: Map<string, string[]> = new Map();
-    private container: Container;
-    private logger: Logger;
-    private eventEmitter: EventEmitter;
+    private readonly services: Map<string, IService> = new Map();
+    private readonly serviceOptions: Map<string, ServiceRegistrationOptions> = new Map();
+    private readonly dependencyGraph: Map<string, string[]> = new Map();
+    private readonly container: Container;
+    private readonly logger: Logger;
+    private readonly eventEmitter: EventEmitter;
     private isInitialized = false;
     private shutdownPromise?: Promise<void>;
 

@@ -54,6 +54,12 @@ interface RepositoryMetrics {
 }
 
 /**
+ * Type aliases for commonly used entity types
+ */
+type CreateEntity<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
+type UpdateEntity<T> = Partial<Omit<T, 'id' | 'createdAt'>>;
+
+/**
  * Abstract base repository providing common functionality
  */
 export abstract class BaseRepository<T extends UniversalElement, TKey = string>
@@ -125,12 +131,12 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
     /**
      * Internal implementation of create without validation
      */
-    protected abstract _create(entity: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T>;
+    protected abstract _create(entity: CreateEntity<T>): Promise<T>;
 
     /**
      * Internal implementation of update without validation
      */
-    protected abstract _update(id: TKey, updates: Partial<Omit<T, 'id' | 'createdAt'>>): Promise<T>;
+    protected abstract _update(id: TKey, updates: UpdateEntity<T>): Promise<T>;
 
     /**
      * Internal implementation of delete
@@ -209,9 +215,9 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
 
     async findPaginated(options?: QueryOptions): Promise<PaginatedResult<T>> {
         return this.withMetrics('findPaginated', async () => {
-            const pagination = options?.pagination || { page: 1, pageSize: 10 };
-            const page = pagination.page || 1;
-            const pageSize = pagination.pageSize || 10;
+            const pagination = options?.pagination ?? { page: 1, pageSize: 10 };
+            const page = pagination.page ?? 1;
+            const pageSize = pagination.pageSize ?? 10;
             const offset = (page - 1) * pageSize;
 
             // Modify options to include offset and limit
@@ -251,7 +257,7 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
         });
     }
 
-    async create(entity: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T> {
+    async create(entity: CreateEntity<T>): Promise<T> {
         return this.withMetrics('create', async () => {
             // Validate entity if enabled
             if (this.options.validation?.enabled) {
@@ -273,7 +279,7 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
         });
     }
 
-    async createMany(entities: Array<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>): Promise<BulkOperationResult<T>> {
+    async createMany(entities: Array<CreateEntity<T>>): Promise<BulkOperationResult<T>> {
         return this.withMetrics('createMany', async () => {
             const result: BulkOperationResult<T> = {
                 successful: [],
@@ -301,7 +307,7 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
         });
     }
 
-    async update(id: TKey, updates: Partial<Omit<T, 'id' | 'createdAt'>>): Promise<T> {
+    async update(id: TKey, updates: UpdateEntity<T>): Promise<T> {
         return this.withMetrics('update', async () => {
             // Validate updates if enabled
             if (this.options.validation?.enabled) {
@@ -461,9 +467,9 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
 
     async beginTransaction(options?: { isolationLevel?: TransactionContext['isolationLevel']; timeout?: number }): Promise<TransactionContext> {
         const context: TransactionContext = {
-            id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            isolationLevel: options?.isolationLevel || 'READ_COMMITTED',
-            timeout: options?.timeout || 30000
+            id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+            isolationLevel: options?.isolationLevel ?? 'READ_COMMITTED',
+            timeout: options?.timeout ?? 30000
         };
 
         this.activeTransactions.set(context.id, context);
@@ -509,7 +515,7 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
         try {
             // Simple health check - attempt to count entities
             await this._count();
-        } catch (error) {
+        } catch {
             connectionStatus = 'error';
         }
 
@@ -621,10 +627,10 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
     protected setCache<TCached>(key: string, data: TCached, ttl?: number): void {
         if (!this.options.caching?.enabled) return;
 
-        const actualTtl = ttl || this.options.caching.ttl || 300000;
+        const actualTtl = ttl ?? this.options.caching.ttl ?? 300000;
 
         // Check cache size limit
-        if (this.cache.size >= (this.options.caching.maxSize || 1000)) {
+        if (this.cache.size >= (this.options.caching.maxSize ?? 1000)) {
             // Remove oldest entry
             const firstKey = this.cache.keys().next().value;
             if (firstKey) {

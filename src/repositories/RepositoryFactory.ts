@@ -44,12 +44,12 @@ interface RepositoryFactoryConfig {
  * Repository factory for creating and managing repository instances
  */
 export class RepositoryFactory implements IRepositoryFactory {
-    private container: Container;
-    private logger: Logger;
-    private eventEmitter: EventEmitter;
-    private config: RepositoryFactoryConfig;
-    private factories: Map<string, (options?: RepositoryOptions) => Repository<any, any>>;
-    private instances: Map<string, Repository<any, any>>;
+    private readonly container: Container;
+    private readonly logger: Logger;
+    private readonly eventEmitter: EventEmitter;
+    private readonly config: RepositoryFactoryConfig;
+    private readonly factories: Map<string, (options?: RepositoryOptions) => Repository<any, any>>;
+    private readonly instances: Map<string, Repository<any, any>>;
 
     constructor(
         container: Container,
@@ -168,12 +168,12 @@ export class RepositoryFactory implements IRepositoryFactory {
         for (const [key, _repository] of this.instances) {
             const [entityType] = key.split(':');
             if (entityType) {
-                instancesByType[entityType] = (instancesByType[entityType] || 0) + 1;
+                instancesByType[entityType] = (instancesByType[entityType] ?? 0) + 1;
             }
 
             // Extract data source from repository (this is a simplified approach)
             const dataSource = 'memory'; // Default, would need proper extraction
-            instancesByDataSource[dataSource] = (instancesByDataSource[dataSource] || 0) + 1;
+            instancesByDataSource[dataSource] = (instancesByDataSource[dataSource] ?? 0) + 1;
         }
 
         return {
@@ -309,7 +309,7 @@ export class RepositoryFactory implements IRepositoryFactory {
  * Repository provider for service container integration
  */
 export class RepositoryProvider {
-    private factory: RepositoryFactory;
+    private readonly factory: RepositoryFactory;
 
     constructor(container: Container) {
         this.factory = new RepositoryFactory(container);

@@ -31,9 +31,9 @@ import type {
 } from '../types/Stripe.js';
 
 export class StripeService extends EventEmitter {
-    private client: Stripe;
-    private config: StripeConfig;
-    private logger: Logger;
+    private readonly client: Stripe;
+    private readonly config: StripeConfig;
+    private readonly logger: Logger;
 
     constructor(config: StripeConfig, logger: Logger) {
         super();

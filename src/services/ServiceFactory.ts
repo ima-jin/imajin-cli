@@ -40,10 +40,10 @@ export interface ServiceDefinition<T extends IService> {
 }
 
 export class ServiceFactory implements IServiceFactory {
-    private factories: Map<string, ServiceFactoryFunction<any>> = new Map();
-    private definitions: Map<string, ServiceDefinition<any>> = new Map();
-    private container: Container;
-    private logger: Logger;
+    private readonly factories: Map<string, ServiceFactoryFunction<any>> = new Map();
+    private readonly definitions: Map<string, ServiceDefinition<any>> = new Map();
+    private readonly container: Container;
+    private readonly logger: Logger;
 
     constructor(container: Container) {
         this.container = container;
@@ -200,7 +200,7 @@ export class ServiceFactory implements IServiceFactory {
      */
     public validateDependencies(serviceType: string): string[] {
         const definition = this.definitions.get(serviceType);
-        if (!definition || !definition.dependencies) {
+        if (!definition?.dependencies) {
             return [];
         }
 
@@ -271,8 +271,8 @@ export class ServiceFactory implements IServiceFactory {
 
         for (const definition of this.definitions.values()) {
             // Count by category
-            const category = definition.category || 'uncategorized';
-            stats.byCategory[category] = (stats.byCategory[category] || 0) + 1;
+            const category = definition.category ?? 'uncategorized';
+            stats.byCategory[category] = (stats.byCategory[category] ?? 0) + 1;
 
             // Count services with dependencies
             if (definition.dependencies && definition.dependencies.length > 0) {
@@ -291,7 +291,7 @@ export class ServiceFactory implements IServiceFactory {
         config: ServiceConfig,
         container?: Container
     ): Promise<T> {
-        const serviceContainer = container || this.container;
+        const serviceContainer = container ?? this.container;
 
         // Check and resolve dependencies first
         const definition = this.definitions.get(serviceType);
@@ -313,7 +313,7 @@ export class ServiceFactory implements IServiceFactory {
             try {
                 // Try to resolve the dependency from the container
                 container.resolve(dependency);
-            } catch (error) {
+            } catch {
                 // If dependency is not available, try to create it if it's a registered service type
                 if (this.isRegistered(dependency)) {
                     this.logger.debug(`Auto-creating dependency: ${dependency}`);

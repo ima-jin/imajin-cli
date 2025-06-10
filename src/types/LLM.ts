@@ -19,9 +19,7 @@
  */
 
 // Progress callback for real-time LLM interaction
-export interface LLMProgressCallback {
-    (event: LLMProgressEvent): void;
-}
+export type LLMProgressCallback = (event: LLMProgressEvent) => void;
 
 export interface LLMProgressEvent {
     type: 'start' | 'progress' | 'complete' | 'error';

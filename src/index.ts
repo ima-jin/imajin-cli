@@ -32,7 +32,7 @@ async function main(): Promise<void> {
   try {
     app = new Application({
       debug: process.env.DEBUG === 'true',
-      logLevel: (process.env.LOG_LEVEL as any) || 'info',
+      logLevel: (process.env.LOG_LEVEL as any) ?? 'info',
       outputFormat: 'text',
       colorOutput: !process.argv.includes('--no-color'),
     });
