@@ -182,7 +182,7 @@ export class ImageTransformer {
     private static async resize(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         // In production, use Sharp or similar library
         // For now, simulate the transformation
@@ -219,7 +219,7 @@ export class ImageTransformer {
     private static async crop(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -244,7 +244,7 @@ export class ImageTransformer {
     private static async convertFormat(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -278,7 +278,7 @@ export class ImageTransformer {
     private static async adjustQuality(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -299,7 +299,7 @@ export class ImageTransformer {
     private static async rotate(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -332,8 +332,8 @@ export class ImageTransformer {
      */
     private static async blur(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         // Blur doesn't significantly change metadata or file size
         return { ...asset };
@@ -344,8 +344,8 @@ export class ImageTransformer {
      */
     private static async sharpen(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         // Sharpen doesn't significantly change metadata or file size
         return { ...asset };
@@ -356,8 +356,8 @@ export class ImageTransformer {
      */
     private static async adjustBrightness(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         // Brightness adjustment doesn't change dimensions or significantly affect size
         return { ...asset };
@@ -368,8 +368,8 @@ export class ImageTransformer {
      */
     private static async adjustContrast(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         // Contrast adjustment doesn't change dimensions or significantly affect size
         return { ...asset };
@@ -380,8 +380,8 @@ export class ImageTransformer {
      */
     private static async adjustSaturation(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         // Saturation adjustment doesn't change dimensions or significantly affect size
         return { ...asset };
@@ -392,8 +392,8 @@ export class ImageTransformer {
      */
     private static async addWatermark(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -408,8 +408,8 @@ export class ImageTransformer {
      */
     private static async addOverlay(
         asset: MediaAsset,
-        params: any,
-        options: ImageTransformOptions
+        _params: any,
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -425,7 +425,7 @@ export class ImageTransformer {
     private static async optimize(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 
@@ -447,7 +447,7 @@ export class ImageTransformer {
     private static async generateThumbnail(
         asset: MediaAsset,
         params: any,
-        options: ImageTransformOptions
+        _options: ImageTransformOptions
     ): Promise<MediaAsset> {
         const transformedAsset = { ...asset };
 

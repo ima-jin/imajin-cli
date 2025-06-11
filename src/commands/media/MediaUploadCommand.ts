@@ -19,7 +19,7 @@
 
 import { Command } from 'commander';
 import * as fs from 'fs/promises';
-import * as glob from 'glob';
+import { glob } from 'glob';
 import * as path from 'path';
 
 import type { Container } from '../../container/Container.js';
@@ -147,13 +147,13 @@ Examples:
                 }
                 if (stats.isDirectory()) {
                     // Add all media files in directory
-                    const dirFiles = await glob.glob(path.join(pattern, '**/*.{jpg,jpeg,png,gif,webp,mp4,mov,avi}'));
+                    const dirFiles = await glob(path.join(pattern, '**/*.{jpg,jpeg,png,gif,webp,mp4,mov,avi}'));
                     filePaths.push(...dirFiles);
                     continue;
                 }
             } catch {
                 // Not a direct path, try as glob pattern
-                const globFiles = await glob.glob(pattern);
+                const globFiles = await glob(pattern);
                 filePaths.push(...globFiles);
             }
         }

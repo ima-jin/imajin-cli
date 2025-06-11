@@ -108,9 +108,13 @@ interface CircuitState {
  */
 @injectable()
 export class CircuitBreaker extends EventEmitter {
-    private circuits = new Map<string, CircuitState>();
-    private configs = new Map<string, CircuitBreakerConfig>();
-    private fallbacks = new Map<string, FallbackFunction>();
+    private readonly ircuits = new Map<string, CircuitState>();
+    private readonly configs = new Map<string, CircuitBreakerConfig>();
+    private readonly fallbacks = new Map<string, FallbackFunction>();
+
+    // Constants for commonly used strings
+    private static readonly CIRCUIT_STATE_MSG = 'Circuit';
+    private static readonly CIRCUIT_OPEN_MSG = 'Circuit breaker is';
 
     constructor() {
         super();
@@ -160,8 +164,8 @@ export class CircuitBreaker extends EventEmitter {
 
         // Check if request should be allowed
         if (!this.canExecute(serviceId)) {
-            const error = new Error(`Circuit breaker is ${circuit.state} for service: ${serviceId}`);
-            this.emit('request-rejected', serviceId, `Circuit ${circuit.state}`);
+            const error = new Error(`${CircuitBreaker.CIRCUIT_OPEN_MSG} ${circuit.state} for service: ${serviceId}`);
+            this.emit('request-rejected', serviceId, `${CircuitBreaker.CIRCUIT_STATE_MSG} ${circuit.state}`);
 
             const fallbackFn = fallback || this.fallbacks.get(serviceId);
             if (fallbackFn) {

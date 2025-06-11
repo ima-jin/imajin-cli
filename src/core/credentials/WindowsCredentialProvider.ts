@@ -22,7 +22,10 @@ import type { CredentialData } from './interfaces.js';
 
 export class WindowsCredentialProvider extends BaseCredentialProvider {
     public readonly name = 'Windows Credential Manager';
-    private readonly serviceName = 'Imajin CLI';
+    private readonly serviceName = 'imajin-cli';
+
+    // Constants for commonly used strings
+    private static readonly IMAJIN_CLI_PREFIX = 'imajin_cli_';
 
     constructor() {
         super();
@@ -122,12 +125,10 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
             }
 
             const credentials = await keytar.findCredentials(this.serviceName);
-            const services = credentials
+            return credentials
                 .map(cred => cred.account)
-                .filter(account => account.startsWith('imajin_cli_'))
-                .map(account => account.replace('imajin_cli_', '').replace(/_/g, '-'));
-
-            return services;
+                .filter(account => account.startsWith(WindowsCredentialProvider.IMAJIN_CLI_PREFIX))
+                .map(account => account.replace(WindowsCredentialProvider.IMAJIN_CLI_PREFIX, '').replace(/_/g, '-'));
         } catch (error) {
             this.logger.debug(`Failed to list credentials: ${error}`);
             return [];
@@ -145,7 +146,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
 
             const credentials = await keytar.findCredentials(this.serviceName);
             const imajinCredentials = credentials.filter(cred =>
-                cred.account.startsWith('imajin_cli_')
+                cred.account.startsWith(WindowsCredentialProvider.IMAJIN_CLI_PREFIX)
             );
 
             for (const credential of imajinCredentials) {

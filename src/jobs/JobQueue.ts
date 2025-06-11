@@ -398,7 +398,7 @@ export class JobQueue extends EventEmitter {
         const jobsToRetry: QueuedJob[] = [];
 
         // Find jobs ready for retry
-        for (const [jobId, queuedJob] of this.jobs.entries()) {
+        for (const [_jobId, queuedJob] of this.jobs.entries()) {
             if (queuedJob.status === 'retrying' &&
                 queuedJob.nextRetryAt &&
                 queuedJob.nextRetryAt <= now) {

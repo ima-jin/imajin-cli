@@ -20,7 +20,7 @@
 
 import 'reflect-metadata';
 
-export type ServiceIdentifier<T = unknown> = string | symbol | Function;
+export type ServiceIdentifier<_T = unknown> = string | symbol | Function;
 export type ServiceFactory<T = any> = (container: Container) => T;
 
 interface ServiceBinding<T = any> {

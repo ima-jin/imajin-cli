@@ -74,9 +74,7 @@ export class SlidingWindowStrategy extends BaseRateLimitStrategy {
         );
 
         const expireTime = oldestRequest.timestamp + this.windowMs;
-        const waitTime = Math.max(0, expireTime - Date.now());
-
-        return waitTime;
+        return Math.max(0, expireTime - Date.now());
     }
 
     /**

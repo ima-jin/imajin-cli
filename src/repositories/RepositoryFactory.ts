@@ -165,7 +165,7 @@ export class RepositoryFactory implements IRepositoryFactory {
         const instancesByType: Record<string, number> = {};
         const instancesByDataSource: Record<string, number> = {};
 
-        for (const [key, _repository] of this.instances) {
+        for (const [key] of this.instances) {
             const [entityType] = key.split(':');
             if (entityType) {
                 instancesByType[entityType] = (instancesByType[entityType] ?? 0) + 1;

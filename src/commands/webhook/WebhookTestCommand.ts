@@ -24,6 +24,9 @@ export class WebhookTestCommand extends BaseCommand {
     public readonly name = 'webhook:test';
     public readonly description = 'Test webhook processing with sample data';
 
+    // Constants for commonly used strings
+    private static readonly TEST_EMAIL = 'test@example.com';
+
     constructor(
         private readonly webhookManager: WebhookManager,
         logger?: Logger
@@ -214,7 +217,7 @@ export class WebhookTestCommand extends BaseCommand {
     /**
      * Generate GitHub test payload
      */
-    private generateGitHubPayload(eventType: string): any {
+    private generateGitHubPayload(_eventType: string): any {
         return {
             ref: 'refs/heads/main',
             before: '0000000000000000000000000000000000000000',
@@ -227,7 +230,7 @@ export class WebhookTestCommand extends BaseCommand {
             },
             pusher: {
                 name: 'test-user',
-                email: 'test@example.com'
+                email: WebhookTestCommand.TEST_EMAIL
             },
             commits: [
                 {
@@ -235,7 +238,7 @@ export class WebhookTestCommand extends BaseCommand {
                     message: 'Test commit for webhook',
                     author: {
                         name: 'Test User',
-                        email: 'test@example.com'
+                        email: WebhookTestCommand.TEST_EMAIL
                     },
                     timestamp: new Date().toISOString()
                 }
@@ -246,7 +249,7 @@ export class WebhookTestCommand extends BaseCommand {
     /**
      * Generate Stripe test payload
      */
-    private generateStripePayload(eventType: string): any {
+    private generateStripePayload(_eventType: string): any {
         return {
             id: `evt_test_${Date.now()}`,
             object: 'event',
@@ -256,7 +259,7 @@ export class WebhookTestCommand extends BaseCommand {
                 object: {
                     id: `cus_test_${Date.now()}`,
                     object: 'customer',
-                    email: 'test@example.com',
+                    email: WebhookTestCommand.TEST_EMAIL,
                     created: Math.floor(Date.now() / 1000)
                 }
             },
@@ -266,17 +269,17 @@ export class WebhookTestCommand extends BaseCommand {
                 id: `req_test_${Date.now()}`,
                 idempotency_key: null
             },
-            type: eventType || 'customer.created'
+            type: _eventType || 'customer.created'
         };
     }
 
     /**
      * Generate Shopify test payload
      */
-    private generateShopifyPayload(eventType: string): any {
+    private generateShopifyPayload(_eventType: string): any {
         return {
             id: Date.now(),
-            email: 'test@example.com',
+            email: WebhookTestCommand.TEST_EMAIL,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             number: 1001,

@@ -126,11 +126,9 @@ export class EnvironmentProvider extends BaseCredentialProvider {
             const envKeys = Object.keys(process.env);
             const credentialKeys = envKeys.filter(key => key.startsWith(`${this.envPrefix}_`));
 
-            const services = credentialKeys
+            return credentialKeys
                 .map(key => key.replace(`${this.envPrefix}_`, '').toLowerCase())
                 .map(service => service.replace(/_/g, '-'));
-
-            return services;
         } catch (error) {
             this.logger.debug(`Failed to list credentials from environment: ${error}`);
             return [];

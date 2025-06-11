@@ -246,31 +246,35 @@ export class SecurityMiddleware {
      */
     public static createServiceConfig(service: 'github' | 'stripe' | 'shopify'): Partial<SignatureValidationConfig> {
         switch (service) {
-            case 'github':
+            case 'github': {
                 return {
                     algorithm: 'sha1',
                     headerName: 'x-hub-signature',
                     prefix: 'sha1='
                 };
+            }
 
-            case 'stripe':
+            case 'stripe': {
                 return {
                     algorithm: 'sha256',
                     headerName: 'stripe-signature',
                     prefix: 'v1='
                 };
+            }
 
-            case 'shopify':
+            case 'shopify': {
                 return {
                     algorithm: 'sha256',
                     headerName: 'x-shopify-hmac-sha256'
                 };
+            }
 
-            default:
+            default: {
                 return {
                     algorithm: 'sha256',
                     headerName: 'x-signature'
                 };
+            }
         }
     }
 } 

@@ -74,7 +74,6 @@ export class ServiceLayerProvider extends ServiceProvider {
      * Register services with the container
      */
     async register(): Promise<void> {
-        const config = this.container.resolve<ImajinConfig>('config');
         const logger = this.container.resolve<Logger>('logger');
 
         // Create and register ServiceRegistry

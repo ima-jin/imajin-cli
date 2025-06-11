@@ -34,6 +34,9 @@ export class CredentialManager implements ICredentialManager {
     private activeProvider?: CredentialProvider;
     private logger: Logger;
 
+    // Constants for commonly used strings
+    private static readonly NO_PROVIDER_MSG = 'No credential provider available';
+
     constructor(logger?: Logger, encryptedFilePassword?: string) {
         this.logger = logger || new Logger('info', true);
         this.initializeProviders(encryptedFilePassword);
@@ -48,7 +51,7 @@ export class CredentialManager implements ICredentialManager {
         this.validateCredentials(credentials);
 
         if (!this.activeProvider) {
-            throw new Error('No credential provider available');
+            throw new Error(CredentialManager.NO_PROVIDER_MSG);
         }
 
         await this.activeProvider.store(service, credentials);
@@ -80,7 +83,7 @@ export class CredentialManager implements ICredentialManager {
         this.validateService(service);
 
         if (!this.activeProvider) {
-            throw new Error('No credential provider available');
+            throw new Error(CredentialManager.NO_PROVIDER_MSG);
         }
 
         await this.activeProvider.delete(service);
@@ -115,7 +118,7 @@ export class CredentialManager implements ICredentialManager {
      */
     public async clear(): Promise<void> {
         if (!this.activeProvider) {
-            throw new Error('No credential provider available');
+            throw new Error(CredentialManager.NO_PROVIDER_MSG);
         }
 
         await this.activeProvider.clear();
@@ -131,7 +134,7 @@ export class CredentialManager implements ICredentialManager {
                 type: 'environment',
                 isNative: false,
                 isSecure: false,
-                description: 'No credential provider available'
+                description: CredentialManager.NO_PROVIDER_MSG
             };
         }
 

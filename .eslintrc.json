@@ -12,7 +12,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "sonarjs"
     ],
     "rules": {
         "@typescript-eslint/no-unused-vars": [
@@ -27,7 +28,14 @@
         "no-undef": "off",
         "no-case-declarations": "warn",
         "no-useless-escape": "warn",
-        "no-unused-vars": "off"
+        "no-unused-vars": "off",
+        "sonarjs/cognitive-complexity": ["error", 15],
+        "sonarjs/no-duplicate-string": ["warn", {"threshold": 3}],
+        "sonarjs/no-identical-functions": "error",
+        "sonarjs/no-redundant-boolean": "warn",
+        "sonarjs/no-unused-collection": "warn",
+        "sonarjs/no-useless-catch": "warn",
+        "sonarjs/prefer-immediate-return": "warn"
     },
     "ignorePatterns": [
         "dist/",

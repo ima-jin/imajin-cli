@@ -77,9 +77,7 @@ export class FixedWindowStrategy implements RateLimitStrategy {
         }
 
         const windowEnd = window.windowStart + this.windowMs;
-        const waitTime = Math.max(0, windowEnd - Date.now());
-
-        return waitTime;
+        return Math.max(0, windowEnd - Date.now());
     }
 
     /**
@@ -189,9 +187,7 @@ export class FixedWindowStrategy implements RateLimitStrategy {
 
         const now = Date.now();
         const elapsed = now - window.windowStart;
-        const progress = Math.min(1, elapsed / this.windowMs);
-
-        return progress;
+        return Math.min(1, elapsed / this.windowMs);
     }
 
     /**
