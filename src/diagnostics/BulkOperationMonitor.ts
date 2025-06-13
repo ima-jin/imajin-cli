@@ -1,5 +1,5 @@
 /**
- * BulkOperationMonitor - High-volume operation tracking and optimization
+ * BulkOperationMonitor - Simplified bulk operation tracking
  * 
  * @package     @imajin/cli
  * @subpackage  diagnostics
@@ -10,125 +10,69 @@
  * @since       2025-01-09
  *
  * Integration Points:
- * - ETL pipeline bulk operations
- * - Background job batch processing
- * - API bulk request monitoring
- * - Media processing batch operations
- * - Service provider bulk actions
+ * - ETL pipeline monitoring
+ * - Basic operation tracking
  */
 
 import { EventEmitter } from 'events';
 
-export interface BulkOperationConfig {
-    batchSize?: number;           // Default: 100
-    concurrency?: number;         // Default: 5
-    retryLimit?: number;          // Default: 3
-    timeoutMs?: number;           // Default: 30000
-    progressInterval?: number;    // Default: 1000ms
-}
-
-export interface BulkOperationProgress {
+export interface OperationProgress {
     operationId: string;
-    operation: string;
-    totalItems: number;
-    processedItems: number;
-    successfulItems: number;
-    failedItems: number;
-    skippedItems: number;
-    progressPercent: number;
-    estimatedTimeRemaining?: number;
-    currentBatch?: number;
-    totalBatches: number;
+    type: string;
+    total: number;
+    completed: number;
+    failed: number;
     startTime: Date;
-    lastUpdateTime: Date;
-    throughputPerSecond: number;
-    errors: BulkOperationError[];
+    lastUpdate: Date;
+    status: 'running' | 'completed' | 'failed';
+    error?: string;
 }
 
-export interface BulkOperationError {
-    itemIndex: number;
-    itemId?: string;
-    error: string;
-    timestamp: Date;
-    retryCount: number;
-}
-
-export interface BulkOperationResult {
-    operationId: string;
-    operation: string;
-    success: boolean;
-    totalItems: number;
-    processedItems: number;
-    successfulItems: number;
-    failedItems: number;
-    skippedItems: number;
-    duration: number;
-    throughputPerSecond: number;
-    errors: BulkOperationError[];
-    metadata?: any;
-}
-
-export interface BulkOperationStats {
-    activeOperations: number;
+export interface OperationMetrics {
     totalOperations: number;
+    activeOperations: number;
     completedOperations: number;
     failedOperations: number;
-    totalItemsProcessed: number;
-    totalItemsSuccessful: number;
-    totalItemsFailed: number;
-    averageThroughput: number;
     averageDuration: number;
-    errorRate: number;
+    successRate: number;
 }
 
 export class BulkOperationMonitor extends EventEmitter {
-    private readonly activeOperations: Map<string, BulkOperationProgress> = new Map();
-    private readonly completedOperations: Map<string, BulkOperationResult> = new Map();
-    private readonly config: BulkOperationConfig;
-    private readonly maxHistorySize = 1000; // Keep last 1000 completed operations
+    private readonly operations: Map<string, OperationProgress> = new Map();
+    private readonly metrics: {
+        totalOperations: number;
+        completedOperations: number;
+        failedOperations: number;
+        totalDuration: number;
+    } = {
+        totalOperations: 0,
+        completedOperations: 0,
+        failedOperations: 0,
+        totalDuration: 0
+    };
 
-    constructor(config: BulkOperationConfig = {}) {
+    constructor() {
         super();
-
-        this.config = {
-            batchSize: config.batchSize ?? 100,
-            concurrency: config.concurrency ?? 5,
-            retryLimit: config.retryLimit ?? 3,
-            timeoutMs: config.timeoutMs ?? 30000,
-            progressInterval: config.progressInterval ?? 1000,
-        };
     }
 
     /**
-     * Start monitoring a bulk operation
+     * Start tracking a new operation
      */
-    public startOperation(
-        operationId: string,
-        operation: string,
-        totalItems: number,
-        metadata?: any
-    ): void {
-        const totalBatches = Math.ceil(totalItems / this.config.batchSize!);
-
-        const progress: BulkOperationProgress = {
+    public startOperation(operationId: string, type: string, total: number): void {
+        const operation: OperationProgress = {
             operationId,
-            operation,
-            totalItems,
-            processedItems: 0,
-            successfulItems: 0,
-            failedItems: 0,
-            skippedItems: 0,
-            progressPercent: 0,
-            currentBatch: 0,
-            totalBatches,
+            type,
+            total,
+            completed: 0,
+            failed: 0,
             startTime: new Date(),
-            lastUpdateTime: new Date(),
-            throughputPerSecond: 0,
-            errors: []
+            lastUpdate: new Date(),
+            status: 'running'
         };
 
-        this.activeOperations.set(operationId, progress);
-        this.emit('operation:started', { operationId, operation, totalItems, metadata });
+        this.operations.set(operationId, operation);
+        this.metrics.totalOperations++;
+        this.emit('operation:started', operation);
     }
 
     /**
@@ -136,257 +80,110 @@ export class BulkOperationMonitor extends EventEmitter {
      */
     public updateProgress(
         operationId: string,
-        processedItems: number,
-        successfulItems: number,
-        failedItems: number,
-        skippedItems: number = 0,
-        currentBatch?: number
+        completed: number,
+        failed: number = 0
     ): void {
-        const operation = this.activeOperations.get(operationId);
+        const operation = this.operations.get(operationId);
         if (!operation) {
             return;
         }
 
-        const now = new Date();
-        const elapsedSeconds = (now.getTime() - operation.startTime.getTime()) / 1000;
-
-        operation.processedItems = processedItems;
-        operation.successfulItems = successfulItems;
-        operation.failedItems = failedItems;
-        operation.skippedItems = skippedItems;
-        operation.progressPercent = Math.round((processedItems / operation.totalItems) * 100);
-        operation.lastUpdateTime = now;
-        operation.throughputPerSecond = elapsedSeconds > 0 ? processedItems / elapsedSeconds : 0;
-
-        if (currentBatch !== undefined) {
-            operation.currentBatch = currentBatch;
-        }
-
-        // Calculate estimated time remaining
-        if (operation.throughputPerSecond > 0) {
-            const remainingItems = operation.totalItems - processedItems;
-            operation.estimatedTimeRemaining = remainingItems / operation.throughputPerSecond;
-        }
+        operation.completed = completed;
+        operation.failed = failed;
+        operation.lastUpdate = new Date();
 
         this.emit('operation:progress', operation);
+
+        // Check if operation is complete
+        if (operation.completed + operation.failed >= operation.total) {
+            this.completeOperation(operationId);
+        }
     }
 
     /**
-     * Record an error for a bulk operation
+     * Mark operation as failed
      */
-    public recordError(
-        operationId: string,
-        itemIndex: number,
-        error: string,
-        itemId?: string,
-        retryCount: number = 0
-    ): void {
-        const operation = this.activeOperations.get(operationId);
+    public failOperation(operationId: string, error: string): void {
+        const operation = this.operations.get(operationId);
         if (!operation) {
             return;
         }
 
-        const bulkError: BulkOperationError = {
-            itemIndex,
-            ...(itemId && { itemId }),
-            error,
-            timestamp: new Date(),
-            retryCount
-        };
+        operation.status = 'failed';
+        operation.error = error;
+        operation.lastUpdate = new Date();
 
-        operation.errors.push(bulkError);
-
-        // Limit error history to avoid memory issues
-        if (operation.errors.length > 100) {
-            operation.errors = operation.errors.slice(-100);
-        }
-
-        this.emit('operation:error', { operationId, error: bulkError });
+        this.metrics.failedOperations++;
+        this.emit('operation:failed', operation);
+        this.operations.delete(operationId);
     }
 
     /**
-     * Complete a bulk operation
+     * Complete an operation
      */
-    public completeOperation(
-        operationId: string,
-        success: boolean = true,
-        metadata?: any
-    ): BulkOperationResult | null {
-        const operation = this.activeOperations.get(operationId);
+    private completeOperation(operationId: string): void {
+        const operation = this.operations.get(operationId);
         if (!operation) {
-            return null;
+            return;
         }
 
-        const endTime = new Date();
-        const duration = endTime.getTime() - operation.startTime.getTime();
+        operation.status = 'completed';
+        operation.lastUpdate = new Date();
 
-        const result: BulkOperationResult = {
-            operationId,
-            operation: operation.operation,
-            success,
-            totalItems: operation.totalItems,
-            processedItems: operation.processedItems,
-            successfulItems: operation.successfulItems,
-            failedItems: operation.failedItems,
-            skippedItems: operation.skippedItems,
-            duration,
-            throughputPerSecond: operation.throughputPerSecond,
-            errors: [...operation.errors], // Copy errors
-            metadata
-        };
+        const duration = operation.lastUpdate.getTime() - operation.startTime.getTime();
+        this.metrics.totalDuration += duration;
+        this.metrics.completedOperations++;
 
-        // Move to completed operations
-        this.activeOperations.delete(operationId);
-        this.completedOperations.set(operationId, result);
-
-        // Maintain history size limit
-        if (this.completedOperations.size > this.maxHistorySize) {
-            const oldestKey = this.completedOperations.keys().next().value;
-            if (oldestKey) {
-                this.completedOperations.delete(oldestKey);
-            }
-        }
-
-        this.emit('operation:completed', result);
-        return result;
+        this.emit('operation:completed', operation);
+        this.operations.delete(operationId);
     }
 
     /**
-     * Get progress for a specific operation
+     * Get operation progress
      */
-    public getOperationProgress(operationId: string): BulkOperationProgress | null {
-        return this.activeOperations.get(operationId) ?? null;
-    }
-
-    /**
-     * Get result for a completed operation
-     */
-    public getOperationResult(operationId: string): BulkOperationResult | null {
-        return this.completedOperations.get(operationId) ?? null;
+    public getOperationProgress(operationId: string): OperationProgress | undefined {
+        return this.operations.get(operationId);
     }
 
     /**
      * Get all active operations
      */
-    public getActiveOperations(): BulkOperationProgress[] {
-        return Array.from(this.activeOperations.values());
+    public getActiveOperations(): OperationProgress[] {
+        return Array.from(this.operations.values());
     }
 
     /**
-     * Get recent completed operations
+     * Get operation metrics
      */
-    public getRecentCompletedOperations(limit: number = 50): BulkOperationResult[] {
-        const operations = Array.from(this.completedOperations.values());
-        return operations
-            .sort((a, b) => b.duration - a.duration) // Sort by completion time (most recent first)
-            .slice(0, limit);
-    }
-
-    /**
-     * Get bulk operation statistics
-     */
-    public getStats(): BulkOperationStats {
-        const active = Array.from(this.activeOperations.values());
-        const completed = Array.from(this.completedOperations.values());
-
-        const totalOperations = active.length + completed.length;
-        const completedOperations = completed.length;
-        const failedOperations = completed.filter(op => !op.success).length;
-
-        const totalItemsProcessed = completed.reduce((sum, op) => sum + op.processedItems, 0);
-        const totalItemsSuccessful = completed.reduce((sum, op) => sum + op.successfulItems, 0);
-        const totalItemsFailed = completed.reduce((sum, op) => sum + op.failedItems, 0);
-
-        const averageThroughput = completed.length > 0
-            ? completed.reduce((sum, op) => sum + op.throughputPerSecond, 0) / completed.length
-            : 0;
-
-        const averageDuration = completed.length > 0
-            ? completed.reduce((sum, op) => sum + op.duration, 0) / completed.length
-            : 0;
-
-        const errorRate = totalItemsProcessed > 0 ? (totalItemsFailed / totalItemsProcessed) * 100 : 0;
+    public getMetrics(): OperationMetrics {
+        const activeOperations = this.operations.size;
+        const totalOperations = this.metrics.totalOperations;
+        const completedOperations = this.metrics.completedOperations;
+        const failedOperations = this.metrics.failedOperations;
 
         return {
-            activeOperations: active.length,
             totalOperations,
+            activeOperations,
             completedOperations,
             failedOperations,
-            totalItemsProcessed,
-            totalItemsSuccessful,
-            totalItemsFailed,
-            averageThroughput: Math.round(averageThroughput * 100) / 100,
-            averageDuration: Math.round(averageDuration),
-            errorRate: Math.round(errorRate * 100) / 100
+            averageDuration: totalOperations > 0 
+                ? this.metrics.totalDuration / totalOperations 
+                : 0,
+            successRate: totalOperations > 0
+                ? (completedOperations / totalOperations) * 100
+                : 100
         };
     }
 
     /**
-     * Cancel an active operation
+     * Clear all operations
      */
-    public cancelOperation(operationId: string, reason?: string): boolean {
-        const operation = this.activeOperations.get(operationId);
-        if (!operation) {
-            return false;
-        }
-
-        // Complete as failed operation
-        this.completeOperation(operationId, false, {
-            cancelled: true,
-            reason: reason ?? 'Operation cancelled',
-            cancelledAt: new Date().toISOString()
-        });
-
-        this.emit('operation:cancelled', { operationId, reason });
-        return true;
-    }
-
-    /**
-     * Clear completed operation history
-     */
-    public clearHistory(): void {
-        const clearedCount = this.completedOperations.size;
-        this.completedOperations.clear();
-        this.emit('history:cleared', { clearedCount });
-    }
-
-    /**
-     * Get operations by status
-     */
-    public getOperationsByStatus(status: 'active' | 'completed' | 'failed'): (BulkOperationProgress | BulkOperationResult)[] {
-        switch (status) {
-            case 'active':
-                return Array.from(this.activeOperations.values());
-            case 'completed':
-                return Array.from(this.completedOperations.values()).filter(op => op.success);
-            case 'failed':
-                return Array.from(this.completedOperations.values()).filter(op => !op.success);
-            default:
-                return [];
-        }
-    }
-
-    /**
-     * Get operations by type/name
-     */
-    public getOperationsByType(operationType: string): (BulkOperationProgress | BulkOperationResult)[] {
-        const active = Array.from(this.activeOperations.values()).filter(op => op.operation === operationType);
-        const completed = Array.from(this.completedOperations.values()).filter(op => op.operation === operationType);
-        return [...active, ...completed];
-    }
-
-    /**
-     * Get configuration
-     */
-    public getConfig(): BulkOperationConfig {
-        return { ...this.config };
-    }
-
-    /**
-     * Update configuration
-     */
-    public updateConfig(config: Partial<BulkOperationConfig>): void {
-        Object.assign(this.config, config);
-        this.emit('config:updated', this.config);
+    public clear(): void {
+        this.operations.clear();
+        this.metrics.totalOperations = 0;
+        this.metrics.completedOperations = 0;
+        this.metrics.failedOperations = 0;
+        this.metrics.totalDuration = 0;
+        this.emit('operations:cleared');
     }
 } 

@@ -11,7 +11,6 @@
  *
  * Integration Points:
  * - Command execution metrics
- * - API call performance tracking
  * - Service provider metrics
  * - Basic system performance monitoring
  */
@@ -164,12 +163,10 @@ export class MetricsCollector extends EventEmitter {
     public recordCommandExecution(
         command: string,
         duration: number,
-        success: boolean,
-        service?: string
+        success: boolean
     ): void {
         const labels = {
             command,
-            service: service ?? 'core',
             status: success ? 'success' : 'error'
         };
 
@@ -177,32 +174,7 @@ export class MetricsCollector extends EventEmitter {
         this.recordHistogram('command_duration_ms', duration, labels);
 
         if (!success) {
-            this.incrementCounter('command_errors_total', 1, { command, service: service ?? 'core' });
-        }
-    }
-
-    /**
-     * Record API call metrics
-     */
-    public recordApiCall(
-        service: string,
-        endpoint: string,
-        method: string,
-        statusCode: number,
-        duration: number
-    ): void {
-        const labels = {
-            service,
-            endpoint,
-            method,
-            status_code: statusCode.toString(),
-        };
-
-        this.incrementCounter('api_calls_total', 1, labels);
-        this.recordHistogram('api_call_duration_ms', duration, labels);
-
-        if (statusCode >= 400) {
-            this.incrementCounter('api_errors_total', 1, { service, endpoint, method });
+            this.incrementCounter('command_errors_total', 1, { command });
         }
     }
 
@@ -215,7 +187,11 @@ export class MetricsCollector extends EventEmitter {
         duration: number,
         success: boolean
     ): void {
-        const labels = { provider, action, status: success ? 'success' : 'error' };
+        const labels = {
+            provider,
+            action,
+            status: success ? 'success' : 'error'
+        };
 
         this.incrementCounter('provider_actions_total', 1, labels);
         this.recordHistogram('provider_action_duration_ms', duration, labels);
@@ -230,38 +206,38 @@ export class MetricsCollector extends EventEmitter {
      */
     public getMetricsSnapshot(): MetricsSnapshot {
         const metrics = Array.from(this.metrics.values());
-        const summary = {
-            counters: metrics.filter(m => m.type === 'counter').length,
-            gauges: metrics.filter(m => m.type === 'gauge').length,
-            histograms: metrics.filter(m => m.type === 'histogram').length,
-            total: metrics.length
-        };
+        const counters = metrics.filter(m => m.type === 'counter').length;
+        const gauges = metrics.filter(m => m.type === 'gauge').length;
+        const histograms = metrics.filter(m => m.type === 'histogram').length;
 
         return {
             timestamp: new Date().toISOString(),
             metrics,
-            summary
+            summary: {
+                counters,
+                gauges,
+                histograms,
+                total: metrics.length
+            }
         };
     }
 
     /**
-     * Get current performance metrics
+     * Get performance metrics
      */
     public getPerformanceMetrics(): PerformanceMetrics {
         const memUsage = process.memoryUsage();
-
-        // Calculate command metrics
         const commandMetrics = this.getCommandMetrics();
         const serviceMetrics = this.getServiceMetrics();
 
         return {
             memory: {
-                used: memUsage.rss,
-                total: memUsage.rss + memUsage.heapTotal,
-                percentage: Math.round((memUsage.rss / (memUsage.rss + memUsage.heapTotal)) * 100)
+                used: memUsage.heapUsed,
+                total: memUsage.heapTotal,
+                percentage: (memUsage.heapUsed / memUsage.heapTotal) * 100
             },
             process: {
-                uptime: Math.floor(process.uptime()),
+                uptime: process.uptime(),
                 pid: process.pid,
                 platform: process.platform
             },
@@ -312,48 +288,41 @@ export class MetricsCollector extends EventEmitter {
         };
     }
 
-    /**
-     * Get command execution metrics summary
-     */
     private getCommandMetrics() {
         const commandMetrics = this.getMetricsByPattern(/^commands_/);
         const totalExecutions = commandMetrics
             .filter(m => m.name === 'commands_total')
             .reduce((sum, m) => sum + m.value, 0);
-
-        const totalErrors = commandMetrics
+        
+        const errors = commandMetrics
             .filter(m => m.name === 'command_errors_total')
             .reduce((sum, m) => sum + m.value, 0);
 
-        const durationMetrics = commandMetrics.filter(m => m.name === 'command_duration_ms');
-        const avgDuration = durationMetrics.length > 0
-            ? durationMetrics.reduce((sum, m) => sum + m.value, 0) / durationMetrics.length
-            : 0;
+        const durations = commandMetrics
+            .filter(m => m.name === 'command_duration_ms')
+            .map(m => m.value);
 
         return {
             totalExecutions,
-            successRate: totalExecutions > 0 ? ((totalExecutions - totalErrors) / totalExecutions) * 100 : 100,
-            avgDuration: Math.round(avgDuration)
+            successRate: totalExecutions > 0 ? (totalExecutions - errors) / totalExecutions : 1,
+            avgDuration: durations.length > 0 ? durations.reduce((a, b) => a + b) / durations.length : 0
         };
     }
 
-    /**
-     * Get service metrics summary
-     */
     private getServiceMetrics() {
-        const serviceMetrics = this.getMetricsByPattern(/^(api_|provider_)/);
-        const totalApiCalls = serviceMetrics
-            .filter(m => m.name === 'api_calls_total')
+        const serviceMetrics = this.getMetricsByPattern(/^provider_/);
+        const totalCalls = serviceMetrics
+            .filter(m => m.name === 'provider_actions_total')
             .reduce((sum, m) => sum + m.value, 0);
-
-        const totalErrors = serviceMetrics
-            .filter(m => m.name.includes('_errors_total'))
+        
+        const errors = serviceMetrics
+            .filter(m => m.name === 'provider_errors_total')
             .reduce((sum, m) => sum + m.value, 0);
 
         return {
-            activeConnections: 1, // Simplified - would track actual connections
-            totalApiCalls,
-            errorRate: totalApiCalls > 0 ? (totalErrors / totalApiCalls) * 100 : 0
+            activeConnections: 0, // Simplified for now
+            totalApiCalls: totalCalls,
+            errorRate: totalCalls > 0 ? errors / totalCalls : 0
         };
     }
 
