@@ -38,7 +38,7 @@ async function main(): Promise<void> {
     });
 
     // Register service providers
-    const { StripeServiceProvider } = await import('./providers/StripeServiceProvider.js');
+    const { StripeServiceProvider } = await import('./services/stripe/StripeServiceProvider.js');
     const { CredentialServiceProvider } = await import('./core/credentials/CredentialServiceProvider.js');
     const { ServiceLayerProvider } = await import('./providers/ServiceLayerProvider.js');
     const { PluginGeneratorServiceProvider } = await import('./providers/PluginGeneratorServiceProvider.js');

@@ -18,14 +18,14 @@
 import type { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import type { Logger } from '../../logging/Logger.js';
-import type { UniversalElement } from '../../types/Core.js';
+// Universal types removed - now using dynamic business context types
 import { BaseRepository } from '../BaseRepository.js';
 import type { QueryFilter, QueryOptions, RepositoryOptions } from '../Repository.js';
 
 /**
  * In-memory repository implementation for testing and development
  */
-export class MemoryRepository<T extends UniversalElement, TKey = string> extends BaseRepository<T, TKey> {
+export class MemoryRepository<T extends Record<string, any>, TKey = string> extends BaseRepository<T, TKey> {
     private readonly storage: Map<TKey, T>;
     private readonly repositoryName: string;
 
@@ -94,12 +94,12 @@ export class MemoryRepository<T extends UniversalElement, TKey = string> extends
         const id = uuidv4() as TKey;
         const now = new Date();
 
-        const newEntity: T = {
+        const newEntity = {
             ...entity,
             id: id as any,
             createdAt: now,
             updatedAt: now
-        } as T;
+        } as unknown as T;
 
         this.storage.set(id, newEntity);
         return newEntity;

@@ -20,7 +20,7 @@ import type { EventEmitter } from 'events';
 import type { Container } from '../container/Container.js';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';
-import type { UniversalElement } from '../types/Core.js';
+// Universal types removed - now using dynamic business context types
 import type { RepositoryFactory as IRepositoryFactory, Repository, RepositoryOptions } from './Repository.js';
 import { MemoryRepository } from './implementations/MemoryRepository.js';
 
@@ -82,7 +82,7 @@ export class RepositoryFactory implements IRepositoryFactory {
     /**
      * Create a repository instance for the specified entity type
      */
-    create<T extends UniversalElement, TKey = string>(
+    create<T extends Record<string, any>, TKey = string>(
         entityType: string,
         options: RepositoryOptions = {}
     ): Repository<T, TKey> {
@@ -133,7 +133,7 @@ export class RepositoryFactory implements IRepositoryFactory {
     /**
      * Register a custom repository factory
      */
-    register<T extends UniversalElement, TKey = string>(
+    register<T extends Record<string, any>, TKey = string>(
         entityType: string,
         factory: (options?: RepositoryOptions) => Repository<T, TKey>
     ): void {
@@ -199,7 +199,7 @@ export class RepositoryFactory implements IRepositoryFactory {
     /**
      * Get repository instance by entity type and options
      */
-    getInstance<T extends UniversalElement, TKey = string>(
+    getInstance<T extends Record<string, any>, TKey = string>(
         entityType: string,
         options: RepositoryOptions = {}
     ): Repository<T, TKey> | undefined {
@@ -235,7 +235,7 @@ export class RepositoryFactory implements IRepositoryFactory {
     // PRIVATE METHODS
     // =============================================================================
 
-    private createRepository<T extends UniversalElement, TKey = string>(
+    private createRepository<T extends Record<string, any>, TKey = string>(
         entityType: string,
         options: RepositoryOptions
     ): Repository<T, TKey> {
@@ -318,7 +318,7 @@ export class RepositoryProvider {
     /**
      * Get repository for entity type
      */
-    getRepository<T extends UniversalElement, TKey = string>(
+    getRepository<T extends Record<string, any>, TKey = string>(
         entityType: string,
         options?: RepositoryOptions
     ): Repository<T, TKey> {
@@ -335,7 +335,7 @@ export class RepositoryProvider {
     /**
      * Register custom repository
      */
-    register<T extends UniversalElement, TKey = string>(
+    register<T extends Record<string, any>, TKey = string>(
         entityType: string,
         factory: (options?: RepositoryOptions) => Repository<T, TKey>
     ): void {

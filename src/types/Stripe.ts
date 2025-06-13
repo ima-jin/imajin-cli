@@ -2,154 +2,143 @@
  * Stripe - Types and interfaces for Stripe service integration
  * 
  * @package     @imajin/cli
- * @subpackage  types/services
- * @author      VETEZE
+ * @subpackage  types
+ * @author      Generated
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-08
+ * @since       2025-01-09
  *
  * @see        docs/services/stripe.md
  * 
  * Integration Points:
  * - Type-safe Stripe API models
- * - Webhook event validation
- * - Command parameter validation
- * - Real-time event streaming types
+ * - Universal element mapping interfaces
+ * - Real-time event handling schemas
+ * - LLM-friendly command contexts
+ * - ETL pipeline data structures
  */
 
 import type Stripe from 'stripe';
 import { z } from 'zod';
-import type { RealTimeEvent } from './LLM.js';
+// Business context types will be resolved at runtime through BusinessTypeRegistry
 
 // Stripe Configuration Schema
 export const StripeConfigSchema = z.object({
     apiKey: z.string().min(1, 'Stripe API key is required'),
-    webhookSecret: z.string().optional(),
-    baseUrl: z.string().url().optional(),
-    apiVersion: z.string().default('2023-10-16'),
-    timeout: z.number().default(30000),
+    apiVersion: z.string().default('2024-06-20'),
+    timeout: z.number().default(60000),
     maxNetworkRetries: z.number().default(3),
-    realTimeWebhooks: z.boolean().default(true),
+    enableTelemetry: z.boolean().default(false),
 });
 
 export type StripeConfig = z.infer<typeof StripeConfigSchema>;
 
-// Payment Intent Commands
+// Payment Intent Schema
 export const CreatePaymentIntentSchema = z.object({
     amount: z.number().positive('Amount must be positive'),
-    currency: z.string().min(3, 'Currency must be valid ISO code'),
+    currency: z.string().min(3, 'Currency code must be at least 3 characters'),
     customerId: z.string().optional(),
     paymentMethodId: z.string().optional(),
     description: z.string().optional(),
     metadata: z.record(z.string()).optional(),
-    automaticPaymentMethods: z.boolean().default(true),
     captureMethod: z.enum(['automatic', 'manual']).default('automatic'),
+    automaticPaymentMethods: z.boolean().default(true),
 });
 
-export type CreatePaymentIntentParams = z.infer<typeof CreatePaymentIntentSchema>;
-
-// Customer Commands
-export const CreateCustomerSchema = z.object({
-    email: z.string().email('Valid email required'),
-    name: z.string().optional(),
-    phone: z.string().optional(),
-    description: z.string().optional(),
-    metadata: z.record(z.string()).optional(),
-});
-
-export type CreateCustomerParams = z.infer<typeof CreateCustomerSchema>;
-
-// Subscription Commands
-export const CreateSubscriptionSchema = z.object({
-    customerId: z.string().min(1, 'Customer ID required'),
-    priceId: z.string().min(1, 'Price ID required'),
-    quantity: z.number().positive().default(1),
-    trialDays: z.number().nonnegative().optional(),
-    metadata: z.record(z.string()).optional(),
-    prorationBehavior: z.enum(['create_prorations', 'none', 'always_invoice']).default('create_prorations'),
-});
-
-export type CreateSubscriptionParams = z.infer<typeof CreateSubscriptionSchema>;
-
-// Webhook Event Types
-export interface StripeWebhookEvent extends RealTimeEvent {
-    stripeEvent: Stripe.Event;
-    webhookId: string;
-    verified: boolean;
-}
-
-// Response Types for LLM
-export interface StripePaymentResponse {
-    paymentIntent: {
-        id: string;
-        amount: number;
-        currency: string;
-        status: Stripe.PaymentIntent.Status;
-        clientSecret?: string;
-        customerId?: string;
-        metadata?: Stripe.Metadata;
-    };
-    success: boolean;
-    message: string;
+// Customer Data Interfaces
+export interface StripeCustomerData {
+    id: string;
+    email: string;
+    name: string;
+    phone?: string;
+    created: Date;
+    metadata?: Record<string, string>;
 }
 
 export interface StripeCustomerResponse {
-    customer: {
-        id: string;
-        email?: string;
-        name?: string;
-        created: number;
-        metadata?: Stripe.Metadata;
-    };
+    customer: StripeCustomerData;
+    businessEntity: any; // Business context entity resolved at runtime
     success: boolean;
     message: string;
+}
+
+// Payment Intent Interfaces
+export interface CreatePaymentIntentParams {
+    amount: number;
+    currency: string;
+    customerId?: string;
+    paymentMethodId?: string;
+    description?: string;
+    metadata?: Record<string, string>;
+    captureMethod?: 'automatic' | 'manual';
+    automaticPaymentMethods?: boolean;
+}
+
+export interface StripePaymentData {
+    id: string;
+    amount: number;
+    currency: string;
+    status: Stripe.PaymentIntent.Status;
+    clientSecret?: string | null;
+    customerId?: string;
+    metadata?: Record<string, string>;
+}
+
+export interface StripePaymentResponse {
+    paymentIntent: StripePaymentData;
+    businessEntity: any; // Business context entity resolved at runtime
+    success: boolean;
+    message: string;
+}
+
+// Subscription Interfaces
+export interface StripeSubscriptionData {
+    id: string;
+    customerId: string;
+    status: Stripe.Subscription.Status;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    metadata?: Record<string, string>;
 }
 
 export interface StripeSubscriptionResponse {
-    subscription: {
-        id: string;
-        customerId: string;
-        status: Stripe.Subscription.Status;
-        priceId: string;
-        quantity: number;
-        currentPeriodStart: number;
-        currentPeriodEnd: number;
-        metadata?: Stripe.Metadata;
-    };
+    subscription: StripeSubscriptionData;
+    businessEntity: any; // Business context entity resolved at runtime
     success: boolean;
     message: string;
 }
 
-// Command Execution Context
+// Command Context Interface
 export interface StripeCommandContext {
     service: 'stripe';
-    command: string;
-    params: any;
-    userId?: string;
-    realTime: boolean;
-    correlationId?: string;
+    operation: string;
+    params: Record<string, any>;
+    metadata?: Record<string, string>;
 }
 
-// Stripe Service Capabilities
+// Service Capabilities
 export const StripeCapabilities = [
+    'customer-management',
     'payment-processing',
     'subscription-management',
-    'customer-management',
-    'webhook-handling',
-    'real-time-events',
-    'payment-methods',
-    'invoicing',
-    'dispute-management',
+    'catalog-browsing',
+    'universal-element-mapping',
+    'real-time-progress',
+    'business-error-handling',
 ] as const;
 
 export type StripeCapability = typeof StripeCapabilities[number];
 
-// Error Types
+// Error Handling Interface
 export interface StripeServiceError {
     type: 'stripe_error' | 'validation_error' | 'network_error' | 'auth_error';
-    code?: string | undefined;
     message: string;
-    details?: any;
-    requestId?: string | undefined;
+    code: string;
+    statusCode: number;
+    details?: {
+        decline_code?: string;
+        param?: string;
+        request_log_url?: string;
+    };
 } 

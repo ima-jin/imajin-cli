@@ -19,6 +19,19 @@
 import { z } from 'zod';
 import { CompatibilityMatrix, GraphModel, GraphSchema } from '../core/interfaces.js';
 
+// Re-export interfaces needed by other modules
+export type { GraphModel, GraphSchema, CompatibilityMatrix };
+
+// Define TranslationMapping interface for business context integration
+export interface TranslationMapping {
+    sourceModel: string;
+    targetModel: string;
+    mappings: Record<string, any>;
+    confidence: number;
+    bidirectional: boolean;
+    metadata: Record<string, any>;
+}
+
 // Universal Elements - Common to all graph models
 export const PersonalProfileSchema = z.object({
     id: z.string(),

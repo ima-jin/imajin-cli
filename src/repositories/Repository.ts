@@ -15,7 +15,7 @@
  * - Exception System for error handling
  */
 
-import type { UniversalElement } from '../types/Core.js';
+// Universal types removed - now using dynamic business context types
 
 /**
  * Query filter options for repository operations
@@ -94,7 +94,7 @@ export interface TransactionContext {
 /**
  * Base repository interface providing type-safe data access patterns
  */
-export interface Repository<T extends UniversalElement, TKey = string> {
+export interface Repository<T extends Record<string, any>, TKey = string> {
     /**
      * Find entity by primary key
      */
@@ -203,12 +203,12 @@ export interface Repository<T extends UniversalElement, TKey = string> {
  * Repository factory interface for creating repository instances
  */
 export interface RepositoryFactory {
-    create<T extends UniversalElement, TKey = string>(
+    create<T extends Record<string, any>, TKey = string>(
         entityType: string,
         options?: RepositoryOptions
     ): Repository<T, TKey>;
 
-    register<T extends UniversalElement, TKey = string>(
+    register<T extends Record<string, any>, TKey = string>(
         entityType: string,
         factory: (options?: RepositoryOptions) => Repository<T, TKey>
     ): void;

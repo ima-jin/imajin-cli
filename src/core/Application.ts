@@ -20,7 +20,9 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
+import { EventEmitter } from 'events';
 import figlet from 'figlet';
+import inquirer from 'inquirer';
 import { Container } from '../container/Container.js';
 import { ExceptionUtils } from '../exceptions/index.js';
 import { Logger } from '../logging/Logger.js';
@@ -53,7 +55,10 @@ export class Application {
     const isJsonMode = process.argv.includes('--json');
     const logLevel = isJsonMode ? 'error' : this.config.logLevel;
 
-    this.logger = new Logger(logLevel, this.config.colorOutput);
+    this.logger = new Logger({ 
+      level: logLevel as any, 
+      enableColors: this.config.colorOutput 
+    });
 
     // Initialize error handling system
     this.errorHandler = new ErrorHandler({
@@ -112,6 +117,7 @@ export class Application {
     this.container.singleton('container', () => this.container);
     this.container.singleton('errorHandler', () => this.errorHandler);
     this.container.singleton('errorRecovery', () => this.errorRecovery);
+    this.container.singleton('eventEmitter', () => new EventEmitter());
   }
 
   private setupProgram(): void {
@@ -358,10 +364,84 @@ export class Application {
 
   public async run(): Promise<void> {
     try {
-      await this.program.parseAsync(process.argv);
+      // If no arguments provided (just 'node dist/index.js'), start interactive mode
+      if (process.argv.length <= 2) {
+        await this.startInteractiveMode();
+      } else {
+        await this.program.parseAsync(process.argv);
+      }
     } catch (error) {
       console.error(chalk.red('Error:'), error);
       process.exit(1);
+    }
+  }
+
+  /**
+   * Start interactive mode with command selection
+   */
+  private async startInteractiveMode(): Promise<void> {
+    // Show banner first
+    console.log(chalk.cyan(figlet.textSync('IMAJIN CLI', { horizontalLayout: 'full' })));
+    console.log(chalk.gray(`Version: ${Application.VERSION}`));
+    console.log(chalk.gray('LLM-powered universal service interface\n'));
+
+    while (true) {
+      try {
+        const { action } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'action',
+            message: 'What would you like to do?',
+            choices: [
+              { name: '🔍 List available services', value: 'list-services' },
+              { name: '📋 Describe a service', value: 'describe' },
+              { name: '🩺 Run system diagnostics', value: 'diagnose' },
+              { name: '❓ Show help', value: 'help' },
+              { name: '🚪 Exit', value: 'exit' }
+            ]
+          }
+        ]);
+
+        if (action === 'exit') {
+          console.log(chalk.green('👋 Goodbye!'));
+          break;
+        }
+
+        if (action === 'help') {
+          this.program.help();
+          continue;
+        }
+
+        if (action === 'describe') {
+          const { serviceName } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'serviceName',
+              message: 'Enter service name to describe:',
+              validate: (input: string) => input.trim().length > 0 || 'Service name is required'
+            }
+          ]);
+          this.handleDescribeService(serviceName.trim(), {});
+        } else if (action === 'list-services') {
+          this.handleListServices({});
+        } else if (action === 'diagnose') {
+          console.log(chalk.green('✅ Application initialized successfully'));
+          console.log(chalk.blue('📦 Container ready'));
+          console.log(chalk.yellow(`⚙️  ${this.providers.length} service provider(s) loaded`));
+          console.log(chalk.gray('\n💡 All systems operational'));
+        }
+
+        // Add a separator for readability
+        console.log('\n' + chalk.gray('─'.repeat(50)) + '\n');
+
+      } catch (error) {
+        if (error && typeof error === 'object' && 'name' in error && error.name === 'ExitPromptError') {
+          // User pressed Ctrl+C
+          console.log(chalk.green('\n👋 Goodbye!'));
+          break;
+        }
+        console.error(chalk.red('Error:'), error);
+      }
     }
   }
 } 

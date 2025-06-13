@@ -19,7 +19,7 @@
 import type { EventEmitter } from 'events';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';
-import type { UniversalElement } from '../types/Core.js';
+// Universal types removed - now using dynamic business context types
 import type {
     BulkOperationResult,
     PaginatedResult,
@@ -62,7 +62,7 @@ type UpdateEntity<T> = Partial<Omit<T, 'id' | 'createdAt'>>;
 /**
  * Abstract base repository providing common functionality
  */
-export abstract class BaseRepository<T extends UniversalElement, TKey = string>
+export abstract class BaseRepository<T extends Record<string, any>, TKey = string>
     implements Repository<T, TKey>, RepositoryMonitor {
 
     protected logger: Logger;

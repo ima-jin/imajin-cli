@@ -11,11 +11,9 @@
  * @since       2025-06-04
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+const fs = require('fs');
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Determine if we're running from source or built version
@@ -24,11 +22,10 @@ const distPath = path.join(__dirname, '..', 'dist', 'index.js');
 
 if (fs.existsSync(distPath)) {
   // Production: Use compiled JavaScript
-  const distUrl = pathToFileURL(distPath).href;
-  const { default: app } = await import(distUrl);
+  require(distPath);
 } else if (fs.existsSync(srcPath)) {
   // Development: Use ts-node to run TypeScript directly
-  console.error('Development mode not supported in ESM. Please run "npm run build" first.');
+  console.error('Development mode not supported. Please run "npm run build" first.');
   process.exit(1);
 } else {
   console.error('Error: Cannot find application entry point');

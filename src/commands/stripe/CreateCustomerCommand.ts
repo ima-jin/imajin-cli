@@ -21,7 +21,7 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { Logger } from '../../logging/Logger.js';
-import { StripeService } from '../../services/StripeService';
+import { StripeService } from '../../services/stripe/StripeService.js';
 import { CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js';
 import type { LLMResponse } from '../../types/LLM.js';
 
@@ -95,22 +95,22 @@ export class CreateCustomerCommand {
             this.logger.info('Creating Stripe customer', { customerData });
 
             // Create customer with progress tracking
-            const customer = await this.stripeService.createCustomer(customerData);
+            const response = await this.stripeService.createCustomer(customerData);
 
             const duration = Date.now() - _startTime;
 
             // Prepare response
-            const response: LLMResponse = {
+            const apiResponse: LLMResponse = {
                 success: true,
                 data: {
                     customer: {
-                        id: customer.id,
-                        name: customer.name,
-                        email: customer.email,
-                        phone: customer.phone,
-                        description: customer.description,
-                        created: new Date(customer.created * 1000),
-                        metadata: customer.metadata,
+                        id: response.customer.id,
+                        name: response.customer.name,
+                        email: response.customer.email,
+                        phone: response.customer.phone,
+                        description: response.customer.metadata?.description,
+                        created: response.customer.created,
+                        metadata: response.customer.metadata,
                     },
                 },
                 timestamp: new Date(),
@@ -121,13 +121,13 @@ export class CreateCustomerCommand {
 
             // Output based on format preference
             if (options.json) {
-                console.log(JSON.stringify(response, null, 2));
+                console.log(JSON.stringify(apiResponse, null, 2));
             } else {
-                this.displayCustomerInfo(customer, duration);
+                this.displayCustomerInfo(response.customer, duration);
             }
 
             this.logger.info('Customer created successfully', {
-                customerId: customer.id,
+                customerId: response.customer.id,
                 duration,
             });
 
@@ -174,11 +174,11 @@ export class CreateCustomerCommand {
             console.log(`${chalk.cyan('Phone:')} ${customer.phone}`);
         }
 
-        if (customer.description) {
-            console.log(`${chalk.cyan('Description:')} ${customer.description}`);
+        if (customer.metadata?.description) {
+            console.log(`${chalk.cyan('Description:')} ${customer.metadata.description}`);
         }
 
-        console.log(`${chalk.cyan('Created:')} ${new Date(customer.created * 1000).toLocaleString()}`);
+        console.log(`${chalk.cyan('Created:')} ${customer.created.toLocaleString()}`);
 
         if (customer.metadata && Object.keys(customer.metadata).length > 0) {
             console.log(`${chalk.cyan('Metadata:')} ${JSON.stringify(customer.metadata, null, 2)}`);

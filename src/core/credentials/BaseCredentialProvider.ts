@@ -27,7 +27,7 @@ export abstract class BaseCredentialProvider implements CredentialProvider {
     protected logger: Logger;
 
     constructor(logger?: Logger) {
-        this.logger = logger || new Logger('info', true);
+        this.logger = logger || new Logger({ level: 'info', enableColors: true });
     }
 
     public abstract readonly name: string;

@@ -41,7 +41,8 @@ export {
 } from './ServiceStrategyManager.js';
 
 // Existing services
-export { StripeService } from './StripeService.js';
+// StripeService export moved to stripe subdirectory
+export { StripeService } from './stripe/StripeService.js';
 
 // Re-export commonly used types for convenience
 export type {

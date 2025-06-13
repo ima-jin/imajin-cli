@@ -20,9 +20,9 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { StripeService } from '../../services/StripeService.js';
+import { StripeService } from '../../services/stripe/StripeService.js';
 import type { LLMProgressCallback, LLMResponse } from '../../types/LLM.js';
-import { CreatePaymentIntentSchema } from '../../types/Stripe.js';
+import { CreatePaymentIntentParams, CreatePaymentIntentSchema } from '../../types/Stripe.js';
 
 export class CreatePaymentCommand {
     private stripeService: StripeService;
@@ -58,7 +58,7 @@ export class CreatePaymentCommand {
     private async execute(options: any): Promise<void> {
         try {
             // Validate input parameters
-            const params = CreatePaymentIntentSchema.parse({
+            const validatedParams = CreatePaymentIntentSchema.parse({
                 amount: options.amount,
                 currency: options.currency,
                 customerId: options.customer,
@@ -68,6 +68,18 @@ export class CreatePaymentCommand {
                 captureMethod: options.captureMethod,
                 automaticPaymentMethods: true,
             });
+
+            // Filter out undefined optional parameters to match interface
+            const params: CreatePaymentIntentParams = {
+                amount: validatedParams.amount,
+                currency: validatedParams.currency,
+                captureMethod: validatedParams.captureMethod,
+                automaticPaymentMethods: validatedParams.automaticPaymentMethods,
+                ...(validatedParams.customerId && { customerId: validatedParams.customerId }),
+                ...(validatedParams.paymentMethodId && { paymentMethodId: validatedParams.paymentMethodId }),
+                ...(validatedParams.description && { description: validatedParams.description }),
+                ...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata }),
+            };
 
             const _startTime = Date.now();
 

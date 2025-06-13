@@ -18,10 +18,8 @@
  * - Automatic metadata extraction
  */
 
-import { createRequire } from 'module';
 import { v4 as uuidv4 } from 'uuid';
-const require = createRequire(import.meta.url);
-const { v2: cloudinary } = require('cloudinary');
+import { v2 as cloudinary } from 'cloudinary';
 
 import type {
     ListOptions,
@@ -30,9 +28,9 @@ import type {
     MediaProvider,
     Transformation,
     UploadOptions
-} from '../../types/Media.js';
+} from '../../types/Media';
 
-import { ExceptionUtils } from '../../exceptions/index.js';
+import { ExceptionUtils } from '../../exceptions/index';
 
 export interface CloudinaryConfig {
     cloudName: string;

@@ -38,7 +38,7 @@ export class CredentialManager implements ICredentialManager {
     private static readonly NO_PROVIDER_MSG = 'No credential provider available';
 
     constructor(logger?: Logger, encryptedFilePassword?: string) {
-        this.logger = logger || new Logger('info', true);
+        this.logger = logger || new Logger({ level: 'info', enableColors: true });
         this.initializeProviders(encryptedFilePassword);
         this.selectActiveProvider();
     }

@@ -17,14 +17,15 @@
 
 import type { EventEmitter } from 'events';
 import type { Logger } from '../../logging/Logger.js';
-import type { UniversalCustomer } from '../../types/Core.js';
+// Universal types removed - now using dynamic business context types
+// Customer type will be defined by business context registry
 import { MemoryRepository } from '../implementations/MemoryRepository.js';
 import type { RepositoryOptions } from '../Repository.js';
 
 /**
  * Example customer repository using memory storage
  */
-export class CustomerRepository extends MemoryRepository<UniversalCustomer> {
+export class CustomerRepository extends MemoryRepository<any> {
     constructor(
         logger: Logger,
         eventEmitter: EventEmitter,
@@ -41,7 +42,7 @@ export class CustomerRepository extends MemoryRepository<UniversalCustomer> {
     /**
      * Find customers by email
      */
-    async findByEmail(email: string): Promise<UniversalCustomer | null> {
+    async findByEmail(email: string): Promise<any | null> {
         const customers = await this.findAll({
             filters: [{ field: 'email', operator: 'eq', value: email }]
         });
@@ -51,18 +52,18 @@ export class CustomerRepository extends MemoryRepository<UniversalCustomer> {
     /**
      * Find customers by service source
      */
-    async findByService(serviceSource: string): Promise<UniversalCustomer[]> {
+    async findByService(serviceSource: string): Promise<any[]> {
         return this.findAll({
-            filters: [{ field: 'sourceService', operator: 'eq', value: serviceSource }]
+            filters: [{ field: 'serviceSource', operator: 'eq', value: serviceSource }]
         });
     }
 
     /**
-     * Search customers by name (case-insensitive)
+     * Search customers by name pattern
      */
-    async searchByName(nameQuery: string): Promise<UniversalCustomer[]> {
+    async searchByName(nameQuery: string): Promise<any[]> {
         return this.findAll({
-            filters: [{ field: 'name', operator: 'like', value: nameQuery }]
+            filters: [{ field: 'name', operator: 'like', value: `%${nameQuery}%` }]
         });
     }
 

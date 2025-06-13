@@ -1,0 +1,294 @@
+version: "1.0.0"
+namespace: "universal"
+description: "Production-ready core business entities for cross-service compatibility"
+
+businessRules:
+  global:
+    - "All entities must have valid timestamps for auditability"
+    - "Service data must preserve original service field mappings"
+    - "Metadata allows for extensibility without schema changes"
+  
+  identifierRules:
+    - "IDs must be alphanumeric with allowed separators: dash and underscore"
+    - "Source service must be from approved service list"
+
+entities:
+  Element:
+    description: "Base interface for all universal entities with comprehensive audit trail"
+    type: "interface"
+    businessRules:
+      - "Base entity providing common fields for all business objects"
+      - "Timestamps must be in ISO 8601 format for cross-timezone compatibility"
+    fields:
+      id: 
+        type: "string"
+        required: true
+        description: "Unique identifier across the universal system"
+        pattern: "^[a-zA-Z0-9_-]+$"
+        minLength: 1
+        maxLength: 100
+        examples: ["cust_123", "pay_abc456", "sub_xyz789"]
+      createdAt: 
+        type: "datetime"
+        required: true
+        description: "Entity creation timestamp in ISO 8601 format"
+        format: "iso8601"
+        examples: ["2025-01-09T12:00:00Z", "2025-01-09T12:00:00.123Z"]
+      updatedAt: 
+        type: "datetime"
+        required: true
+        description: "Last modification timestamp in ISO 8601 format"
+        format: "iso8601"
+        validation: "must be >= createdAt"
+      metadata: 
+        type: "object"
+        required: false
+        description: "Extensible metadata for custom business attributes"
+        additionalProperties: true
+        maxProperties: 50
+        examples: [{"region": "US", "source_campaign": "email2025"}]
+      serviceData: 
+        type: "object"
+        required: false
+        description: "Original service-specific data preservation"
+        additionalProperties: true
+        maxProperties: 100
+        examples: [{"stripe_customer_id": "cus_abc123", "stripe_metadata": {"plan": "pro"}}]
+      sourceService: 
+        type: "string"
+        required: true
+        description: "Originating service identifier"
+        enum: ["stripe", "salesforce", "hubspot", "mailchimp", "shopify", "notion", "github"]
+        examples: ["stripe", "salesforce", "hubspot"]
+
+  Customer:
+    description: "Universal customer/user entity with comprehensive validation"
+    extends: "Element"
+    businessRules:
+      - "Email must be unique within the source service context"
+      - "Phone number must be valid international format when provided"
+      - "Name should be provided for personalization but not required for privacy"
+    fields:
+      email: 
+        type: "email"
+        required: true
+        description: "Primary customer email address"
+        format: "email"
+        maxLength: 254
+        examples: ["customer@example.com", "user.name+tag@domain.co.uk"]
+        validation: "must be valid RFC 5322 email format"
+      name: 
+        type: "string"
+        required: false
+        description: "Customer full name or display name"
+        minLength: 1
+        maxLength: 255
+        pattern: "^[\\p{L}\\p{M}\\s\\-\\.]+$"
+        examples: ["John Doe", "María García-López", "李小明"]
+      phone: 
+        type: "string"
+        required: false
+        description: "International phone number with country code"
+        pattern: "^\\+?[1-9]\\d{1,14}$"
+        examples: ["+1234567890", "+44 20 7123 4567", "+81 3-1234-5678"]
+        validation: "must be valid E.164 international format when provided"
+      
+  Payment:
+    description: "Universal payment transaction entity with financial compliance"
+    extends: "Element"
+    businessRules:
+      - "Amount must be positive and in smallest currency unit (cents)"
+      - "Currency must be valid ISO 4217 three-letter code"
+      - "Status transitions must follow valid payment workflow"
+      - "Financial amounts require precise decimal handling"
+    fields:
+      amount: 
+        type: "number"
+        required: true
+        min: 0
+        multipleOf: 0.01
+        description: "Payment amount in smallest currency unit (e.g., cents for USD)"
+        examples: [2500, 999.99, 10.00]
+        validation: "must be >= 0 and properly formatted for currency precision"
+      currency: 
+        type: "string"
+        required: true
+        pattern: "^[A-Z]{3}$"
+        description: "ISO 4217 three-letter currency code"
+        enum: ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "SEK", "DKK", "NOK"]
+        examples: ["USD", "EUR", "GBP"]
+      status: 
+        type: "enum"
+        required: true
+        values: ["pending", "processing", "completed", "failed", "cancelled", "refunded", "partially_refunded"]
+        description: "Current payment processing status"
+        examples: ["pending", "completed", "failed"]
+        transitions:
+          pending: ["processing", "completed", "failed", "cancelled"]
+          processing: ["completed", "failed"]
+          completed: ["refunded", "partially_refunded"]
+          failed: ["pending"]
+          cancelled: []
+          refunded: []
+          partially_refunded: ["refunded"]
+      customerId: 
+        type: "string"
+        required: false
+        description: "Associated customer identifier"
+        pattern: "^[a-zA-Z0-9_-]+$"
+        maxLength: 100
+        examples: ["cust_123", "customer_abc456"]
+      description: 
+        type: "string"
+        required: false
+        description: "Human-readable payment description"
+        maxLength: 500
+        examples: ["Monthly subscription fee", "Product purchase: Widget Pro"]
+
+  Contact:
+    description: "Universal contact/lead entity for CRM integration"
+    extends: "Element"
+    businessRules:
+      - "Type determines the relationship and expected interactions"
+      - "Email is required for communication capabilities"
+      - "Name is required for personalized interactions"
+    fields:
+      type: 
+        type: "enum"
+        required: true
+        values: ["customer", "lead", "contact", "prospect", "partner"]
+        description: "Classification of contact relationship"
+        examples: ["customer", "lead", "prospect"]
+        businessMeaning:
+          customer: "Active paying customer"
+          lead: "Potential customer with expressed interest"
+          contact: "General business contact"
+          prospect: "Identified potential customer"
+          partner: "Business partner or affiliate"
+      name: 
+        type: "string"
+        required: true
+        description: "Full contact name for personalization"
+        minLength: 1
+        maxLength: 255
+        pattern: "^[\\p{L}\\p{M}\\s\\-\\.]+$"
+        examples: ["John Smith", "Sarah O'Connor", "Jean-Pierre Dupont"]
+      email: 
+        type: "email"
+        required: true
+        description: "Primary contact email address"
+        format: "email"
+        maxLength: 254
+        examples: ["contact@company.com", "leads+source@domain.org"]
+      phone: 
+        type: "string"
+        required: false
+        description: "Contact phone number with international format"
+        pattern: "^\\+?[1-9]\\d{1,14}$"
+        examples: ["+1-555-123-4567", "+44 20 1234 5678"]
+      company:
+        type: "string"
+        required: false
+        description: "Associated company or organization"
+        maxLength: 255
+        examples: ["Acme Corp", "Tech Innovations Ltd"]
+      title:
+        type: "string"
+        required: false
+        description: "Professional title or role"
+        maxLength: 100
+        examples: ["Software Engineer", "Marketing Director", "CEO"]
+
+  Subscription:
+    description: "Universal subscription entity for recurring billing"
+    extends: "Element"
+    businessRules:
+      - "Customer ID must reference a valid customer entity"
+      - "Billing periods must be logically consistent"
+      - "Status must reflect actual billing state"
+      - "Dates must be in chronological order"
+    fields:
+      customerId: 
+        type: "string"
+        required: true
+        description: "Reference to the subscribing customer"
+        pattern: "^[a-zA-Z0-9_-]+$"
+        maxLength: 100
+        examples: ["cust_123", "customer_abc456"]
+      status: 
+        type: "enum"
+        required: true
+        values: ["active", "canceled", "incomplete", "past_due", "trialing", "unpaid", "paused"]
+        description: "Current subscription lifecycle status"
+        examples: ["active", "canceled", "trialing"]
+        businessMeaning:
+          active: "Subscription is active and being billed"
+          canceled: "Subscription has been terminated"
+          incomplete: "Subscription needs payment method or confirmation"
+          past_due: "Payment failed, grace period active"
+          trialing: "In trial period, not yet billed"
+          unpaid: "Payment failed, access restricted"
+          paused: "Temporarily suspended by customer or admin"
+      currentPeriodStart: 
+        type: "datetime"
+        required: true
+        description: "Start date of the current billing period"
+        format: "iso8601"
+        examples: ["2025-01-01T00:00:00Z", "2025-01-15T12:00:00Z"]
+      currentPeriodEnd: 
+        type: "datetime"
+        required: true
+        description: "End date of the current billing period"
+        format: "iso8601"
+        validation: "must be > currentPeriodStart"
+        examples: ["2025-02-01T00:00:00Z", "2025-02-15T12:00:00Z"]
+      planId:
+        type: "string"
+        required: false
+        description: "Associated subscription plan identifier"
+        pattern: "^[a-zA-Z0-9_-]+$"
+        maxLength: 100
+        examples: ["plan_basic", "monthly_pro", "annual_enterprise"]
+      trialEnd:
+        type: "datetime"
+        required: false
+        description: "End date of trial period if applicable"
+        format: "iso8601"
+        examples: ["2025-01-16T00:00:00Z"]
+
+validation:
+  rules:
+    - name: "timestamp_consistency"
+      description: "updatedAt must be >= createdAt for all entities"
+      scope: "all"
+    - name: "subscription_period_logic"
+      description: "currentPeriodEnd must be after currentPeriodStart"
+      scope: "Subscription"
+    - name: "email_uniqueness"
+      description: "Email addresses should be unique within service context"
+      scope: ["Customer", "Contact"]
+    - name: "currency_amount_precision"
+      description: "Payment amounts must respect currency decimal precision"
+      scope: "Payment"
+    - name: "international_phone_format"
+      description: "Phone numbers must follow E.164 international format"
+      scope: ["Customer", "Contact"]
+
+compatibility:
+  version: "1.0.0"
+  breaking_changes_from_previous: []
+  migration_guide: "Initial production version - no migrations needed"
+  supported_services: ["stripe", "salesforce", "hubspot", "mailchimp", "shopify", "notion", "github"]
+  
+extensions:
+  custom_fields:
+    enabled: true
+    max_per_entity: 10
+    naming_convention: "custom_[a-z_]+"
+  service_specific:
+    stripe:
+      additional_fields: ["stripe_customer_id", "stripe_subscription_id"]
+    salesforce:
+      additional_fields: ["sf_account_id", "sf_lead_id"]
+    hubspot:
+      additional_fields: ["hs_contact_id", "hs_company_id"] 
