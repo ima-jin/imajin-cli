@@ -116,6 +116,11 @@ export class StripeServiceProvider extends ServiceProvider {
      * Boot the service provider and set up event listeners
      */
     async boot(): Promise<void> {
+        // Load existing business context if available
+        if (this.stripeService) {
+            await this.loadBusinessContext();
+        }
+
         // Set up event listeners for real-time coordination
         if (this.stripeService) {
             this.stripeService.on('customer-created', (event) => {
@@ -308,6 +313,36 @@ export class StripeServiceProvider extends ServiceProvider {
                 },
             ],
         };
+    }
+
+    /**
+     * Load existing business context for Stripe service
+     */
+    private async loadBusinessContext(): Promise<void> {
+        if (!this.stripeService) {
+            return;
+        }
+
+        try {
+            // Try to load existing business context
+            const { BusinessContextManager } = await import('../../context/BusinessContextManager.js');
+            const manager = new BusinessContextManager();
+            
+            if (await manager.configurationExists()) {
+                const domainModel = await manager.toDomainModel();
+                await this.stripeService.initializeWithBusinessContext(domainModel);
+                this.logger.info('Stripe service initialized with existing business context', {
+                    businessType: domainModel.businessType,
+                    entities: Object.keys(domainModel.entities)
+                });
+            } else {
+                this.logger.warn('No business context found. Run "imajin init setup" to create one.');
+            }
+        } catch (error) {
+            this.logger.warn('Failed to load business context, continuing without it', {
+                error: String(error)
+            });
+        }
     }
 
     /**
