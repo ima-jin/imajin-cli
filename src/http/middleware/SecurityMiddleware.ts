@@ -179,11 +179,12 @@ export class SecurityMiddleware {
                 // GitHub format: sha1=<signature>
                 return signatureHeader.replace(/^sha1=/, '');
 
-            case 'stripe':
+            case 'stripe': {
                 // Stripe format: t=timestamp,v1=signature
                 const parts = signatureHeader.split(',');
                 const signaturePart = parts.find(part => part.startsWith('v1='));
                 return signaturePart ? signaturePart.replace('v1=', '') : '';
+            }
 
             case 'generic':
             default:

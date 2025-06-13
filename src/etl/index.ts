@@ -26,18 +26,38 @@ export { BaseTransformer, BaseTransformerConfig, TransformRule } from './transfo
 // Main pipeline orchestration
 export { Pipeline, PipelineExecutionOptions, PipelineExecutionState } from './Pipeline.js';
 
-// Graph translation system
-export { BridgeRegistry } from './bridges/BridgeRegistry.js';
-export { GraphTranslationEngine } from './graphs/GraphTranslationEngine.js';
-export { GraphLoader } from './loaders/GraphLoader.js';
-export { GraphTransformer } from './transformers/GraphTransformer.js';
+// Core ETL Components
+export { ETLPipeline } from './core/ETLPipeline';
+export { ETLContext } from './core/ETLContext';
+export { ETLConfig } from './core/ETLConfig';
+export { ETLResult } from './core/ETLResult';
+export { ETLProgress } from './core/ETLProgress';
+export { ETLEvents } from './core/ETLEvents';
+export { Extractor } from './core/Extractor';
+export { Loader } from './core/Loader';
+export { Transformer } from './core/Transformer';
 
-// Graph models and schemas
+// Graph Components
+export { GraphExtractor } from './extractors/GraphExtractor';
+export { GraphLoader } from './loaders/GraphLoader';
+export { GraphTransformer } from './transformers/GraphTransformer';
+export { GraphTranslationEngine as GraphTranslator } from './graphs/GraphTranslationEngine';
+
+// Graph models and types
 export * from './graphs/models.js';
 
-// Re-export for convenience
+// Types
 export type {
-    BridgeConfiguration, ETLConfig, ETLContext, ETLEvents, ETLProgress, ETLResult, Extractor, GraphExtractionConfig, GraphExtractor, GraphLoadingConfig, GraphModel, GraphTransformationConfig, GraphTranslationResult, GraphTranslator, GraphLoader as IGraphLoader, GraphTransformer as IGraphTransformer, Loader,
-    PipelineDefinition, PipelineResult, PipelineStep, Transformer
-} from './core/interfaces.js';
+    // Core Types
+    PipelineStep,
+    PipelineDefinition,
+    PipelineResult,
+    // Graph Types
+    GraphSchema,
+    GraphModel,
+    GraphTranslationResult,
+    GraphTransformationConfig,
+    GraphExtractionConfig,
+    GraphLoadingConfig
+} from './core/interfaces';
 

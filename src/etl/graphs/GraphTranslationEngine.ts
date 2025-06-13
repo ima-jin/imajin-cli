@@ -8,49 +8,34 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- *
- * Integration Points:
- * - Graph-to-graph translation for user communication
- * - Standard model compatibility and bridging
- * - Context normalization for external graphs
- * - Efficient communication paths between compatible models
  */
 
 import { EventEmitter } from 'events';
 import {
-    BridgeConfiguration,
     ETLContext,
-    FieldMapping,
     GraphModel,
     GraphTranslationResult,
-    GraphTranslator,
-    TransformationRule
+    GraphTranslator
 } from '../core/interfaces.js';
-import {
-    STANDARD_MODELS,
-    StandardModelType
-} from './models.js';
+import { ModelFactory } from './models.js';
 
 /**
  * Main graph translation engine
  */
 export class GraphTranslationEngine extends EventEmitter {
     private translators = new Map<string, GraphTranslator>();
-    private bridges = new Map<string, BridgeConfiguration>();
-    private modelRegistry = STANDARD_MODELS;
 
     constructor() {
         super();
         this.initializeStandardTranslators();
-        this.generateStandardBridges();
     }
 
     /**
      * Check if two models can communicate directly (same model type)
      */
     canCommunicateDirectly(modelA: string, modelB: string): boolean {
-        if (modelA === modelB && modelA in this.modelRegistry) {
-            return true;
+        if (modelA === modelB) {
+            return ModelFactory.isModelRegistered(modelA);
         }
         return false;
     }
@@ -60,7 +45,7 @@ export class GraphTranslationEngine extends EventEmitter {
      */
     async translateGraph<T extends GraphModel, U extends GraphModel>(
         sourceGraph: T,
-        targetModel: StandardModelType,
+        targetModel: string,
         context: ETLContext
     ): Promise<GraphTranslationResult<U>> {
         const startTime = Date.now();
@@ -136,7 +121,7 @@ export class GraphTranslationEngine extends EventEmitter {
      */
     async normalizeToContext<T extends GraphModel>(
         externalGraph: unknown,
-        userContextModel: StandardModelType,
+        userContextModel: string,
         context: ETLContext
     ): Promise<GraphTranslationResult<T>> {
         const startTime = Date.now();
@@ -162,12 +147,18 @@ export class GraphTranslationEngine extends EventEmitter {
                 };
             }
 
+            // Get the model definition
+            const modelDef = ModelFactory.getModelDefinition(detectedModel);
+            if (!modelDef) {
+                throw new Error(`Model ${detectedModel} not found`);
+            }
+
             // Create a temporary graph object for translation
             const tempGraph: GraphModel = {
-                modelType: detectedModel as any,
-                version: '1.0.0',
-                schema: this.modelRegistry[detectedModel]?.schema || this.createFallbackSchema(),
-                compatibilityMap: this.modelRegistry[detectedModel]?.compatibility || this.createFallbackCompatibility(),
+                modelType: detectedModel,
+                version: modelDef.version,
+                schema: modelDef.schema,
+                compatibilityMap: modelDef.compatibility,
                 metadata: { source: 'external', normalized: true },
                 ...(externalGraph as any)
             };
@@ -192,30 +183,19 @@ export class GraphTranslationEngine extends EventEmitter {
     }
 
     /**
-     * Generate bridge configuration for translation between models
-     */
-    generateBridge(sourceModel: StandardModelType, targetModel: StandardModelType): BridgeConfiguration {
-        const bridgeKey = `${sourceModel}->${targetModel}`;
-
-        if (this.bridges.has(bridgeKey)) {
-            return this.bridges.get(bridgeKey)!;
-        }
-
-        // Generate new bridge configuration
-        const bridge = this.createBridge(sourceModel, targetModel);
-        this.bridges.set(bridgeKey, bridge);
-
-        return bridge;
-    }
-
-    /**
      * Get efficiency score for translation between models
      */
-    getEfficiency(sourceModel: StandardModelType, targetModel: StandardModelType): number {
+    getEfficiency(sourceModel: string, targetModel: string): number {
         if (sourceModel === targetModel) return 1.0;
 
-        const bridge = this.generateBridge(sourceModel, targetModel);
-        return bridge.efficiency;
+        const translatorKey = `${sourceModel}->${targetModel}`;
+        const translator = this.translators.get(translatorKey);
+
+        if (!translator) {
+            return 0.0;
+        }
+
+        return translator.getEfficiencyScore(sourceModel, targetModel);
     }
 
     /**
@@ -237,7 +217,7 @@ export class GraphTranslationEngine extends EventEmitter {
      * Initialize standard translators for built-in models
      */
     private initializeStandardTranslators(): void {
-        const modelTypes: StandardModelType[] = ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub'];
+        const modelTypes = ModelFactory.getModelNames();
 
         // Create translators for all model pairs
         for (const source of modelTypes) {
@@ -251,473 +231,147 @@ export class GraphTranslationEngine extends EventEmitter {
     }
 
     /**
-     * Generate standard bridge configurations
-     */
-    private generateStandardBridges(): void {
-        const modelTypes: StandardModelType[] = ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub'];
-
-        for (const source of modelTypes) {
-            for (const target of modelTypes) {
-                if (source !== target) {
-                    this.generateBridge(source, target);
-                }
-            }
-        }
-    }
-
-    /**
      * Create standard translator for model pair
      */
-    private createStandardTranslator(sourceModel: StandardModelType, targetModel: StandardModelType): GraphTranslator {
+    private createStandardTranslator(sourceModel: string, targetModel: string): GraphTranslator {
+        const engine = this;
         return {
-            name: `${sourceModel}-to-${targetModel}`,
+            name: `${sourceModel}-to-${targetModel}-translator`,
             sourceModel,
             targetModel,
             version: '1.0.0',
-
-            translate: async (sourceGraph: GraphModel, _context: ETLContext): Promise<GraphTranslationResult> => {
-                const mappings = this.getFieldMappings(sourceModel, targetModel);
-                const translatedGraph = await this.performTranslation(sourceGraph, mappings, targetModel);
+            async translate(sourceGraph: GraphModel, context: ETLContext): Promise<GraphTranslationResult> {
+                const translatedGraph = await engine.performTranslation(sourceGraph, targetModel);
+                const confidence = engine.calculateConfidence(sourceModel, targetModel);
+                const efficiency = engine.calculateEfficiency(sourceModel, targetModel);
 
                 return {
                     success: true,
                     translatedGraph,
-                    translationMap: this.createTranslationMap(mappings),
-                    lossyFields: this.identifyLossyFields(mappings),
-                    addedFields: this.identifyAddedFields(mappings),
-                    confidence: this.calculateConfidence(sourceModel, targetModel),
+                    translationMap: {}, // TODO: Implement field mapping
+                    lossyFields: [], // TODO: Track lost fields
+                    addedFields: [], // TODO: Track added fields
+                    confidence,
                     metadata: {
+                        translationType: 'standard',
+                        efficiency,
                         sourceModel,
-                        targetModel,
-                        mappingCount: mappings.length
+                        targetModel
                     }
                 };
             },
-
-            canTranslate: (source: string, target: string): boolean => {
+            canTranslate(source: string, target: string): boolean {
                 return source === sourceModel && target === targetModel;
             },
-
-            getBridgeConfig: (): BridgeConfiguration => {
-                return this.generateBridge(sourceModel, targetModel);
-            },
-
-            getEfficiencyScore: (source: string, target: string): number => {
-                return this.calculateEfficiency(source as StandardModelType, target as StandardModelType);
+            getEfficiencyScore(source: string, target: string): number {
+                return engine.calculateEfficiency(source, target);
             }
         };
     }
 
     /**
-     * Create bridge configuration between models
-     */
-    private createBridge(sourceModel: StandardModelType, targetModel: StandardModelType): BridgeConfiguration {
-        const mappings = this.getFieldMappings(sourceModel, targetModel);
-        const transformations = this.getTransformationRules(sourceModel, targetModel);
-
-        return {
-            id: `${sourceModel}-${targetModel}-bridge`,
-            sourceModel,
-            targetModel,
-            mappings,
-            transformations,
-            efficiency: this.calculateEfficiency(sourceModel, targetModel),
-            lossyFields: this.identifyLossyFields(mappings),
-            metadata: {
-                created: new Date().toISOString(),
-                version: '1.0.0'
-            }
-        };
-    }
-
-    /**
-     * Get field mappings between models
-     */
-    private getFieldMappings(sourceModel: StandardModelType, targetModel: StandardModelType): FieldMapping[] {
-        // Standard mappings that work across all models
-        const baseMappings: FieldMapping[] = [
-            {
-                sourceField: 'identity.id',
-                targetField: 'identity.id',
-                required: true
-            },
-            {
-                sourceField: 'identity.name',
-                targetField: 'identity.name',
-                required: true
-            },
-            {
-                sourceField: 'identity.email',
-                targetField: 'identity.email',
-                required: true
-            },
-            {
-                sourceField: 'social.connections',
-                targetField: 'social.connections',
-                required: false
-            }
-        ];
-
-        // Model-specific mappings
-        const specificMappings = this.getModelSpecificMappings(sourceModel, targetModel);
-
-        return [...baseMappings, ...specificMappings];
-    }
-
-    /**
-     * Get model-specific field mappings
-     */
-    private getModelSpecificMappings(sourceModel: StandardModelType, targetModel: StandardModelType): FieldMapping[] {
-        const mappings: FieldMapping[] = [];
-
-        // Social Commerce to Creative Portfolio
-        if (sourceModel === 'social-commerce' && targetModel === 'creative-portfolio') {
-            mappings.push(
-                {
-                    sourceField: 'catalog.products',
-                    targetField: 'portfolio.artworks',
-                    transformation: 'products-to-artworks',
-                    required: false
-                },
-                {
-                    sourceField: 'catalog.events',
-                    targetField: 'portfolio.exhibitions',
-                    transformation: 'events-to-exhibitions',
-                    required: false
-                }
-            );
-        }
-
-        // Creative Portfolio to Social Commerce
-        if (sourceModel === 'creative-portfolio' && targetModel === 'social-commerce') {
-            mappings.push(
-                {
-                    sourceField: 'portfolio.artworks',
-                    targetField: 'catalog.products',
-                    transformation: 'artworks-to-products',
-                    required: false
-                },
-                {
-                    sourceField: 'portfolio.exhibitions',
-                    targetField: 'catalog.events',
-                    transformation: 'exhibitions-to-events',
-                    required: false
-                }
-            );
-        }
-
-        // Professional Network mappings
-        if (sourceModel === 'professional-network') {
-            mappings.push({
-                sourceField: 'experience.skills',
-                targetField: targetModel === 'social-commerce' ? 'catalog.services' : 'metadata.skills',
-                transformation: 'skills-to-services',
-                required: false
-            });
-        }
-
-        // Community Hub mappings
-        if (sourceModel === 'community-hub') {
-            mappings.push(
-                {
-                    sourceField: 'community.events',
-                    targetField: 'catalog.events',
-                    required: false
-                },
-                {
-                    sourceField: 'resources.items',
-                    targetField: 'catalog.products',
-                    transformation: 'resources-to-products',
-                    required: false
-                }
-            );
-        }
-
-        return mappings;
-    }
-
-    /**
-     * Get transformation rules for model translation
-     */
-    private getTransformationRules(_sourceModel: StandardModelType, _targetModel: StandardModelType): TransformationRule[] {
-        return [
-            {
-                name: 'products-to-artworks',
-                sourceFields: ['catalog.products'],
-                targetField: 'portfolio.artworks',
-                rule: (products: any[]) => {
-                    return products.map(product => ({
-                        id: product.id,
-                        title: product.name,
-                        description: product.description,
-                        medium: product.category,
-                        year: new Date().getFullYear(),
-                        price: product.price,
-                        currency: product.currency,
-                        isForSale: product.isActive,
-                        images: product.images,
-                        tags: product.tags,
-                        created: product.created
-                    }));
-                }
-            },
-            {
-                name: 'artworks-to-products',
-                sourceFields: ['portfolio.artworks'],
-                targetField: 'catalog.products',
-                rule: (artworks: any[]) => {
-                    return artworks.map(artwork => ({
-                        id: artwork.id,
-                        name: artwork.title,
-                        description: artwork.description || `${artwork.medium} artwork from ${artwork.year}`,
-                        price: artwork.price || 0,
-                        currency: artwork.currency,
-                        category: artwork.medium,
-                        tags: artwork.tags,
-                        images: artwork.images,
-                        inventory: artwork.isForSale ? 1 : 0,
-                        isActive: artwork.isForSale,
-                        created: artwork.created
-                    }));
-                }
-            },
-            {
-                name: 'events-to-exhibitions',
-                sourceFields: ['catalog.events'],
-                targetField: 'portfolio.exhibitions',
-                rule: (events: any[]) => {
-                    return events.map(event => ({
-                        id: event.id,
-                        title: event.title,
-                        description: event.description,
-                        venue: event.location || 'Virtual',
-                        startDate: event.startDate,
-                        endDate: event.endDate || event.startDate,
-                        artworkIds: [],
-                        isGroup: true,
-                        created: event.created
-                    }));
-                }
-            },
-            {
-                name: 'skills-to-services',
-                sourceFields: ['experience.skills'],
-                targetField: 'catalog.services',
-                rule: (skills: any[]) => {
-                    return skills.map(skill => ({
-                        id: `skill-${skill.id}`,
-                        name: skill.name,
-                        description: `Professional ${skill.name} services`,
-                        category: skill.category,
-                        tags: [skill.level, ...skill.certifications],
-                        isAvailable: true,
-                        created: skill.created
-                    }));
-                }
-            }
-        ];
-    }
-
-    /**
-     * Perform the actual translation
+     * Perform the actual translation between models
      */
     private async performTranslation(
         sourceGraph: GraphModel,
-        mappings: FieldMapping[],
-        targetModel: StandardModelType
+        targetModel: string
     ): Promise<GraphModel> {
-        const translated: any = {
+        const targetDef = ModelFactory.getModelDefinition(targetModel);
+        if (!targetDef) {
+            throw new Error(`Target model ${targetModel} not found`);
+        }
+
+        // Create new graph with target model structure
+        const translatedGraph: GraphModel = {
             modelType: targetModel,
-            version: '1.0.0',
-            schema: this.modelRegistry[targetModel].schema,
-            compatibilityMap: this.modelRegistry[targetModel].compatibility,
+            version: targetDef.version,
+            schema: targetDef.schema,
+            compatibilityMap: targetDef.compatibility,
             metadata: {
                 ...sourceGraph.metadata,
                 translatedFrom: sourceGraph.modelType,
-                translatedAt: new Date().toISOString()
+                translationTimestamp: new Date()
             }
         };
 
-        // Apply field mappings
-        for (const mapping of mappings) {
-            const sourceValue = this.getNestedValue(sourceGraph, mapping.sourceField);
-            if (sourceValue !== undefined) {
-                if (mapping.transformation) {
-                    const transformationRule = this.getTransformationRules(sourceGraph.modelType as StandardModelType, targetModel)
-                        .find(rule => rule.name === mapping.transformation);
+        // TODO: Implement field mapping and transformation logic
+        // This would involve mapping fields from source to target based on schema compatibility
 
-                    if (transformationRule) {
-                        const transformedValue = transformationRule.rule(sourceValue);
-                        this.setNestedValue(translated, mapping.targetField, transformedValue);
-                    }
-                } else {
-                    this.setNestedValue(translated, mapping.targetField, sourceValue);
-                }
-            } else if (mapping.required && mapping.defaultValue !== undefined) {
-                this.setNestedValue(translated, mapping.targetField, mapping.defaultValue);
+        return translatedGraph;
+    }
+
+    /**
+     * Calculate confidence score for translation
+     */
+    private calculateConfidence(sourceModel: string, targetModel: string): number {
+        const similarity = this.getModelSimilarity(sourceModel, targetModel);
+        return Math.min(similarity, 0.95); // Cap at 0.95 to indicate some uncertainty
+    }
+
+    /**
+     * Calculate efficiency score for translation
+     */
+    private calculateEfficiency(sourceModel: string, targetModel: string): number {
+        const similarity = this.getModelSimilarity(sourceModel, targetModel);
+        return similarity * 0.8; // Efficiency is typically lower than confidence
+    }
+
+    /**
+     * Get similarity score between models
+     */
+    private getModelSimilarity(sourceModel: string, targetModel: string): number {
+        const sourceDef = ModelFactory.getModelDefinition(sourceModel);
+        const targetDef = ModelFactory.getModelDefinition(targetModel);
+
+        if (!sourceDef || !targetDef) {
+            return 0;
+        }
+
+        // Check if models are directly compatible
+        if (sourceDef.compatibility.directCompatible.includes(targetModel)) {
+            return 0.9;
+        }
+
+        // Check if translation is possible
+        if (sourceDef.compatibility.translatableTo.includes(targetModel)) {
+            return 0.7;
+        }
+
+        return 0.3; // Default low similarity for incompatible models
+    }
+
+    /**
+     * Detect the model type of an external graph
+     */
+    private async detectGraphModel(externalGraph: unknown): Promise<string> {
+        const graph = externalGraph as Record<string, any>;
+        
+        // Check for explicit model type
+        if (graph.modelType && ModelFactory.isModelRegistered(graph.modelType)) {
+            return graph.modelType;
+        }
+
+        // Check for model-specific fields
+        const modelTypes = ModelFactory.getModelNames();
+        for (const modelType of modelTypes) {
+            const modelDef = ModelFactory.getModelDefinition(modelType);
+            if (!modelDef) continue;
+
+            // Check if graph has required fields for this model
+            const requiredFields = Object.keys(modelDef.schema.entities);
+            if (this.hasFields(graph, requiredFields)) {
+                return modelType;
             }
         }
 
-        return translated;
+        // Default to content model if no match found
+        return 'content';
     }
 
     /**
-     * Calculate translation confidence based on model compatibility
+     * Check if object has all specified fields
      */
-    private calculateConfidence(sourceModel: StandardModelType, targetModel: StandardModelType): number {
-        const efficiency = this.calculateEfficiency(sourceModel, targetModel);
-
-        // Confidence is based on efficiency and model similarity
-        const similarityBonus = this.getModelSimilarity(sourceModel, targetModel);
-
-        return Math.min(0.95, efficiency * 0.7 + similarityBonus * 0.3);
-    }
-
-    /**
-     * Calculate efficiency score between models
-     */
-    private calculateEfficiency(sourceModel: StandardModelType, targetModel: StandardModelType): number {
-        if (sourceModel === targetModel) return 1.0;
-
-        // Base efficiency scores between different model types
-        const efficiencyMatrix: Record<string, Record<string, number>> = {
-            'social-commerce': {
-                'creative-portfolio': 0.75,
-                'professional-network': 0.65,
-                'community-hub': 0.80
-            },
-            'creative-portfolio': {
-                'social-commerce': 0.75,
-                'professional-network': 0.60,
-                'community-hub': 0.70
-            },
-            'professional-network': {
-                'social-commerce': 0.65,
-                'creative-portfolio': 0.60,
-                'community-hub': 0.85
-            },
-            'community-hub': {
-                'social-commerce': 0.80,
-                'creative-portfolio': 0.70,
-                'professional-network': 0.85
-            }
-        };
-
-        return efficiencyMatrix[sourceModel]?.[targetModel] || 0.50;
-    }
-
-    /**
-     * Get model similarity score
-     */
-    private getModelSimilarity(sourceModel: StandardModelType, targetModel: StandardModelType): number {
-        if (sourceModel === targetModel) return 1.0;
-
-        // Models with similar concepts have higher similarity
-        const similarityMatrix: Record<string, Record<string, number>> = {
-            'social-commerce': {
-                'creative-portfolio': 0.6, // Both have products/items for sale
-                'professional-network': 0.4, // Both have profiles
-                'community-hub': 0.7 // Both are social
-            },
-            'creative-portfolio': {
-                'social-commerce': 0.6,
-                'professional-network': 0.5, // Both showcase work
-                'community-hub': 0.5
-            },
-            'professional-network': {
-                'social-commerce': 0.4,
-                'creative-portfolio': 0.5,
-                'community-hub': 0.8 // Both are networking focused
-            },
-            'community-hub': {
-                'social-commerce': 0.7,
-                'creative-portfolio': 0.5,
-                'professional-network': 0.8
-            }
-        };
-
-        return similarityMatrix[sourceModel]?.[targetModel] || 0.3;
-    }
-
-    /**
-     * Detect graph model type from external data
-     */
-    private async detectGraphModel(externalGraph: unknown): Promise<StandardModelType> {
-        const graph = externalGraph as any;
-
-        // Look for characteristic fields of each model
-        if (graph.catalog?.products || graph.commerce?.transactions) {
-            return 'social-commerce';
-        }
-
-        if (graph.portfolio?.artworks || graph.professional?.commissions) {
-            return 'creative-portfolio';
-        }
-
-        if (graph.experience?.positions || graph.network?.recommendations) {
-            return 'professional-network';
-        }
-
-        if (graph.community?.groups || graph.resources?.items) {
-            return 'community-hub';
-        }
-
-        // Default fallback
-        return 'social-commerce';
-    }
-
-    /**
-     * Helper methods for nested object manipulation
-     */
-    private getNestedValue(obj: any, path: string): any {
-        return path.split('.').reduce((current, key) => current?.[key], obj);
-    }
-
-    private setNestedValue(obj: any, path: string, value: any): void {
-        const keys = path.split('.');
-        const lastKey = keys.pop()!;
-        const target = keys.reduce((current, key) => {
-            if (!current[key]) current[key] = {};
-            return current[key];
-        }, obj);
-        target[lastKey] = value;
-    }
-
-    private createTranslationMap(mappings: FieldMapping[]): Record<string, string> {
-        const map: Record<string, string> = {};
-        mappings.forEach(mapping => {
-            map[mapping.sourceField] = mapping.targetField;
-        });
-        return map;
-    }
-
-    private identifyLossyFields(mappings: FieldMapping[]): string[] {
-        return mappings
-            .filter(mapping => mapping.transformation && mapping.transformation.includes('lossy'))
-            .map(mapping => mapping.sourceField);
-    }
-
-    private identifyAddedFields(mappings: FieldMapping[]): string[] {
-        return mappings
-            .filter(mapping => mapping.defaultValue !== undefined)
-            .map(mapping => mapping.targetField);
-    }
-
-    private createFallbackSchema(): any {
-        return {
-            version: '1.0.0',
-            entities: {},
-            relationships: {},
-            constraints: {}
-        };
-    }
-
-    private createFallbackCompatibility(): any {
-        return {
-            directCompatible: [],
-            translatableFrom: ['custom'],
-            translatableTo: ['custom'],
-            bridgeRequired: []
-        };
+    private hasFields(obj: Record<string, any>, fields: string[]): boolean {
+        return fields.every(field => field in obj);
     }
 } 

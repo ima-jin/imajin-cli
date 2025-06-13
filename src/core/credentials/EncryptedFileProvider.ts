@@ -20,6 +20,7 @@ import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'crypt
 import { promises as fs } from 'fs';
 import { homedir } from 'os';
 import { dirname, join } from 'path';
+import { ERROR_MESSAGES } from '../../constants/CommonStrings.js';
 import { BaseCredentialProvider } from './BaseCredentialProvider.js';
 import type { CredentialData, EncryptionConfig } from './interfaces.js';
 
@@ -71,7 +72,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
     public async store(service: string, credentials: CredentialData): Promise<void> {
         try {
             if (!this.masterPassword) {
-                throw new Error('Master password not set. Call setMasterPassword() first.');
+                throw new Error(ERROR_MESSAGES.MASTER_PASSWORD_NOT_SET);
             }
 
             const store = await this.loadStore();
@@ -134,7 +135,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
     public async delete(service: string): Promise<void> {
         try {
             if (!this.masterPassword) {
-                throw new Error('Master password not set. Call setMasterPassword() first.');
+                throw new Error(ERROR_MESSAGES.MASTER_PASSWORD_NOT_SET);
             }
 
             const store = await this.loadStore();
@@ -185,7 +186,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
     public async clear(): Promise<void> {
         try {
             if (!this.masterPassword) {
-                throw new Error('Master password not set. Call setMasterPassword() first.');
+                throw new Error(ERROR_MESSAGES.MASTER_PASSWORD_NOT_SET);
             }
 
             const store = await this.loadStore();

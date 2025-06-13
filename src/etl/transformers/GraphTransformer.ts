@@ -12,33 +12,32 @@
  * Integration Points:
  * - Graph-to-graph translation for user communication
  * - Context normalization for external graphs
- * - Bridge-based transformation optimization
  * - Real-time translation with progress tracking
  */
 
 import { z } from 'zod';
-import { BridgeRegistry } from '../bridges/BridgeRegistry.js';
+import { ALL_MODEL_TYPES } from '../../constants/ETLConstants.js';
 import {
     ETLContext,
     ETLResult,
     GraphModel,
     GraphTransformationConfig,
     GraphTranslationResult,
-    GraphTransformer as IGraphTransformer
+    Transformer
 } from '../core/interfaces.js';
-import { GraphTranslationEngine } from '../graphs/GraphTranslationEngine.js';
-import { StandardModelType } from '../graphs/models.js';
+import { ModelFactory } from '../graphs/models.js';
 import { BaseTransformer } from './BaseTransformer.js';
+import { GraphTranslationEngine } from '../graphs/GraphTranslationEngine.js';
 
 /**
  * Graph transformer implementation
  */
-export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> implements IGraphTransformer {
+export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> implements Transformer<GraphModel, GraphModel> {
     public readonly name = 'GraphTransformer';
     public readonly description = 'Transforms graphs between different standard models';
 
     public readonly inputSchema = z.object({
-        modelType: z.enum(['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub', 'custom']),
+        modelType: z.enum(ALL_MODEL_TYPES),
         version: z.string(),
         schema: z.object({
             version: z.string(),
@@ -49,14 +48,13 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
         compatibilityMap: z.object({
             directCompatible: z.array(z.string()),
             translatableFrom: z.array(z.string()),
-            translatableTo: z.array(z.string()),
-            bridgeRequired: z.array(z.string())
+            translatableTo: z.array(z.string())
         }),
         metadata: z.record(z.any())
     }) as z.ZodType<GraphModel, z.ZodTypeDef, GraphModel>;
 
     public readonly outputSchema = z.object({
-        modelType: z.enum(['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub', 'custom']),
+        modelType: z.enum(ALL_MODEL_TYPES),
         version: z.string(),
         schema: z.object({
             version: z.string(),
@@ -67,19 +65,16 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
         compatibilityMap: z.object({
             directCompatible: z.array(z.string()),
             translatableFrom: z.array(z.string()),
-            translatableTo: z.array(z.string()),
-            bridgeRequired: z.array(z.string())
+            translatableTo: z.array(z.string())
         }),
         metadata: z.record(z.any())
     }) as z.ZodType<GraphModel, z.ZodTypeDef, GraphModel>;
 
     private translationEngine: GraphTranslationEngine;
-    private bridgeRegistry: BridgeRegistry;
 
     constructor() {
         super();
         this.translationEngine = new GraphTranslationEngine();
-        this.bridgeRegistry = new BridgeRegistry();
     }
 
     /**
@@ -152,15 +147,9 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
             // Perform translation
             const result = await this.translationEngine.translateGraph(
                 sourceGraph,
-                config.targetModel as StandardModelType,
+                config.targetModel,
                 context
             );
-
-            // Update bridge usage statistics
-            const bridge = this.bridgeRegistry.getBridge(sourceGraph.modelType, config.targetModel);
-            if (bridge) {
-                this.bridgeRegistry.updateUsageStats(bridge.id, result.confidence);
-            }
 
             return result;
 
@@ -200,7 +189,7 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
 
             const result = await this.translationEngine.normalizeToContext(
                 externalGraph,
-                targetModel as StandardModelType,
+                targetModel,
                 context
             );
 
@@ -247,34 +236,24 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
 
         try {
             const transformedData: GraphModel[] = [];
+            let processed = 0;
+            const total = data.length;
 
-            for (let i = 0; i < data.length; i++) {
-                const sourceGraph = data[i];
-
-                if (!sourceGraph) {
-                    continue; // Skip undefined/null graphs
+            for (const item of data) {
+                const result = await this.transformGraph(item, config, context);
+                if (result.success && result.translatedGraph) {
+                    transformedData.push(result.translatedGraph);
                 }
+                processed++;
 
                 context.events.emit('progress', {
                     stage: 'transform',
-                    step: 'batch-graph-transformation',
-                    processed: i,
-                    total: data.length,
-                    percentage: (i / data.length) * 100,
-                    message: `Transforming graph ${i + 1} of ${data.length}`
+                    step: 'graph-transformation',
+                    processed,
+                    total,
+                    percentage: (processed / total) * 100,
+                    message: `Transformed ${processed}/${total} graphs`
                 });
-
-                const result = await this.transformGraph(sourceGraph, config, context);
-
-                if (result.success && result.translatedGraph) {
-                    transformedData.push(result.translatedGraph);
-                } else {
-                    // Handle transformation failure based on configuration
-                    if (!config.allowLossyTranslation) {
-                        throw new Error(`Failed to transform graph ${i}: ${result.error?.message}`);
-                    }
-                    // Skip failed transformations if lossy translation is allowed
-                }
             }
 
             return {
@@ -282,10 +261,9 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
                 data: transformedData,
                 processed: transformedData.length,
                 metadata: {
-                    transformer: this.name,
-                    targetModel: config.targetModel,
-                    originalCount: data.length,
-                    transformedCount: transformedData.length
+                    duration: Date.now() - startTime,
+                    sourceModel: data[0]?.modelType,
+                    targetModel: config.targetModel
                 },
                 duration: Date.now() - startTime
             };
@@ -296,8 +274,7 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
                 error: error as Error,
                 processed: 0,
                 metadata: {
-                    transformer: this.name,
-                    targetModel: config.targetModel
+                    duration: Date.now() - startTime
                 },
                 duration: Date.now() - startTime
             };
@@ -308,46 +285,28 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
      * Transform a single graph item
      */
     async transformItem(item: GraphModel, context: ETLContext): Promise<GraphModel> {
-        // For single item transformation, we need configuration
-        // This would typically be set up in the pipeline context
-        const config: GraphTransformationConfig = {
-            targetModel: 'social-commerce', // Default fallback
-            preserveMetadata: true,
-            allowLossyTranslation: false
-        };
-
-        const result = await this.transformGraph(item, config, context);
-
-        if (result.success && result.translatedGraph) {
-            return result.translatedGraph;
-        } else {
-            throw new Error(`Failed to transform graph item: ${result.error?.message}`);
+        const result = await this.transformGraph(item, { targetModel: item.modelType }, context);
+        if (!result.success || !result.translatedGraph) {
+            throw new Error(`Graph transformation failed: ${result.error?.message || 'Unknown error'}`);
         }
+        return result.translatedGraph;
     }
 
     /**
-     * Get available transformation targets for a source model
+     * Get available target models for a source model
      */
     getAvailableTargets(sourceModel: string): string[] {
-        return this.bridgeRegistry.getBridgesFromModel(sourceModel)
-            .map(bridge => bridge.targetModel);
+        return this.translationEngine.getAvailableTranslators()
+            .filter((key: string) => key.startsWith(`${sourceModel}->`))
+            .map((key: string) => key.split('->')[1])
+            .filter((target: string | undefined): target is string => target !== undefined);
     }
 
     /**
      * Get transformation efficiency score
      */
     getTransformationEfficiency(sourceModel: string, targetModel: string): number {
-        return this.translationEngine.getEfficiency(
-            sourceModel as StandardModelType,
-            targetModel as StandardModelType
-        );
-    }
-
-    /**
-     * Get bridge configuration for model pair
-     */
-    getBridgeConfiguration(sourceModel: string, targetModel: string) {
-        return this.bridgeRegistry.getBridge(sourceModel, targetModel);
+        return this.translationEngine.getEfficiency(sourceModel, targetModel);
     }
 
     /**
@@ -358,32 +317,22 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
             return false;
         }
 
-        // Validate target model
-        const validModels = ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub'];
-        if (!validModels.includes(config.targetModel)) {
+        if (!config.targetModel) {
             return false;
         }
 
-        return true;
+        return ModelFactory.isModelRegistered(config.targetModel);
     }
 
     /**
-     * Get metadata about the transformer
+     * Get transformer metadata
      */
     async getMetadata(): Promise<Record<string, any>> {
         return {
             name: this.name,
             description: this.description,
-            supportedModels: ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub'],
-            availableTranslators: this.translationEngine.getAvailableTranslators(),
-            bridgeCount: this.bridgeRegistry.getAllBridges().length,
-            capabilities: [
-                'graph-to-graph-translation',
-                'context-normalization',
-                'batch-transformation',
-                'efficiency-optimization',
-                'lossy-transformation-support'
-            ]
+            supportedModels: ModelFactory.getModelNames(),
+            version: '1.0.0'
         };
     }
 } 

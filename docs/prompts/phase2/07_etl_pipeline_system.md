@@ -3,92 +3,142 @@
 **Status:** ⏳ **PENDING**  
 **Phase:** 2 - Infrastructure Components  
 **Estimated Time:** 12-15 hours  
-**Dependencies:** Service Providers, Type System, Event System  
+**Dependencies:** Service Providers, Type System, Event System, Plugin System  
 
 ---
 
 ## CONTEXT
 Create a modern TypeScript ETL (Extract, Transform, Load) architecture for imajin-cli that enables:
 1. **Traditional data processing** workflows and service integrations
-2. **Graph-to-Graph translation** between standard graph models (social-commerce, creative-portfolio, professional-network)
+2. **Graph-to-Graph translation** between different graph models
 3. **Context normalization** where users can translate any external graph into their chosen model
-4. **Universal communication** between nodes using the same standard models
+4. **Universal communication** between nodes using standard models
+5. **AI-composable** operations through clear CLI interfaces
+6. **Human-readable** configuration and output formats
 
 ## ARCHITECTURAL VISION
 **Dual-Purpose ETL System:**
-- **Service ETL**: Traditional API service data transformations (Stripe → Internal, etc.)
-- **Graph ETL**: Translation between standard graph models for user-to-user communication
-- **Context ETL**: Normalize external graphs into user's chosen context/model
-- **Bridge ETL**: Efficient communication paths between compatible models
+- **Service ETL**: Traditional API service data transformations
+- **Graph ETL**: Translation between graph models
+- **Context ETL**: Normalize external graphs to user's context
+- **Bridge ETL**: Simple, composable bridges between models
 
 ## DELIVERABLES
-1. `src/etl/core/` - ETL base abstractions (enhanced)
-2. `src/etl/extractors/` - Data extraction components (services + graphs)
-3. `src/etl/transformers/` - Data transformation logic (enhanced with graph translation)
-4. `src/etl/loaders/` - Data loading components (enhanced)
-5. `src/etl/Pipeline.ts` - ETL orchestration system (enhanced)
-6. `src/etl/graphs/` - **NEW**: Graph model definitions and translators
-7. `src/etl/bridges/` - **NEW**: Graph-to-graph bridge configurations
-8. Integration with Command Pattern and Event System
+1. `src/etl/core/` - ETL base abstractions
+2. `src/etl/extractors/` - Data extraction components
+3. `src/etl/transformers/` - Data transformation logic
+4. `src/etl/loaders/` - Data loading components
+5. `src/etl/Pipeline.ts` - ETL orchestration system
+6. `src/etl/graphs/` - Graph model definitions
+7. `src/etl/bridges/` - Bridge system
+8. CLI commands for ETL operations
 
 ## IMPLEMENTATION REQUIREMENTS
 
-### 1. Enhanced ETL Abstractions
+### 1. CLI Command Structure
 ```typescript
-// Base ETL interfaces (existing)
-interface Extractor<TInput, TOutput> {
-  extract(input: TInput): Promise<TOutput>;
-  validate(input: TInput): boolean;
+// Bridge Management Commands
+class BridgeCommand extends BaseCommand {
+    async execute() {
+        // List available bridges
+        // Show bridge details
+        // Create new bridge
+    }
 }
 
-interface Transformer<TInput, TOutput> {
-  transform(input: TInput): Promise<TOutput>;
-  getSchema(): TransformationSchema;
-}
-
-interface Loader<TInput> {
-  load(data: TInput): Promise<LoadResult>;
-  getBatchSize(): number;
-}
-
-// NEW: Graph translation interfaces
-interface GraphTranslator<TSource extends GraphModel, TTarget extends GraphModel> {
-  translate(sourceGraph: TSource): Promise<TTarget>;
-  canTranslate(sourceModel: string, targetModel: string): boolean;
-  getBridgeConfig(): BridgeConfiguration;
-  getEfficiencyScore(): number; // Higher = less transformation needed
+// Graph Translation Commands
+class TranslateCommand extends BaseCommand {
+    async execute() {
+        // Translate between graph models
+        // Show translation options
+        // Configure translation
+    }
 }
 ```
 
-### 2. Graph Translation Engine
+### 2. Human-Readable Configuration Format
+```yaml
+# bridge-config.yaml
+source: social-commerce
+target: creative-portfolio
+mappings:
+  catalog.products: portfolio.artworks
+  catalog.services: professional.commissions
+  catalog.events: portfolio.exhibitions
+transformations:
+  products-to-artworks:
+    source: catalog.products
+    target: portfolio.artworks
+    rules:
+      - name: title
+        from: name
+      - name: description
+        from: description
+      - name: medium
+        from: category
+```
+
+### 3. CLI Help Text Examples
+```bash
+# List available bridges
+$ imajin bridge list
+Available Bridges:
+  social-commerce -> creative-portfolio
+  creative-portfolio -> professional-network
+  ...
+
+# Show bridge details
+$ imajin bridge show social-commerce-to-creative-portfolio
+Bridge: social-commerce-to-creative-portfolio
+Source: social-commerce
+Target: creative-portfolio
+Mappings:
+  catalog.products -> portfolio.artworks
+  catalog.services -> professional.commissions
+  ...
+
+# Create new bridge
+$ imajin bridge create
+? Source model: social-commerce
+? Target model: creative-portfolio
+? Add field mapping: catalog.products -> portfolio.artworks
+? Add another mapping? (y/n)
+```
+
+### 4. Bridge Definition
 ```typescript
-export class GraphTranslationEngine {
-  // Direct communication (same models - no ETL needed)
-  canCommunicateDirectly(modelA: string, modelB: string): boolean;
-  
-  // Translation required (different models)
-  async translateGraph<T extends GraphModel, U extends GraphModel>(
-    sourceGraph: T, 
-    targetModel: string
-  ): Promise<U>;
-  
-  // Context normalization - translate ANY external graph to user's model
-  async normalizeToContext<T extends GraphModel>(
-    externalGraph: unknown,
-    userContextModel: string
-  ): Promise<T>;
+interface Bridge {
+    source: string;
+    target: string;
+    mappings: Record<string, string>;
+    transformations?: {
+        [key: string]: {
+            source: string;
+            target: string;
+            rules: Array<{
+                name: string;
+                from: string;
+            }>;
+        };
+    };
 }
 ```
 
 ## SUCCESS CRITERIA
-- [ ] **Traditional ETL**: Service data flows work (existing functionality preserved)
-- [ ] **Graph Translation**: Can translate between all standard graph models
-- [ ] **Direct Communication**: Same-model graphs communicate without ETL overhead
+- [ ] **CLI Interface**: Clear, intuitive commands for ETL operations
+- [ ] **AI Composable**: Help text enables AI to understand and compose operations
+- [ ] **Human Readable**: Configuration and output are easy to understand
+- [ ] **Graph Translation**: Can translate between different graph models
+- [ ] **Direct Communication**: Same-model graphs communicate without ETL
 - [ ] **Context Normalization**: External graphs can be normalized to user's context
-- [ ] **CLI Integration**: Graph operations are accessible via intuitive commands
-- [ ] **Real-time Capable**: Graph translations can happen in real-time for live workflows
+- [ ] **Real-time Capable**: Graph translations can happen in real-time
 
----
+## INTEGRATION POINTS
+- CLI: Clear command structure and help text
+- Configuration: Human-readable YAML/JSON format
+- Plugin System: Bridge definitions as plugins
+- Event System: Bridge operations emit events
+- Type System: Basic type safety without over-constraining
 
 ## NEXT STEP
 After completion, update `docs/DEVELOPMENT_PROGRESS.md`:

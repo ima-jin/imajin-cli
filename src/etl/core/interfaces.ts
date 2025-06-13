@@ -222,14 +222,13 @@ export interface CompatibilityMatrix {
     readonly directCompatible: string[];
     readonly translatableFrom: string[];
     readonly translatableTo: string[];
-    readonly bridgeRequired: string[];
 }
 
 /**
  * Base graph model interface
  */
 export interface GraphModel {
-    readonly modelType: 'social-commerce' | 'creative-portfolio' | 'professional-network' | 'community-hub' | 'custom';
+    readonly modelType: string;
     readonly version: string;
     readonly schema: GraphSchema;
     readonly compatibilityMap: CompatibilityMatrix;
@@ -270,11 +269,6 @@ export interface GraphTranslator<TSource extends GraphModel = GraphModel, TTarge
     canTranslate(sourceModel: string, targetModel: string): boolean;
 
     /**
-     * Get bridge configuration for this translation
-     */
-    getBridgeConfig(): BridgeConfiguration;
-
-    /**
      * Get efficiency score (higher = less transformation needed)
      */
     getEfficiencyScore(sourceModel: string, targetModel: string): number;
@@ -286,39 +280,12 @@ export interface GraphTranslator<TSource extends GraphModel = GraphModel, TTarge
 }
 
 /**
- * Bridge configuration for graph translation
+ * Graph transformation configuration
  */
-export interface BridgeConfiguration {
-    readonly id: string;
-    readonly sourceModel: string;
+export interface GraphTransformationConfig extends ETLConfig {
     readonly targetModel: string;
-    readonly mappings: FieldMapping[];
-    readonly transformations: TransformationRule[];
-    readonly efficiency: number;
-    readonly lossyFields: string[];
-    readonly metadata: Record<string, any>;
-}
-
-/**
- * Field mapping for graph translation
- */
-export interface FieldMapping {
-    readonly sourceField: string;
-    readonly targetField: string;
-    readonly transformation?: string;
-    readonly required: boolean;
-    readonly defaultValue?: any;
-}
-
-/**
- * Transformation rule for field mapping
- */
-export interface TransformationRule {
-    readonly name: string;
-    readonly sourceFields: string[];
-    readonly targetField: string;
-    readonly rule: (sourceData: any) => any;
-    readonly validation?: z.ZodSchema;
+    readonly preserveMetadata?: boolean;
+    readonly allowLossyTranslation?: boolean;
 }
 
 /**
@@ -352,41 +319,6 @@ export interface GraphExtractor<TOutput extends GraphModel = GraphModel> extends
      * Get compatibility information for the source
      */
     getCompatibility(config: GraphExtractionConfig): Promise<CompatibilityMatrix>;
-}
-
-/**
- * Graph transformation configuration  
- */
-export interface GraphTransformationConfig extends ETLConfig {
-    readonly targetModel: string;
-    readonly preserveMetadata?: boolean;
-    readonly allowLossyTranslation?: boolean;
-    readonly customMappings?: FieldMapping[];
-}
-
-/**
- * Graph transformer interface
- */
-export interface GraphTransformer<TInput extends GraphModel = GraphModel, TOutput extends GraphModel = GraphModel>
-    extends Transformer<TInput, TOutput> {
-
-    /**
-     * Transform graph from one model to another
-     */
-    transformGraph(
-        sourceGraph: TInput,
-        config: GraphTransformationConfig,
-        context: ETLContext
-    ): Promise<GraphTranslationResult<TOutput>>;
-
-    /**
-     * Normalize external graph to target context
-     */
-    normalizeToContext(
-        externalGraph: unknown,
-        targetModel: string,
-        context: ETLContext
-    ): Promise<GraphTranslationResult<TOutput>>;
 }
 
 /**

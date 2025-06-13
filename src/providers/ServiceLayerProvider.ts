@@ -23,11 +23,15 @@ import { Command } from 'commander';
 import type { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
 import { ServiceFactory, ServiceRegistry, ServiceStrategyManager } from '../services/index.js';
-import type { ImajinConfig } from '../types/Config.js';
 import type { ServiceIntrospection } from '../types/LLM.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
 export class ServiceLayerProvider extends ServiceProvider {
+    private static readonly SERVICE_NAMES = 'service-layer|service-registry|service-factory|strategy-manager|service-discovery|service-management';
+    private static readonly JSON_OPTION = '--json';
+    private static readonly SERVICE_LAYER_NAME = 'service-layer';
+    private static readonly SERVICE_REGISTRY_NOT_AVAILABLE = '❌ Service registry not available';
+    
     private serviceRegistry?: ServiceRegistry;
     private serviceFactory?: ServiceFactory;
     private strategyManager?: ServiceStrategyManager;
@@ -40,7 +44,7 @@ export class ServiceLayerProvider extends ServiceProvider {
      * Get provider name
      */
     getName(): string {
-        return 'service-layer';
+        return ServiceLayerProvider.SERVICE_NAMES.split('|')[0]!;
     }
 
     /**
@@ -54,20 +58,14 @@ export class ServiceLayerProvider extends ServiceProvider {
      * Get services provided by this provider
      */
     getServices(): string[] {
-        return [
-            'service-registry',
-            'service-factory',
-            'strategy-manager',
-            'service-discovery',
-            'service-management'
-        ];
+        return ServiceLayerProvider.SERVICE_NAMES.split('|');
     }
 
     /**
      * Check if provider provides a specific service
      */
     provides(service: string): boolean {
-        return this.getServices().includes(service) || service === 'service-layer';
+        return this.getServices().includes(service) || service === ServiceLayerProvider.SERVICE_NAMES.split('|')[0];
     }
 
     /**
@@ -119,7 +117,7 @@ export class ServiceLayerProvider extends ServiceProvider {
             .command('list')
             .description('List all registered services')
             .option('--status <status>', 'Filter by service status')
-            .option('--json', 'Output in JSON format')
+            .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
                 this.handleListServices(options);
             });
@@ -129,7 +127,7 @@ export class ServiceLayerProvider extends ServiceProvider {
             .command('health')
             .description('Check health of all services')
             .option('--service <name>', 'Check specific service')
-            .option('--json', 'Output in JSON format')
+            .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
                 this.handleHealthCheck(options);
             });
@@ -138,7 +136,7 @@ export class ServiceLayerProvider extends ServiceProvider {
         serviceCmd
             .command('stats')
             .description('Display service layer statistics')
-            .option('--json', 'Output in JSON format')
+            .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
                 this.handleStatistics(options);
             });
@@ -162,7 +160,7 @@ export class ServiceLayerProvider extends ServiceProvider {
             .command('types')
             .description('List available service types')
             .option('--category <category>', 'Filter by category')
-            .option('--json', 'Output in JSON format')
+            .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
                 this.handleListServiceTypes(options);
             });
@@ -176,7 +174,7 @@ export class ServiceLayerProvider extends ServiceProvider {
         strategyCmd
             .command('list')
             .description('List all registered strategies')
-            .option('--json', 'Output in JSON format')
+            .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
                 this.handleListStrategies(options);
             });
@@ -195,7 +193,7 @@ export class ServiceLayerProvider extends ServiceProvider {
                     name: 'service:list',
                     description: 'List all registered services with their status',
                     usage: 'imajin service list [--status <status>] [--json]',
-                    service: 'service-layer',
+                    service: ServiceLayerProvider.SERVICE_LAYER_NAME,
                     arguments: [],
                     options: [
                         {
@@ -219,7 +217,7 @@ export class ServiceLayerProvider extends ServiceProvider {
                     name: 'service:health',
                     description: 'Check health status of services',
                     usage: 'imajin service health [--service <name>] [--json]',
-                    service: 'service-layer',
+                    service: ServiceLayerProvider.SERVICE_LAYER_NAME,
                     arguments: [],
                     options: [
                         {
@@ -243,7 +241,7 @@ export class ServiceLayerProvider extends ServiceProvider {
                     name: 'factory:types',
                     description: 'List available service types from factory',
                     usage: 'imajin factory types [--category <category>] [--json]',
-                    service: 'service-layer',
+                    service: ServiceLayerProvider.SERVICE_LAYER_NAME,
                     arguments: [],
                     options: [
                         {
@@ -276,7 +274,7 @@ export class ServiceLayerProvider extends ServiceProvider {
 
     private async handleListServices(options: any): Promise<void> {
         if (!this.serviceRegistry) {
-            console.error('❌ Service registry not available');
+            console.error(ServiceLayerProvider.SERVICE_REGISTRY_NOT_AVAILABLE);
             return;
         }
 
@@ -314,7 +312,7 @@ export class ServiceLayerProvider extends ServiceProvider {
 
     private async handleHealthCheck(options: any): Promise<void> {
         if (!this.serviceRegistry) {
-            console.error('❌ Service registry not available');
+            console.error(ServiceLayerProvider.SERVICE_REGISTRY_NOT_AVAILABLE);
             return;
         }
 
@@ -378,7 +376,7 @@ export class ServiceLayerProvider extends ServiceProvider {
 
     private async handleRestartService(serviceName: string): Promise<void> {
         if (!this.serviceRegistry) {
-            console.error('❌ Service registry not available');
+            console.error(ServiceLayerProvider.SERVICE_REGISTRY_NOT_AVAILABLE);
             return;
         }
 

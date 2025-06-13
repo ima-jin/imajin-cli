@@ -21,7 +21,8 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { Logger } from '../../logging/Logger.js';
-import { StripeService } from '../../services/StripeService.js';
+import { StripeService } from '../../services/StripeService';
+import { CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js';
 import type { LLMResponse } from '../../types/LLM.js';
 
 export interface CreateCustomerOptions {
@@ -49,7 +50,7 @@ export class CreateCustomerCommand {
             .option('--phone <phone>', 'Customer phone number')
             .option('--description <description>', 'Customer description')
             .option('--metadata <metadata>', 'Customer metadata as JSON string')
-            .option('--json', 'Output in JSON format for LLM parsing')
+            .option('--json', CLI_DESCRIPTIONS.JSON_OUTPUT)
             .option('--watch', 'Watch for real-time updates')
             .action(async (options: CreateCustomerOptions) => {
                 await this.execute(options);

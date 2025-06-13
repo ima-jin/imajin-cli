@@ -1,5 +1,5 @@
 /**
- * Standard Graph Models - Core graph model definitions for user-to-user communication
+ * Dynamic Graph Models - Core graph model definitions for user-to-user communication
  * 
  * @package     @imajin/cli
  * @subpackage  etl/graphs
@@ -11,7 +11,7 @@
  *
  * Integration Points:
  * - Graph-to-graph translation for user communication
- * - Standard model compatibility and bridging
+ * - Dynamic model compatibility and bridging
  * - Context normalization for external graphs
  * - Type-safe graph operations across all models
  */
@@ -269,221 +269,364 @@ export const ResourceSchema = z.object({
     created: z.date()
 });
 
-// Standard Graph Model Implementations
-export interface SocialCommerceGraph extends GraphModel {
-    readonly modelType: 'social-commerce';
-    identity: z.infer<typeof PersonalProfileSchema>;
-    catalog: {
-        products: z.infer<typeof ProductSchema>[];
-        services: z.infer<typeof ServiceSchema>[];
-        events: z.infer<typeof EventSchema>[];
-    };
-    social: {
-        connections: z.infer<typeof ConnectionSchema>[];
-        reputation: {
-            score: number;
-            reviews: number;
-            rating: number;
+// Dynamic Model Registry
+export interface ModelDefinition {
+    name: string;
+    version: string;
+    schema: GraphSchema;
+    compatibility: CompatibilityMatrix;
+    metadata?: Record<string, any>;
+    validate?: (data: any) => Promise<boolean>;
+}
+
+export class ModelRegistry {
+    private static instance: ModelRegistry;
+    private models: Map<string, ModelDefinition> = new Map();
+    private versionMap: Map<string, Set<string>> = new Map(); // name -> Set of versions
+
+    private constructor() {}
+
+    public static getInstance(): ModelRegistry {
+        if (!ModelRegistry.instance) {
+            ModelRegistry.instance = new ModelRegistry();
+        }
+        return ModelRegistry.instance;
+    }
+
+    public registerModel(definition: ModelDefinition): void {
+        if (!definition.name || !definition.version || !definition.schema) {
+            throw new Error('Invalid model definition: name, version, and schema are required');
+        }
+
+        const modelKey = `${definition.name}@${definition.version}`;
+        
+        // Store the model definition
+        this.models.set(modelKey, definition);
+
+        // Track versions
+        if (!this.versionMap.has(definition.name)) {
+            this.versionMap.set(definition.name, new Set());
+        }
+        this.versionMap.get(definition.name)?.add(definition.version);
+    }
+
+    public getModel(name: string, version?: string): ModelDefinition | undefined {
+        if (version) {
+            return this.models.get(`${name}@${version}`);
+        }
+
+        // If no version specified, get the latest version
+        const versions = this.versionMap.get(name);
+        if (!versions || versions.size === 0) return undefined;
+
+        const latestVersion = Array.from(versions).sort().pop();
+        return this.models.get(`${name}@${latestVersion}`);
+    }
+
+    public getAllModels(): ModelDefinition[] {
+        return Array.from(this.models.values());
+    }
+
+    public getModelNames(): string[] {
+        return Array.from(this.versionMap.keys());
+    }
+
+    public getModelVersions(name: string): string[] {
+        return Array.from(this.versionMap.get(name) || []);
+    }
+
+    public isModelRegistered(name: string, version?: string): boolean {
+        if (version) {
+            return this.models.has(`${name}@${version}`);
+        }
+        return this.versionMap.has(name);
+    }
+
+    public getCompatibilityMatrix(name: string, version?: string): CompatibilityMatrix | undefined {
+        const model = this.getModel(name, version);
+        return model?.compatibility;
+    }
+
+    public validateModelData(name: string, version: string, data: any): Promise<boolean> {
+        const model = this.getModel(name, version);
+        if (!model) {
+            throw new Error(`Model ${name}@${version} not found`);
+        }
+
+        if (model.validate) {
+            return model.validate(data);
+        }
+
+        // Default validation using schema
+        try {
+            Object.entries(model.schema.entities).forEach(([key, schema]) => {
+                schema.parse(data[key]);
+            });
+            return Promise.resolve(true);
+        } catch (error) {
+            return Promise.resolve(false);
+        }
+    }
+
+    public unregisterModel(name: string, version: string): boolean {
+        const modelKey = `${name}@${version}`;
+        const success = this.models.delete(modelKey);
+        
+        if (success) {
+            const versions = this.versionMap.get(name);
+            if (versions) {
+                versions.delete(version);
+                if (versions.size === 0) {
+                    this.versionMap.delete(name);
+                }
+            }
+        }
+        
+        return success;
+    }
+}
+
+// Model Factory
+export class ModelFactory {
+    private static registry = ModelRegistry.getInstance();
+
+    public static async createModel<T extends GraphModel>(
+        type: string,
+        version: string,
+        data: Partial<T>
+    ): Promise<T> {
+        const modelDef = this.registry.getModel(type, version);
+        if (!modelDef) {
+            throw new Error(`Model ${type}@${version} not found`);
+        }
+
+        // Validate the data against the model schema
+        const isValid = await this.registry.validateModelData(type, version, data);
+        if (!isValid) {
+            throw new Error(`Invalid data for model ${type}@${version}`);
+        }
+
+        // Create the model instance
+        const model: GraphModel = {
+            modelType: type,
+            version: version,
+            schema: modelDef.schema,
+            compatibilityMap: modelDef.compatibility,
+            metadata: {
+                ...modelDef.metadata,
+                ...data.metadata
+            }
         };
-    };
-    commerce: {
-        paymentMethods: z.infer<typeof PaymentMethodSchema>[];
-        transactions: z.infer<typeof TransactionSchema>[];
-    };
+
+        return model as T;
+    }
+
+    public static registerModel(definition: ModelDefinition): void {
+        this.registry.registerModel(definition);
+    }
+
+    public static unregisterModel(name: string, version: string): boolean {
+        return this.registry.unregisterModel(name, version);
+    }
+
+    public static getModelDefinition(name: string, version?: string): ModelDefinition | undefined {
+        return this.registry.getModel(name, version);
+    }
+
+    public static getAllModelDefinitions(): ModelDefinition[] {
+        return this.registry.getAllModels();
+    }
+
+    public static getModelNames(): string[] {
+        return this.registry.getModelNames();
+    }
+
+    public static getModelVersions(name: string): string[] {
+        return this.registry.getModelVersions(name);
+    }
+
+    public static isModelRegistered(name: string, version?: string): boolean {
+        return this.registry.isModelRegistered(name, version);
+    }
+
+    public static getCompatibilityMatrix(name: string, version?: string): CompatibilityMatrix | undefined {
+        return this.registry.getCompatibilityMatrix(name, version);
+    }
 }
 
-export interface CreativePortfolioGraph extends GraphModel {
-    readonly modelType: 'creative-portfolio';
-    identity: z.infer<typeof PersonalProfileSchema>;
-    portfolio: {
-        artworks: z.infer<typeof ArtworkSchema>[];
-        collections: z.infer<typeof CollectionSchema>[];
-        exhibitions: z.infer<typeof ExhibitionSchema>[];
-    };
-    professional: {
-        commissions: z.infer<typeof CommissionSchema>[];
-        availability: {
-            isOpen: boolean;
-            rates: Record<string, number>;
-            schedule: Record<string, any>;
-        };
-    };
-    social: {
-        connections: z.infer<typeof ConnectionSchema>[];
-    };
-}
+// Default Models Registration
+export const registerDefaultModels = () => {
+    const registry = ModelRegistry.getInstance();
 
-export interface ProfessionalNetworkGraph extends GraphModel {
-    readonly modelType: 'professional-network';
-    identity: z.infer<typeof PersonalProfileSchema>;
-    experience: {
-        positions: z.infer<typeof PositionSchema>[];
-        skills: z.infer<typeof SkillSchema>[];
-        certifications: z.infer<typeof CertificationSchema>[];
-    };
-    network: {
-        connections: z.infer<typeof ConnectionSchema>[];
-        recommendations: z.infer<typeof RecommendationSchema>[];
-    };
-}
+    // Social Commerce Model
+    registry.registerModel({
+        name: 'social-commerce',
+        version: '1.0.0',
+        schema: {
+            version: '1.0.0',
+            entities: {
+                profile: PersonalProfileSchema,
+                product: ProductSchema,
+                service: ServiceSchema,
+                transaction: TransactionSchema,
+                paymentMethod: PaymentMethodSchema,
+                event: EventSchema,
+                connection: ConnectionSchema
+            },
+            relationships: {
+                hasProducts: z.object({
+                    userId: z.string(),
+                    productId: z.string()
+                }),
+                hasServices: z.object({
+                    userId: z.string(),
+                    serviceId: z.string()
+                }),
+                hasTransactions: z.object({
+                    userId: z.string(),
+                    transactionId: z.string()
+                })
+            },
+            constraints: {
+                maxProducts: 1000,
+                maxServices: 100,
+                maxTransactions: 10000
+            }
+        },
+        compatibility: {
+            directCompatible: ['social-commerce'],
+            translatableFrom: ['creative-portfolio', 'professional-network'],
+            translatableTo: ['creative-portfolio', 'professional-network']
+        }
+    });
 
-export interface CommunityHubGraph extends GraphModel {
-    readonly modelType: 'community-hub';
-    identity: z.infer<typeof PersonalProfileSchema>;
-    community: {
-        groups: z.infer<typeof GroupSchema>[];
-        discussions: z.infer<typeof DiscussionSchema>[];
-        events: z.infer<typeof EventSchema>[];
-    };
-    resources: {
-        items: z.infer<typeof ResourceSchema>[];
-        categories: string[];
-    };
-    social: {
-        connections: z.infer<typeof ConnectionSchema>[];
-    };
-}
+    // Creative Portfolio Model
+    registry.registerModel({
+        name: 'creative-portfolio',
+        version: '1.0.0',
+        schema: {
+            version: '1.0.0',
+            entities: {
+                profile: PersonalProfileSchema,
+                artwork: ArtworkSchema,
+                collection: CollectionSchema,
+                exhibition: ExhibitionSchema,
+                commission: CommissionSchema,
+                connection: ConnectionSchema
+            },
+            relationships: {
+                hasArtworks: z.object({
+                    userId: z.string(),
+                    artworkId: z.string()
+                }),
+                hasCollections: z.object({
+                    userId: z.string(),
+                    collectionId: z.string()
+                }),
+                hasExhibitions: z.object({
+                    userId: z.string(),
+                    exhibitionId: z.string()
+                })
+            },
+            constraints: {
+                maxArtworks: 1000,
+                maxCollections: 100,
+                maxExhibitions: 50
+            }
+        },
+        compatibility: {
+            directCompatible: ['creative-portfolio'],
+            translatableFrom: ['social-commerce', 'professional-network'],
+            translatableTo: ['social-commerce', 'professional-network']
+        }
+    });
 
-// Graph Schema Definitions
-export const SocialCommerceSchema: GraphSchema = {
-    version: '1.0.0',
-    entities: {
-        PersonalProfile: PersonalProfileSchema,
-        Product: ProductSchema,
-        Service: ServiceSchema,
-        Event: EventSchema,
-        Connection: ConnectionSchema,
-        Transaction: TransactionSchema,
-        PaymentMethod: PaymentMethodSchema
-    },
-    relationships: {
-        UserProduct: z.object({ userId: z.string(), productId: z.string() }),
-        UserService: z.object({ userId: z.string(), serviceId: z.string() }),
-        UserConnection: z.object({ userId: z.string(), connectionId: z.string() }),
-        UserTransaction: z.object({ userId: z.string(), transactionId: z.string() })
-    },
-    constraints: {
-        maxProducts: 1000,
-        maxServices: 500,
-        maxConnections: 5000
-    }
+    // Professional Network Model
+    registry.registerModel({
+        name: 'professional-network',
+        version: '1.0.0',
+        schema: {
+            version: '1.0.0',
+            entities: {
+                profile: PersonalProfileSchema,
+                position: PositionSchema,
+                skill: SkillSchema,
+                certification: CertificationSchema,
+                recommendation: RecommendationSchema,
+                connection: ConnectionSchema
+            },
+            relationships: {
+                hasPositions: z.object({
+                    userId: z.string(),
+                    positionId: z.string()
+                }),
+                hasSkills: z.object({
+                    userId: z.string(),
+                    skillId: z.string()
+                }),
+                hasCertifications: z.object({
+                    userId: z.string(),
+                    certificationId: z.string()
+                })
+            },
+            constraints: {
+                maxPositions: 50,
+                maxSkills: 100,
+                maxCertifications: 50
+            }
+        },
+        compatibility: {
+            directCompatible: ['professional-network'],
+            translatableFrom: ['social-commerce', 'creative-portfolio'],
+            translatableTo: ['social-commerce', 'creative-portfolio']
+        }
+    });
+
+    // Community Hub Model
+    registry.registerModel({
+        name: 'community-hub',
+        version: '1.0.0',
+        schema: {
+            version: '1.0.0',
+            entities: {
+                profile: PersonalProfileSchema,
+                group: GroupSchema,
+                discussion: DiscussionSchema,
+                event: EventSchema,
+                resource: ResourceSchema,
+                connection: ConnectionSchema
+            },
+            relationships: {
+                hasGroups: z.object({
+                    userId: z.string(),
+                    groupId: z.string()
+                }),
+                hasDiscussions: z.object({
+                    userId: z.string(),
+                    discussionId: z.string()
+                }),
+                hasResources: z.object({
+                    userId: z.string(),
+                    resourceId: z.string()
+                })
+            },
+            constraints: {
+                maxGroups: 50,
+                maxDiscussions: 1000,
+                maxResources: 500
+            }
+        },
+        compatibility: {
+            directCompatible: ['community-hub'],
+            translatableFrom: ['social-commerce', 'creative-portfolio', 'professional-network'],
+            translatableTo: ['social-commerce', 'creative-portfolio', 'professional-network']
+        }
+    });
 };
 
-export const CreativePortfolioSchema: GraphSchema = {
-    version: '1.0.0',
-    entities: {
-        PersonalProfile: PersonalProfileSchema,
-        Artwork: ArtworkSchema,
-        Collection: CollectionSchema,
-        Exhibition: ExhibitionSchema,
-        Commission: CommissionSchema,
-        Connection: ConnectionSchema
-    },
-    relationships: {
-        ArtworkCollection: z.object({ artworkId: z.string(), collectionId: z.string() }),
-        ArtworkExhibition: z.object({ artworkId: z.string(), exhibitionId: z.string() }),
-        UserConnection: z.object({ userId: z.string(), connectionId: z.string() })
-    },
-    constraints: {
-        maxArtworks: 2000,
-        maxCollections: 100,
-        maxExhibitions: 200
-    }
-};
+// Initialize default models
+registerDefaultModels();
 
-export const ProfessionalNetworkSchema: GraphSchema = {
-    version: '1.0.0',
-    entities: {
-        PersonalProfile: PersonalProfileSchema,
-        Position: PositionSchema,
-        Skill: SkillSchema,
-        Certification: CertificationSchema,
-        Connection: ConnectionSchema,
-        Recommendation: RecommendationSchema
-    },
-    relationships: {
-        UserPosition: z.object({ userId: z.string(), positionId: z.string() }),
-        UserSkill: z.object({ userId: z.string(), skillId: z.string() }),
-        UserCertification: z.object({ userId: z.string(), certificationId: z.string() }),
-        UserConnection: z.object({ userId: z.string(), connectionId: z.string() })
-    },
-    constraints: {
-        maxPositions: 50,
-        maxSkills: 200,
-        maxCertifications: 100
-    }
-};
-
-export const CommunityHubSchema: GraphSchema = {
-    version: '1.0.0',
-    entities: {
-        PersonalProfile: PersonalProfileSchema,
-        Group: GroupSchema,
-        Discussion: DiscussionSchema,
-        Event: EventSchema,
-        Resource: ResourceSchema,
-        Connection: ConnectionSchema
-    },
-    relationships: {
-        UserGroup: z.object({ userId: z.string(), groupId: z.string() }),
-        GroupDiscussion: z.object({ groupId: z.string(), discussionId: z.string() }),
-        GroupEvent: z.object({ groupId: z.string(), eventId: z.string() }),
-        UserConnection: z.object({ userId: z.string(), connectionId: z.string() })
-    },
-    constraints: {
-        maxGroups: 100,
-        maxDiscussions: 10000,
-        maxResources: 5000
-    }
-};
-
-// Compatibility Matrices
-export const SocialCommerceCompatibility: CompatibilityMatrix = {
-    directCompatible: ['social-commerce'],
-    translatableFrom: ['creative-portfolio', 'professional-network', 'community-hub'],
-    translatableTo: ['creative-portfolio', 'professional-network', 'community-hub'],
-    bridgeRequired: ['custom']
-};
-
-export const CreativePortfolioCompatibility: CompatibilityMatrix = {
-    directCompatible: ['creative-portfolio'],
-    translatableFrom: ['social-commerce', 'professional-network', 'community-hub'],
-    translatableTo: ['social-commerce', 'professional-network', 'community-hub'],
-    bridgeRequired: ['custom']
-};
-
-export const ProfessionalNetworkCompatibility: CompatibilityMatrix = {
-    directCompatible: ['professional-network'],
-    translatableFrom: ['social-commerce', 'creative-portfolio', 'community-hub'],
-    translatableTo: ['social-commerce', 'creative-portfolio', 'community-hub'],
-    bridgeRequired: ['custom']
-};
-
-export const CommunityHubCompatibility: CompatibilityMatrix = {
-    directCompatible: ['community-hub'],
-    translatableFrom: ['social-commerce', 'creative-portfolio', 'professional-network'],
-    translatableTo: ['social-commerce', 'creative-portfolio', 'professional-network'],
-    bridgeRequired: ['custom']
-};
-
-// Model Registry
-export const STANDARD_MODELS = {
-    'social-commerce': {
-        schema: SocialCommerceSchema,
-        compatibility: SocialCommerceCompatibility
-    },
-    'creative-portfolio': {
-        schema: CreativePortfolioSchema,
-        compatibility: CreativePortfolioCompatibility
-    },
-    'professional-network': {
-        schema: ProfessionalNetworkSchema,
-        compatibility: ProfessionalNetworkCompatibility
-    },
-    'community-hub': {
-        schema: CommunityHubSchema,
-        compatibility: CommunityHubCompatibility
-    }
-} as const;
-
-export type StandardModelType = keyof typeof STANDARD_MODELS; 
+// Export types
+export type ModelType = string;
+export type ModelData<T extends GraphModel> = Partial<T>; 

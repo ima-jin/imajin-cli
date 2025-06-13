@@ -20,7 +20,7 @@
 
 import 'reflect-metadata';
 
-export type ServiceIdentifier<_T = unknown> = string | symbol | Function;
+export type ServiceIdentifier<T = unknown> = string | symbol | Function;
 export type ServiceFactory<T = any> = (container: Container) => T;
 
 interface ServiceBinding<T = any> {
@@ -30,8 +30,8 @@ interface ServiceBinding<T = any> {
 }
 
 export class Container {
-    private bindings = new Map<ServiceIdentifier<any>, ServiceBinding>();
-    private instances = new Map<ServiceIdentifier<any>, any>();
+    private readonly bindings = new Map<ServiceIdentifier<any>, ServiceBinding>();
+    private readonly instances = new Map<ServiceIdentifier<any>, any>();
 
     /**
      * Register a service with the container

@@ -448,10 +448,10 @@ export abstract class BaseRepository<T extends UniversalElement, TKey = string>
             const existing = await this.findFirst({ filters: criteria });
 
             if (existing) {
-                const { id: _, ...updateData } = entity;
+                const { id: _id, ...updateData } = entity;
                 return this.update(existing.id as TKey, updateData as Partial<Omit<T, 'id' | 'createdAt'>>);
             } else {
-                const { id: _, ...createData } = entity;
+                const { id: _id, ...createData } = entity;
                 return this.create(createData as Omit<T, 'id' | 'createdAt' | 'updatedAt'>);
             }
         });

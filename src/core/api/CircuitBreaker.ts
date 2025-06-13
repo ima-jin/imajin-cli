@@ -17,6 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { injectable } from 'tsyringe';
+import { CIRCUIT_BREAKER_EVENTS } from '../../constants/CommonStrings.js';
 
 /**
  * Circuit breaker states
@@ -59,12 +60,12 @@ export interface CircuitBreakerStats {
  * Circuit breaker events
  */
 export interface CircuitBreakerEvents {
-    'state-changed': (serviceId: string, oldState: CircuitBreakerState, newState: CircuitBreakerState) => void;
-    'circuit-opened': (serviceId: string, stats: CircuitBreakerStats) => void;
-    'circuit-closed': (serviceId: string, stats: CircuitBreakerStats) => void;
-    'circuit-half-opened': (serviceId: string, stats: CircuitBreakerStats) => void;
-    'request-rejected': (serviceId: string, reason: string) => void;
-    'fallback-executed': (serviceId: string, fallbackResult: any) => void;
+    [CIRCUIT_BREAKER_EVENTS.STATE_CHANGED]: (serviceId: string, oldState: CircuitBreakerState, newState: CircuitBreakerState) => void;
+    [CIRCUIT_BREAKER_EVENTS.CIRCUIT_OPENED]: (serviceId: string, stats: CircuitBreakerStats) => void;
+    [CIRCUIT_BREAKER_EVENTS.CIRCUIT_CLOSED]: (serviceId: string, stats: CircuitBreakerStats) => void;
+    [CIRCUIT_BREAKER_EVENTS.CIRCUIT_HALF_OPENED]: (serviceId: string, stats: CircuitBreakerStats) => void;
+    [CIRCUIT_BREAKER_EVENTS.REQUEST_REJECTED]: (serviceId: string, reason: string) => void;
+    [CIRCUIT_BREAKER_EVENTS.FALLBACK_EXECUTED]: (serviceId: string, fallbackResult: any) => void;
 }
 
 /**
@@ -108,7 +109,7 @@ interface CircuitState {
  */
 @injectable()
 export class CircuitBreaker extends EventEmitter {
-    private readonly ircuits = new Map<string, CircuitState>();
+    private readonly circuits = new Map<string, CircuitState>();
     private readonly configs = new Map<string, CircuitBreakerConfig>();
     private readonly fallbacks = new Map<string, FallbackFunction>();
 
@@ -165,13 +166,13 @@ export class CircuitBreaker extends EventEmitter {
         // Check if request should be allowed
         if (!this.canExecute(serviceId)) {
             const error = new Error(`${CircuitBreaker.CIRCUIT_OPEN_MSG} ${circuit.state} for service: ${serviceId}`);
-            this.emit('request-rejected', serviceId, `${CircuitBreaker.CIRCUIT_STATE_MSG} ${circuit.state}`);
+            this.emit(CIRCUIT_BREAKER_EVENTS.REQUEST_REJECTED, serviceId, `${CircuitBreaker.CIRCUIT_STATE_MSG} ${circuit.state}`);
 
-            const fallbackFn = fallback || this.fallbacks.get(serviceId);
+            const fallbackFn = fallback ?? this.fallbacks.get(serviceId);
             if (fallbackFn) {
                 try {
                     const fallbackResult = await fallbackFn(error, serviceId);
-                    this.emit('fallback-executed', serviceId, fallbackResult);
+                    this.emit(CIRCUIT_BREAKER_EVENTS.FALLBACK_EXECUTED, serviceId, fallbackResult);
 
                     return {
                         success: true,
@@ -304,8 +305,8 @@ export class CircuitBreaker extends EventEmitter {
             delete circuit.openedAt;
             delete circuit.halfOpenedAt;
 
-            this.emit('state-changed', serviceId, oldState, CircuitBreakerState.CLOSED);
-            this.emit('circuit-closed', serviceId, this.getStats(serviceId)!);
+            this.emit(CIRCUIT_BREAKER_EVENTS.STATE_CHANGED, serviceId, oldState, CircuitBreakerState.CLOSED);
+            this.emit(CIRCUIT_BREAKER_EVENTS.CIRCUIT_CLOSED, serviceId, this.getStats(serviceId)!);
         }
     }
 
@@ -377,7 +378,7 @@ export class CircuitBreaker extends EventEmitter {
 
         // Clean old failures outside monitoring window
         const cutoff = now - config.monitoringWindow;
-        circuit.recentFailures = circuit.recentFailures.filter(time => time > cutoff);
+        circuit.recentFailures = circuit.recentFailures.filter((time: number) => time > cutoff);
 
         if (circuit.state === CircuitBreakerState.CLOSED) {
             if (circuit.recentFailures.length >= config.failureThreshold) {
@@ -399,8 +400,8 @@ export class CircuitBreaker extends EventEmitter {
         circuit.state = CircuitBreakerState.OPEN;
         circuit.openedAt = Date.now();
 
-        this.emit('state-changed', serviceId, oldState, CircuitBreakerState.OPEN);
-        this.emit('circuit-opened', serviceId, this.getStats(serviceId)!);
+        this.emit(CIRCUIT_BREAKER_EVENTS.STATE_CHANGED, serviceId, oldState, CircuitBreakerState.OPEN);
+        this.emit(CIRCUIT_BREAKER_EVENTS.CIRCUIT_OPENED, serviceId, this.getStats(serviceId)!);
     }
 
     /**
@@ -415,8 +416,8 @@ export class CircuitBreaker extends EventEmitter {
         circuit.halfOpenedAt = Date.now();
         circuit.successes = 0; // Reset success counter for half-open evaluation
 
-        this.emit('state-changed', serviceId, oldState, CircuitBreakerState.HALF_OPEN);
-        this.emit('circuit-half-opened', serviceId, this.getStats(serviceId)!);
+        this.emit(CIRCUIT_BREAKER_EVENTS.STATE_CHANGED, serviceId, oldState, CircuitBreakerState.HALF_OPEN);
+        this.emit(CIRCUIT_BREAKER_EVENTS.CIRCUIT_HALF_OPENED, serviceId, this.getStats(serviceId)!);
     }
 
     /**
@@ -433,8 +434,8 @@ export class CircuitBreaker extends EventEmitter {
         delete circuit.openedAt;
         delete circuit.halfOpenedAt;
 
-        this.emit('state-changed', serviceId, oldState, CircuitBreakerState.CLOSED);
-        this.emit('circuit-closed', serviceId, this.getStats(serviceId)!);
+        this.emit(CIRCUIT_BREAKER_EVENTS.STATE_CHANGED, serviceId, oldState, CircuitBreakerState.CLOSED);
+        this.emit(CIRCUIT_BREAKER_EVENTS.CIRCUIT_CLOSED, serviceId, this.getStats(serviceId)!);
     }
 
     /**
@@ -448,7 +449,7 @@ export class CircuitBreaker extends EventEmitter {
                 const config = this.configs.get(serviceId);
                 if (config) {
                     const cutoff = now - config.monitoringWindow;
-                    circuit.recentFailures = circuit.recentFailures.filter(time => time > cutoff);
+                    circuit.recentFailures = circuit.recentFailures.filter((time: number) => time > cutoff);
                 }
             }
         }, 60 * 1000); // Run every minute

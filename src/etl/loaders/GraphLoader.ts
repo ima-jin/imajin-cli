@@ -46,8 +46,7 @@ export class GraphLoader extends BaseLoader<GraphModel> implements IGraphLoader 
         compatibilityMap: z.object({
             directCompatible: z.array(z.string()),
             translatableFrom: z.array(z.string()),
-            translatableTo: z.array(z.string()),
-            bridgeRequired: z.array(z.string())
+            translatableTo: z.array(z.string())
         }),
         metadata: z.record(z.any())
     }) as z.ZodType<GraphModel, z.ZodTypeDef, GraphModel>;

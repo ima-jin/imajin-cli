@@ -18,6 +18,7 @@
 
 import axios, { AxiosRequestConfig } from 'axios';
 import { z } from 'zod';
+import { ALL_MODEL_TYPES, DEBUG_LABELS } from '../../constants/ETLConstants.js';
 import {
     CompatibilityMatrix,
     ETLContext,
@@ -26,7 +27,7 @@ import {
     GraphModel,
     GraphExtractor as IGraphExtractor
 } from '../core/interfaces.js';
-import { STANDARD_MODELS, StandardModelType } from '../graphs/models.js';
+import { ModelFactory } from '../graphs/models.js';
 import { BaseExtractor } from './BaseExtractor.js';
 
 /**
@@ -36,7 +37,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
     public readonly name = 'GraphExtractor';
     public readonly description = 'Extracts graph data from external API endpoints';
     public readonly outputSchema = z.object({
-        modelType: z.enum(['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub', 'custom']),
+        modelType: z.enum(ALL_MODEL_TYPES),
         version: z.string(),
         schema: z.object({
             version: z.string(),
@@ -47,8 +48,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
         compatibilityMap: z.object({
             directCompatible: z.array(z.string()),
             translatableFrom: z.array(z.string()),
-            translatableTo: z.array(z.string()),
-            bridgeRequired: z.array(z.string())
+            translatableTo: z.array(z.string())
         }),
         metadata: z.record(z.any())
     }) as z.ZodType<GraphModel, z.ZodTypeDef, GraphModel>;
@@ -100,7 +100,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
             }
 
             // Transform raw data to graph model
-            const graphData = await this.transformToGraphModel(rawData, modelType as StandardModelType);
+            const graphData = await this.transformToGraphModel(rawData, modelType);
 
             context.events.emit('progress', {
                 stage: 'extract',
@@ -173,7 +173,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
     async getCompatibility(config: GraphExtractionConfig): Promise<CompatibilityMatrix> {
         try {
             const modelType = await this.detectModel(config);
-            const standardModel = STANDARD_MODELS[modelType as StandardModelType];
+            const standardModel = ModelFactory.getModelDefinition(modelType);
 
             if (standardModel) {
                 return standardModel.compatibility;
@@ -183,8 +183,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
             return {
                 directCompatible: [],
                 translatableFrom: ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub'],
-                translatableTo: ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub'],
-                bridgeRequired: ['custom']
+                translatableTo: ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub']
             };
 
         } catch (error) {
@@ -192,8 +191,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
             return {
                 directCompatible: [],
                 translatableFrom: [],
-                translatableTo: [],
-                bridgeRequired: ['all']
+                translatableTo: []
             };
         }
     }
@@ -361,19 +359,19 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
     /**
      * Transform raw data to graph model structure
      */
-    private async transformToGraphModel(rawData: any, _modelType: StandardModelType): Promise<GraphModel> {
-        const standardModel = STANDARD_MODELS[_modelType];
+    private async transformToGraphModel(rawData: any, modelType: string): Promise<GraphModel> {
+        const modelDef = ModelFactory.getModelDefinition(modelType);
 
-        if (!standardModel) {
-            throw new Error(`Unknown model type: ${_modelType}`);
+        if (!modelDef) {
+            throw new Error(`Unknown model type: ${modelType}`);
         }
 
         // Create base graph structure
         const graphModel: GraphModel = {
-            modelType: _modelType,
-            version: standardModel.schema.version,
-            schema: standardModel.schema,
-            compatibilityMap: standardModel.compatibility,
+            modelType,
+            version: modelDef.version,
+            schema: modelDef.schema,
+            compatibilityMap: modelDef.compatibility,
             metadata: {
                 extracted: true,
                 extractedAt: new Date().toISOString(),
@@ -388,13 +386,13 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
         };
 
         // Validate against model schema if available
-        return this.validateGraphModel(mergedData, _modelType);
+        return this.validateGraphModel(mergedData, modelType);
     }
 
     /**
      * Validate graph model against schema
      */
-    private async validateGraphModel(data: any, _modelType: StandardModelType): Promise<GraphModel> {
+    private async validateGraphModel(data: any, modelType: string): Promise<GraphModel> {
         // For now, return the data as-is
         // In a full implementation, we would validate against the Zod schemas
         return data as GraphModel;

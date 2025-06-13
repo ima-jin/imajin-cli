@@ -216,7 +216,7 @@ export class JobProcessor extends EventEmitter {
     /**
      * Execute job with timeout handling
      */
-    private async executeJobWithTimeout(job: Job, context: ProcessingContext): Promise<JobExecutionResult> {
+    private async executeJobWithTimeout(job: Job, _context: ProcessingContext): Promise<JobExecutionResult> {
         if (this.config.maxProcessingTime) {
             const timeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => {

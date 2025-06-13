@@ -17,6 +17,7 @@
  */
 
 import * as keytar from 'keytar';
+import { ERROR_MESSAGES } from '../../constants/CommonStrings.js';
 import { BaseCredentialProvider } from './BaseCredentialProvider.js';
 import type { CredentialData } from './interfaces.js';
 
@@ -41,7 +42,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
     public async store(service: string, credentials: CredentialData): Promise<void> {
         try {
             if (!this.isAvailable) {
-                throw new Error('Windows Credential Manager is not available on this platform');
+                throw new Error(ERROR_MESSAGES.WINDOWS_CREDENTIAL_MANAGER_NOT_AVAILABLE);
             }
 
             const credentialKey = this.getCredentialKey(service);
@@ -96,7 +97,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
     public async delete(service: string): Promise<void> {
         try {
             if (!this.isAvailable) {
-                throw new Error('Windows Credential Manager is not available on this platform');
+                throw new Error(ERROR_MESSAGES.WINDOWS_CREDENTIAL_MANAGER_NOT_AVAILABLE);
             }
 
             const credentialKey = this.getCredentialKey(service);
@@ -141,7 +142,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
     public async clear(): Promise<void> {
         try {
             if (!this.isAvailable) {
-                throw new Error('Windows Credential Manager is not available on this platform');
+                throw new Error(ERROR_MESSAGES.WINDOWS_CREDENTIAL_MANAGER_NOT_AVAILABLE);
             }
 
             const credentials = await keytar.findCredentials(this.serviceName);

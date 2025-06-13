@@ -19,6 +19,7 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
+import { CLI_OPTIONS, CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js';
 import { CredentialManager } from '../../core/credentials/CredentialManager.js';
 import type { CredentialData } from '../../core/credentials/interfaces.js';
 import { Logger } from '../../logging/Logger.js';
@@ -56,7 +57,7 @@ export class AuthCommands {
         // List command
         authCommand
             .command('list')
-            .option('--json', 'Output in JSON format')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
             .option('--provider-info', 'Include provider information')
             .description('List configured services')
             .action(this.handleList.bind(this));
@@ -65,7 +66,7 @@ export class AuthCommands {
         authCommand
             .command('test')
             .argument('<service>', 'Service name to test')
-            .option('--json', 'Output in JSON format')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
             .description('Test if credentials are valid for a service')
             .action(this.handleTest.bind(this));
 
@@ -90,7 +91,7 @@ export class AuthCommands {
             .option('--list', 'List available providers')
             .option('--switch <type>', 'Switch to a specific provider')
             .option('--info', 'Show current provider information')
-            .option('--json', 'Output in JSON format')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
             .description('Manage credential providers')
             .action(this.handleProvider.bind(this));
     }

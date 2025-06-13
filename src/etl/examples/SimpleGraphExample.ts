@@ -45,7 +45,6 @@ export class SimpleGraphExample {
         console.log('');
         console.log('# Cross-model translation (ETL required)');
         console.log('imajin graph:translate mike-portfolio.com --to social-commerce --output products');
-        console.log('imajin graph:bridge creative-portfolio social-commerce --optimize');
         console.log('');
         console.log('# Context normalization for external APIs');
         console.log('imajin graph:normalize https://linda.customapi.com --context social-commerce');
@@ -88,7 +87,6 @@ export class SimpleGraphExample {
         console.log('------------------------');
         console.log('✅ Service ETL: Traditional API data processing (existing functionality)');
         console.log('✅ Graph ETL: User-to-user communication translation (NEW)');
-        console.log('✅ Bridge ETL: Optimized translation paths (NEW)');
         console.log('✅ Context ETL: External graph normalization (NEW)');
         console.log('✅ Real-time: Live progress tracking and error handling');
         console.log('✅ Type-safe: Full TypeScript support with compile-time validation');
@@ -142,8 +140,8 @@ export class SimpleGraphExample {
         console.log('   imajin graph:efficiency social-commerce creative-portfolio');
         console.log('   Output: 75% efficiency (Products↔Artworks mapping)');
         console.log('');
-        console.log('3. Auto-generate optimized bridge');
-        console.log('   imajin graph:bridge-generate social-commerce creative-portfolio --optimize');
+        console.log('3. Auto-generate optimized translation');
+        console.log('   imajin graph:translate social-commerce creative-portfolio --optimize');
         console.log('');
     }
 
@@ -174,8 +172,7 @@ export class SimpleGraphExample {
         console.log('---------------------------');
         console.log('✅ Enhanced ETL interfaces with graph translation support');
         console.log('✅ Standard graph models (social-commerce, creative-portfolio, etc.)');
-        console.log('✅ Graph translation engine with bridge optimization');
-        console.log('✅ Bridge registry with pre-computed efficiency scores');
+        console.log('✅ Graph translation engine with optimization');
         console.log('✅ Graph transformer with real-time progress tracking');
         console.log('✅ Graph loader with conflict resolution strategies');
         console.log('✅ CLI command patterns for all graph operations');
