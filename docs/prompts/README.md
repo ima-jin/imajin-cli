@@ -68,8 +68,8 @@ docs/prompts/
 | 13 | `phase2/13_repository_pattern.md` | ✅ Complete | Data access abstraction |
 | 14 | `phase2/14_background_jobs.md` | ✅ Complete | Background job processing |
 | 15 | `phase2/15_monitoring.md` | ✅ Complete | System monitoring & diagnostics |
-| 16 | `phase2/16_logging_system.md` | 🔄 **CURRENT** | Comprehensive logging |
-| 17 | `phase2/17_stripe_connector.md` | ⏳ Pending | First service connector (reference) |
+| 16 | `phase2/16_logging_system.md` | ✅ Complete | Comprehensive logging |
+| 17 | `phase2/17_stripe_connector.md` | 🔄 **CURRENT** | First service connector (reference) |
 
 ---
 
