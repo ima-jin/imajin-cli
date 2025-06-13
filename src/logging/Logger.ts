@@ -16,9 +16,14 @@
  * - Console and file transports
  * - JSON structured logging for debugging
  * - Real-time log streaming for development
+ * - Monitoring integration
  */
 
 import winston from 'winston';
+import { v4 as uuidv4 } from 'uuid';
+import { LoggerConfig, LogLevel, defaultConfig } from './LoggerConfig';
+import { JsonFormatter } from './formatters/JsonFormatter';
+import { MonitoringTransport } from './transports/MonitoringTransport';
 
 export interface LogContext {
     service?: string;
@@ -28,76 +33,111 @@ export interface LogContext {
 }
 
 export class Logger {
-    private logger: winston.Logger;
+    private logger!: winston.Logger; // Using definite assignment assertion
+    private config: LoggerConfig;
+    private correlationId: string;
 
-    constructor(level: string = 'info', enableColors: boolean = true) {
+    constructor(config: Partial<LoggerConfig> = {}) {
+        this.config = { ...defaultConfig, ...config };
+        this.correlationId = uuidv4();
+        this.initializeLogger();
+    }
+
+    private initializeLogger(): void {
+        const transports: winston.transport[] = [];
+
+        // Add configured transports
+        this.config.transports.forEach(transportConfig => {
+            switch (transportConfig.type) {
+                case 'console':
+                    transports.push(new winston.transports.Console({
+                        level: transportConfig.level || this.config.level,
+                        format: winston.format.combine(
+                            winston.format.colorize({ all: this.config.enableColors }),
+                            winston.format.simple(),
+                            winston.format.printf(({ level, message, timestamp, ...meta }) => {
+                                let output = `${timestamp} [${level}]: ${message}`;
+                                if (Object.keys(meta).length > 0) {
+                                    output += ` ${JSON.stringify(meta)}`;
+                                }
+                                return output;
+                            })
+                        ),
+                    }));
+                    break;
+
+                case 'file':
+                    if (transportConfig.options?.filename) {
+                        transports.push(new winston.transports.File({
+                            level: transportConfig.level || this.config.level,
+                            filename: transportConfig.options.filename,
+                            format: JsonFormatter.format(),
+                        }));
+                    }
+                    break;
+
+                case 'stream':
+                    if (transportConfig.options?.stream) {
+                        transports.push(new winston.transports.Stream({
+                            level: transportConfig.level || this.config.level,
+                            stream: transportConfig.options.stream,
+                            format: JsonFormatter.format(),
+                        }));
+                    }
+                    break;
+            }
+        });
+
+        // Add monitoring transport if enabled
+        if (this.config.monitoring?.enabled) {
+            transports.push(new MonitoringTransport(this.config));
+        }
+
         this.logger = winston.createLogger({
-            level,
-            format: winston.format.combine(
-                winston.format.timestamp(),
-                winston.format.errors({ stack: true }),
-                winston.format.json()
-            ),
-            transports: [
-                // Console transport with custom formatting
-                new winston.transports.Console({
-                    format: winston.format.combine(
-                        winston.format.colorize({ all: enableColors }),
-                        winston.format.simple(),
-                        winston.format.printf(({ level, message, timestamp, ...meta }) => {
-                            let output = `${timestamp} [${level}]: ${message}`;
-
-                            if (Object.keys(meta).length > 0) {
-                                output += ` ${JSON.stringify(meta)}`;
-                            }
-
-                            return output;
-                        })
-                    ),
-                }),
-
-                // File transport for persistent logging
-                new winston.transports.File({
-                    filename: 'logs/error.log',
-                    level: 'error',
-                }),
-                new winston.transports.File({
-                    filename: 'logs/combined.log',
-                }),
-            ],
+            level: this.config.level,
+            format: JsonFormatter.format(),
+            defaultMeta: {
+                correlationId: this.correlationId,
+                ...this.config.defaultContext,
+            },
+            transports,
         });
     }
 
     public debug(message: string, context?: LogContext): void {
-        this.logger.debug(message, context);
+        this.logger.debug(message, { ...context, correlationId: this.correlationId });
     }
 
     public info(message: string, context?: LogContext): void {
-        this.logger.info(message, context);
+        this.logger.info(message, { ...context, correlationId: this.correlationId });
     }
 
     public warn(message: string, context?: LogContext): void {
-        this.logger.warn(message, context);
+        this.logger.warn(message, { ...context, correlationId: this.correlationId });
     }
 
     public error(message: string, error?: Error, context?: LogContext): void {
         this.logger.error(message, {
             error: error?.message,
             stack: error?.stack,
-            ...context
+            ...context,
+            correlationId: this.correlationId,
         });
     }
 
-    public log(level: string, message: string, context?: LogContext): void {
-        this.logger.log(level, message, context);
+    public log(level: LogLevel, message: string, context?: LogContext): void {
+        this.logger.log(level, message, { ...context, correlationId: this.correlationId });
     }
 
     /**
      * Create a child logger with persistent context
      */
     public child(context: LogContext): Logger {
-        const child = new Logger();
-        child.logger = this.logger.child(context);
+        const child = new Logger(this.config);
+        child.logger = this.logger.child({
+            ...context,
+            correlationId: this.correlationId,
+        });
         return child;
     }
 
@@ -131,6 +171,20 @@ export class Logger {
             command,
             ...context,
         });
+    }
+
+    /**
+     * Get the current correlation ID
+     */
+    public getCorrelationId(): string {
+        return this.correlationId;
+    }
+
+    /**
+     * Set a new correlation ID
+     */
+    public setCorrelationId(id: string): void {
+        this.correlationId = id;
     }
 
     /**

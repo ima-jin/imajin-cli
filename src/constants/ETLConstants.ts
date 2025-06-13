@@ -18,14 +18,6 @@ export const DEFAULT_MODEL_VERSIONS = {
     'community-hub': '1.0.0'
 } as const;
 
-// Standard model types array for iteration
-export const STANDARD_MODEL_TYPES = [
-    'social-commerce',
-    'creative-portfolio',
-    'professional-network',
-    'community-hub'
-] as const;
-
 // Pipeline Step Messages
 export const PIPELINE_MESSAGES = {
     INVALID_PIPELINE_ID: 'Invalid pipeline ID provided',

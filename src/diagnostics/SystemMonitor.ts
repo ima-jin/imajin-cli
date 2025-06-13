@@ -130,4 +130,25 @@ export class SystemMonitor extends EventEmitter {
     public getMetricsCollector(): MetricsCollector {
         return this.metricsCollector;
     }
+
+    /**
+     * Get comprehensive system status (for StatusCommand compatibility)
+     */
+    public async getSystemStatus(): Promise<any> {
+        const health = await this.healthManager.runHealthChecks();
+        const metrics = this.metricsCollector.getPerformanceMetrics();
+
+        return {
+            overall: health.overall,
+            uptime: health.uptime,
+            version: health.version,
+            health: {
+                checks: health.checks
+            },
+            metrics: {
+                performance: metrics
+            },
+            timestamp: new Date().toISOString()
+        };
+    }
 } 

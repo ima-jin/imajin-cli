@@ -43,9 +43,11 @@ async function main(): Promise<void> {
     const { ServiceLayerProvider } = await import('./providers/ServiceLayerProvider.js');
     const { PluginGeneratorServiceProvider } = await import('./providers/PluginGeneratorServiceProvider.js');
     const { MediaServiceProvider } = await import('./providers/MediaServiceProvider.js');
+    const { MonitoringServiceProvider } = await import('./providers/MonitoringServiceProvider.js');
 
     app.createProvider(CredentialServiceProvider);
     app.createProvider(ServiceLayerProvider);
+    app.createProvider(MonitoringServiceProvider);
     app.createProvider(StripeServiceProvider);
     app.createProvider(PluginGeneratorServiceProvider);
     app.createProvider(MediaServiceProvider);

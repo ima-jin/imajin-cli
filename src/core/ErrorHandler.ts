@@ -178,11 +178,33 @@ export class ErrorHandler extends EventEmitter {
     }
 
     /**
-     * Log error (placeholder for logging integration)
+     * Log error with integrated logging system
      */
     private async logError(error: BaseException, context: any): Promise<void> {
-        // This would integrate with the logging system
-        // For now, we'll just emit a log event
+        // Import logger dynamically to avoid circular dependencies
+        const { Logger } = await import('../logging/Logger');
+        const logger = new Logger();
+
+        const logLevel = this.severityToLogLevel(error.severity) as any;
+        
+        logger.log(logLevel, `Error handled: ${error.message}`, {
+            type: 'error_handled',
+            error: {
+                name: error.name,
+                message: error.message,
+                severity: error.severity,
+                code: error.code,
+                category: error.category,
+                technicalDetails: error.technicalDetails,
+                userMessage: error.userMessage,
+                recoveryStrategy: error.recoveryStrategy,
+                metadata: error.metadata,
+            },
+            context,
+            correlationId: error.metadata.requestId || logger.getCorrelationId(),
+        });
+
+        // Also emit event for backward compatibility
         this.emit('log', {
             level: this.severityToLogLevel(error.severity),
             message: error.message,
