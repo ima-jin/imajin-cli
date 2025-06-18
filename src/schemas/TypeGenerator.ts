@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-13
+ * @since       2025-06-13
  *
  * Integration Points:
  * - TypeScript interface generation from schemas

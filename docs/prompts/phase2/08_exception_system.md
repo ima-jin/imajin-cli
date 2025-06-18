@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "08 Exception System"
+created: "2025-06-09T21:17:52Z"
+---
+
 # ⚠️ IMPLEMENT: Exception System & Error Handling
 
 **Status:** ⏳ **PENDING**  

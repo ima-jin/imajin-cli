@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "INSPO"
+created: "2025-06-10T04:02:35Z"
+---
+
 Ryan: Why does a planet that is free scare the war people so much?
 
 

@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "02 Command Pattern Framework"
+created: "2025-06-09T21:17:52Z"
+---
+
 # ⚡ IMPLEMENT: Command Pattern Framework
 
 **Status:** ⏳ **COMPLETE**  

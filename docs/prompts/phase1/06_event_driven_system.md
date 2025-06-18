@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "06 Event Driven System"
+created: "2025-06-09T21:17:52Z"
+---
+
 # 🚀 IMPLEMENT: Event-Driven System
 
 **Status:** ⏳ **PENDING**  

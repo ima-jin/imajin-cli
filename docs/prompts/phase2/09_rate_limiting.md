@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "09 Rate Limiting"
+created: "2025-06-09T21:17:52Z"
+---
+
 # 🚦 IMPLEMENT: Rate Limiting & API Management
 
 **Status:** ⏳ **PENDING**  

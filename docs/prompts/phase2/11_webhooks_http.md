@@ -1,3 +1,10 @@
+---
+# Metadata
+title: "11 Webhooks Http"
+created: "2025-06-09T21:17:52Z"
+updated: "2025-06-09T23:00:22Z"
+---
+
 # 🔗 IMPLEMENT: Webhooks & HTTP Layer
 
 **Status:** ⏳ **PENDING**  

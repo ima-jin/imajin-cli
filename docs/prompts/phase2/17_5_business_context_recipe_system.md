@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "17 5 Business Context Recipe System"
+created: "2025-06-13T22:32:39Z"
+---
+
 # 🍯 IMPLEMENT: Business Context Recipe System
 
 **Status:** ⏳ **PENDING**  

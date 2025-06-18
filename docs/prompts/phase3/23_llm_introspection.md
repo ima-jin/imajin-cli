@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "23 Llm Introspection"
+created: "2025-06-09T21:17:52Z"
+---
+
 # 🤖 IMPLEMENT: LLM Introspection APIs
 
 **Status:** ⏳ **PENDING**  

@@ -4,6 +4,7 @@
 
   "description": "LLM-powered universal service interface for dynamic service discovery and orchestration",
   "main": "dist/index.js",
+  "type": "module",
   "bin": {
     "imajin": "./bin/imajin"
   },
@@ -20,7 +21,10 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "clean": "rimraf dist",
-    "sonar": "eslint src/**/*.ts --ext .ts"
+    "sonar": "eslint src/**/*.ts --ext .ts",
+    "update-dates": "node scripts/update-task-dates.js",
+    "update-dates:tasks": "node scripts/update-task-dates.js docs/prompts/tasks/*.md",
+    "update-dates:projects": "node scripts/update-task-dates.js docs/prompts/projects/*.md"
   },
   "keywords": [
     "cli",

@@ -1,3 +1,10 @@
+---
+# Metadata
+title: "README"
+created: "2025-06-09T21:17:52Z"
+updated: "2025-06-13T21:31:07Z"
+---
+
 # 🎯 IMAJIN-CLI IMPLEMENTATION PROMPTS
 
 **Purpose:** Ready-to-use implementation prompts for systematic development  

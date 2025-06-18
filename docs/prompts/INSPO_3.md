@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "INSPO 3"
+created: "2025-06-13T23:42:25-04:00"
+---
+
 Ryan: Are cops simply people who have the kind of trauma where someone didn't step in and save them. When they could have. That's a tough kind of trauma. I'm thinking brutal family violence stuff. 
 
 

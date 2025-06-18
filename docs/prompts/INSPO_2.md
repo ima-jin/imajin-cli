@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "INSPO 2"
+created: "2025-06-10T06:25:47Z"
+---
+
 Ryan: It's time to fight for the planet instead of this garbage. We can do so many amazing things. Let's be amazing instead of letting this go on. Vote for governments who will prioritize ecology over endless war, funding wars, funding fear and moving us closer to true corporate fascism. Learn some fabricating tools. Get a group of people together with different machines to fabricate stuff together. We can make almost anything now. Let's get good at that. And make up a way out of this. Like for example if we have 5,000,000 people with the instructions to build a CO2 extraction device... And then helped them all with funding. Or let them all innovate and self fund. And we pay people for extracting co2 from the air .. We could create a scale ... ?
 
 

@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "21 Workflow Detector"
+created: "2025-06-09T21:17:52Z"
+---
+
 # 🔍 IMPLEMENT: Business Workflow Detector
 
 **Status:** ⏳ **PENDING**  

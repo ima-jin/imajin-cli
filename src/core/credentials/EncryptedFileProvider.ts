@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
+ * @updated      2025-06-13
  *
  * Integration Points:
  * - Encrypted file credential storage

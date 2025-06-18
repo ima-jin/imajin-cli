@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "17 1 External Schema System"
+created: "2025-06-13T21:31:07Z"
+---
+
 # 🗂️ IMPLEMENT: External Schema System
 
 **Status:** ⏳ **PENDING**  

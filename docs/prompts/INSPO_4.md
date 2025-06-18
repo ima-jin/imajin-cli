@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "INSPO 4"
+created: "2025-06-15T20:50:36-06:00"
+---
+
 Ryan: Voice to Text braindump omitted 
 
 

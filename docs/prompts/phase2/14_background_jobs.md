@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "14 Background Jobs"
+created: "2025-06-09T21:17:52Z"
+---
+
 # ⚙️ IMPLEMENT: Background Job Processing
 
 **Status:** ⏳ **PENDING**  

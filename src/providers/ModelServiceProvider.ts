@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-12
+ * @since       2025-06-13
  */
 
 import { ServiceProvider } from '../core/ServiceProvider.js';

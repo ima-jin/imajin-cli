@@ -1,3 +1,9 @@
+---
+# Metadata
+title: "01 Service Provider System"
+created: "2025-06-09T21:17:52Z"
+---
+
 # 🏗️ IMPLEMENT: Service Provider System
 
 **Status:** ⏳ **COMPLETE**  
