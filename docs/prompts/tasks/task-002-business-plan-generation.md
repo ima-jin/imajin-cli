@@ -40,6 +40,7 @@ Generate a comprehensive set of business plan documents that position imajin-cli
 1. **10-Page Comprehensive Business Plan** - Complete market analysis, revenue models, technical architecture, competitive landscape, and implementation roadmap
 2. **3-Page Executive Summary** - Vision, market opportunity, differentiation, and key success metrics
 3. **1-Page Vision Statement** - Core mission, value proposition, and immediate next steps
+4. **Founder Profile Document** - Dedicated profile of Ryan VETEZE covering background, expertise, vision, and execution capability
 
 ### Core Positioning
 
@@ -66,7 +67,7 @@ The fair attribution system creates a **win-win transition model** rather than d
 
 **Required Sections:**
 
-- [ ] **Executive Summary**: Vision, mission, market opportunity, competitive advantage
+- [ ] **Executive Summary**: Vision, mission, market opportunity, competitive advantage, founder credibility
 - [ ] **Market Analysis**: API economy size ($2.2T by 2025), middleware platform pain points, developer economics
 - [ ] **Product Vision**: Universal Elements architecture, graph translation, enterprise-grade generation
 - [ ] **Competitive Landscape**: Zapier, Postman, GitHub CLI vs. domain-specific generation
@@ -74,7 +75,7 @@ The fair attribution system creates a **win-win transition model** rather than d
 - [ ] **Technical Architecture**: Service Provider System, Phase 1+2 status, generation engine
 - [ ] **Go-to-Market Strategy**: Developer communities, open source adoption, enterprise partnerships
 - [ ] **Financial Projections**: Growth from free adoption → premium conversions → ecosystem revenue
-- [ ] **Team & Execution**: Current progress, next milestones, scaling requirements  
+- [ ] **Team & Leadership**: Founder profile (Ryan VETEZE), current progress, next milestones, scaling requirements  
 - [ ] **Investment Thesis**: Economic democracy, network effects, post-platform infrastructure value
 
 **Success Criteria:**
@@ -94,6 +95,7 @@ The fair attribution system creates a **win-win transition model** rather than d
 
 - [ ] **Problem Statement**: Expensive middleware hell, vendor lock-in, subscription fatigue
 - [ ] **Solution Overview**: Free CLI generation with enterprise patterns and fair attribution
+- [ ] **Founder & Leadership**: Ryan VETEZE profile, technical credibility, vision execution
 - [ ] **Dual-Path Investment Model**: Traditional VC returns + fair attribution community rewards
 - [ ] **Market Opportunity**: Size, growth trends, competitive gaps
 - [ ] **Business Model**: Primary revenue streams and unit economics
@@ -127,7 +129,52 @@ The fair attribution system creates a **win-win transition model** rather than d
 - [ ] Positions the project as inevitable evolution, not just another tool
 - [ ] Inspires action while maintaining credibility
 
+### 👤 **Founder Profile Document**
+
+**Required Content:**
+
+- [ ] **Professional Background**: Technical expertise, industry experience, relevant credentials
+- [ ] **Vision Alignment**: How personal journey led to economic democracy mission
+- [ ] **Technical Leadership**: Evidence of ability to execute complex software architecture
+- [ ] **Community Building**: Experience with open source, developer communities, fair attribution
+- [ ] **Business Acumen**: Understanding of API economy, developer tools market, platform dynamics
+- [ ] **Execution Track Record**: Completed projects, implementations, demonstrated results
+- [ ] **Unique Perspective**: What Ryan brings that differentiates imajin-cli from competitors
+- [ ] **Future Commitment**: Long-term vision for leadership and project evolution
+
+**Success Criteria:**
+
+- [ ] Builds investor confidence in founder's ability to execute the vision
+- [ ] Demonstrates deep understanding of both technical and business challenges
+- [ ] Shows authentic commitment to fair attribution and community ownership
+- [ ] Positions founder as credible leader in post-platform infrastructure movement
+
 ## Implementation Strategy
+
+### Phase 0: Founder Profile Development (Day 0.5)
+
+#### **Information Gathering for Ryan VETEZE**
+
+**Profile Development Process:**
+
+1. **Interactive Founder Interview**: Structured questions to gather:
+   - Professional background and technical expertise
+   - Career journey leading to imajin-cli vision
+   - Previous projects and execution experience
+   - Philosophy on economic democracy and fair attribution
+   - Vision for leadership and community building
+
+2. **Technical Credibility Assessment**: Document:
+   - Architecture design capabilities (evidenced by current implementation)
+   - Understanding of API economy and developer tools landscape
+   - Open source community engagement and philosophy
+   - Business model innovation and market insight
+
+3. **Create Founder Profile Sub-Document**: `[[docs/business/founder-profile-ryan-veteze.md]]`
+   - Professional bio optimized for business plan inclusion
+   - Key achievements and differentiation factors
+   - Vision alignment with imajin-cli mission
+   - Execution capability and track record
 
 ### Phase 1: Context Integration & Market Analysis (Day 1)
 
@@ -140,7 +187,8 @@ The fair attribution system creates a **win-win transition model** rather than d
 - [[docs/prompts/INSPO*.md]] - All inspiration documents (INSPO.md, INSPO_2.md, INSPO_3.md, INSPO_4.md) containing philosophical foundations
 - [[docs/prompts/README.md]] - Implementation tracking and prompt-based development approach
 - [[docs/.fair-license.md]] - Fair attribution licensing framework and economic protocol
-- [[docs/business/*.md]] - All business plan documents (📁 **Directory exists but empty - target for generated documents**)
+- [[docs/business/*.md]] - All business plan documents (📁 **Directory exists but empty - target for generated documents**)  
+- [[docs/business/founder-profile-ryan-veteze.md]] - Founder profile for business plan integration
 
 #### **Market Research Integration**
 
@@ -210,10 +258,11 @@ The fair attribution system creates a **win-win transition model** rather than d
 - Investment Requirements & ROI
 - Exit Strategy Considerations
 
-## 8. Technical Roadmap & Team (1 page)
-- Current Implementation Status
+## 8. Team & Leadership (1 page)
+- Founder Profile: Ryan VETEZE (background, expertise, vision alignment)
+- Current Implementation Status & Technical Leadership
 - Phase 2-3 Development Timeline
-- Scaling Requirements
+- Scaling Requirements & Team Growth
 - Community Growth Strategy
 
 ## 9. Risk Analysis & Mitigation (0.5 pages)
