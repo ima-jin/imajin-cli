@@ -81,7 +81,11 @@ docs/prompts/
 | 16   | `phase2/16_logging_system.md`                   | ✅ Complete    | Comprehensive logging                 |
 | 17   | `phase2/17_stripe_connector.md`                 | ✅ Complete    | First service connector (reference)   |
 | 17.1 | `phase2/17_1_external_schema_system.md`         | ✅ Complete    | External schema definition system     |
-| 17.3 | `phase2/17_3_business_context_schema_system.md` | 🔄 **CURRENT** | Business-context-driven schema system |
+| 17.3 | `phase2/17_3_business_context_schema_system.md` | ✅ Complete    | Business-context-driven schema system |
+| 17.4 | `phase2/17_4_business_context_cleanup.md`       | ✅ Complete    | Business context cleanup and optimization |
+| 17.5 | `phase2/17_5_business_context_recipe_system.md` | 🔄 **CURRENT** | Business context recipe system implementation |
+| 18   | `phase2/18_service_hardening_multi_api.md`      | ⏳ Pending     | Connect 5-6 APIs for practical testing |
+| 19   | `phase2/19_local_model_samples.md`              | ⏳ Pending     | Build sample local model integrations |
 
 ---
 
@@ -89,14 +93,14 @@ docs/prompts/
 
 | #   | Prompt File                            | Status     | Description                          |
 | --- | -------------------------------------- | ---------- | ------------------------------------ |
-| 18  | `phase3/18_ai_context_analysis.md`     | ⏳ Pending | AI-powered context analysis          |
-| 19  | `phase3/19_intelligent_generator.md`   | ⏳ Pending | Smart CLI command generation         |
-| 20  | `phase3/20_adaptive_optimizer.md`      | ⏳ Pending | Learning & optimization system       |
-| 21  | `phase3/21_workflow_detector.md`       | ⏳ Pending | Business workflow discovery          |
-| 22  | `phase3/22_realtime_progress.md`       | ⏳ Pending | Real-time progress tracking          |
-| 23  | `phase3/23_llm_introspection.md`       | ⏳ Pending | LLM introspection APIs               |
-| 24  | `phase3/24_cross_service_workflows.md` | ⏳ Pending | Multi-service workflow orchestration |
-| 25  | `phase3/25_integration_testing.md`     | ⏳ Pending | Comprehensive integration testing    |
+| 20  | `phase3/20_ai_context_analysis.md`     | ⏳ Pending | AI-powered context analysis          |
+| 21  | `phase3/21_intelligent_generator.md`   | ⏳ Pending | Smart CLI command generation         |
+| 22  | `phase3/22_adaptive_optimizer.md`      | ⏳ Pending | Learning & optimization system       |
+| 23  | `phase3/23_workflow_detector.md`       | ⏳ Pending | Business workflow discovery          |
+| 24  | `phase3/24_realtime_progress.md`       | ⏳ Pending | Real-time progress tracking          |
+| 25  | `phase3/25_llm_introspection.md`       | ⏳ Pending | LLM introspection APIs               |
+| 26  | `phase3/26_cross_service_workflows.md` | ⏳ Pending | Multi-service workflow orchestration |
+| 27  | `phase3/27_integration_testing.md`     | ⏳ Pending | Comprehensive integration testing    |
 
 ---
 
