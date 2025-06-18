@@ -130,7 +130,7 @@ Eliminate subscription fatigue and vendor lock-in through business-specific CLI 
 ## Success Metrics
 
 ### Business Success
-- **Investment**: $2.5M Series A funding secured
+- **Investment**: $2.5M Series A funding target
 - **Revenue**: $2M annual run rate by Month 18
 - **Customers**: 100+ enterprise customers
 - **Community**: 500+ contributors with fair attribution
