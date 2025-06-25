@@ -11,24 +11,33 @@
  * @since       2025-06-04
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Determine if we're running from source or built version
-const srcPath = path.join(__dirname, '..', 'src', 'index.ts');
-const distPath = path.join(__dirname, '..', 'dist', 'index.js');
+// Main execution function
+async function main() {
+  // Determine if we're running from source or built version
+  const srcPath = path.join(__dirname, '..', 'src', 'index.ts');
+  const distPath = path.join(__dirname, '..', 'dist', 'index.js');
 
-if (fs.existsSync(distPath)) {
-  // Production: Use compiled JavaScript
-  require(distPath);
-} else if (fs.existsSync(srcPath)) {
-  // Development: Use ts-node to run TypeScript directly
-  console.error('Development mode not supported. Please run "npm run build" first.');
-  process.exit(1);
-} else {
-  console.error('Error: Cannot find application entry point');
-  console.error('Run "npm run build" to compile TypeScript or ensure source files exist');
-  process.exit(1);
-} 
+  if (fs.existsSync(distPath)) {
+    // Production: Use compiled JavaScript
+    const distUrl = new URL('file://' + distPath.replace(/\\/g, '/'));
+    await import(distUrl);
+  } else if (fs.existsSync(srcPath)) {
+    // Development: Use ts-node to run TypeScript directly
+    console.error('Development mode not supported. Please run "npm run build" first.');
+    process.exit(1);
+  } else {
+    console.error('Error: Cannot find application entry point');
+    console.error('Run "npm run build" to compile TypeScript or ensure source files exist');
+    process.exit(1);
+  }
+}
+
+// Execute main function
+main().catch(console.error);

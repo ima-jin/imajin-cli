@@ -1,0 +1,29 @@
+{
+  "name": "SaaS Platform",
+  "description": "Software-as-a-service with user management and subscriptions",
+  "businessType": "saas",
+  "entities": {
+    "user": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "email", "type": "string", "required": true },
+        { "name": "role", "type": "enum", "values": ["admin", "user", "viewer"], "required": true },
+        { "name": "lastLogin", "type": "date", "required": false }
+      ]
+    },
+    "organization": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "plan", "type": "string", "required": true },
+        { "name": "billingEmail", "type": "string", "required": true }
+      ]
+    },
+    "subscription": {
+      "fields": [
+        { "name": "organizationId", "type": "string", "required": true },
+        { "name": "plan", "type": "string", "required": true },
+        { "name": "status", "type": "enum", "values": ["active", "cancelled", "past_due"], "required": true }
+      ]
+    }
+  }
+} 

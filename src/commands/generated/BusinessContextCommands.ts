@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
+ * @updated      2025-06-18
  *
  * Integration Points:
  * - Business context initialization and management
@@ -22,6 +23,7 @@ import { BusinessContextManager } from '../../context/BusinessContextManager.js'
 import { BusinessServiceDiscovery } from '../../discovery/BusinessServiceDiscovery.js';
 import { BusinessModelFactory } from '../../etl/graphs/BusinessModelFactory.js';
 import { BusinessTypeRegistry, initializeBusinessTypeSystem } from '../../types/Core.js';
+import { RecipeManager } from '../../context/RecipeManager.js';
 import chalk from 'chalk';
 
 // =============================================================================
@@ -129,6 +131,110 @@ Important business rules:
                 
             } catch (error) {
                 console.error(chalk.red('❌ Failed to initialize business context:'), error);
+                process.exit(1);
+            }
+        });
+
+    // Initialize from recipe
+    cmd.command('recipe')
+        .description('Initialize from business recipe template')
+        .option('-t, --type <type>', 'Recipe type (e.g., coffee-shop, restaurant, ecommerce, saas)')
+        .option('-n, --name <name>', 'Business name')
+        .option('--preview', 'Preview recipe without creating')
+        .option('--json', 'Output in JSON format')
+        .action(async (options) => {
+            try {
+                const recipeManager = new RecipeManager();
+                
+                if (!options.type) {
+                    // Show available recipes if no type specified
+                    const recipes = await recipeManager.listRecipes();
+                    console.log(chalk.yellow('⚠️  Please specify a recipe type:\n'));
+                    
+                    for (const recipe of recipes) {
+                        console.log(chalk.gray(`   imajin context recipe --type ${recipe.businessType}`));
+                    }
+                    return;
+                }
+                
+                const recipe = await recipeManager.getRecipe(options.type);
+                if (!recipe) {
+                    console.log(chalk.red(`❌ Recipe not found: ${options.type}`));
+                    console.log(chalk.yellow('\n💡 Available recipes:'));
+                    const recipes = await recipeManager.listRecipes();
+                    for (const r of recipes) {
+                        console.log(chalk.gray(`   ${r.businessType}`));
+                    }
+                    return;
+                }
+                
+                if (options.preview) {
+                    // Preview mode - show what would be generated
+                    if (options.json) {
+                        console.log(JSON.stringify(recipe, null, 2));
+                    } else {
+                        console.log(chalk.blue('📋 Recipe Preview:'));
+                        console.log(chalk.cyan(`Name: ${recipe.name}`));
+                        console.log(chalk.cyan(`Type: ${recipe.businessType}`));
+                        console.log(chalk.cyan(`Description: ${recipe.description}`));
+                        console.log(chalk.cyan(`Entities: ${Object.keys(recipe.entities).join(', ')}`));
+                    }
+                    return;
+                }
+                
+                // Check if business context already exists
+                const manager = new BusinessContextManager();
+                if (await manager.configurationExists()) {
+                    console.log(chalk.yellow('⚠️  Business context already exists.'));
+                    
+                    const inquirer = await import('inquirer');
+                    const overwriteAnswer = await inquirer.default.prompt([{
+                        type: 'confirm',
+                        name: 'overwrite',
+                        message: 'Overwrite existing business context?',
+                        default: false
+                    }]);
+                    
+                    if (!overwriteAnswer.overwrite) {
+                        console.log(chalk.blue('Recipe setup cancelled.'));
+                        return;
+                    }
+                }
+                
+                // Generate business context from recipe
+                const domainModel = recipeManager.generateBusinessContext(recipe);
+                
+                // Initialize business context
+                const businessName = options.name || recipe.name;
+                const config = await manager.initialize(domainModel.description, businessName);
+                
+                // Save the generated domain model
+                config.entities = domainModel.entities;
+                config.workflows = domainModel.workflows?.map(w => ({ ...w, enabled: true }));
+                await manager.saveConfiguration(config);
+                
+                if (options.json) {
+                    console.log(JSON.stringify({
+                        success: true,
+                        recipe: options.type,
+                        businessType: domainModel.businessType,
+                        entities: Object.keys(domainModel.entities),
+                        configPath: manager.getConfigurationPath()
+                    }, null, 2));
+                } else {
+                    console.log(chalk.green('✅ Business context created from recipe!'));
+                    console.log(chalk.cyan(`Recipe: ${recipe.name}`));
+                    console.log(chalk.cyan(`Business Type: ${domainModel.businessType}`));
+                    console.log(chalk.cyan(`Entities: ${Object.keys(domainModel.entities).join(', ')}`));
+                    console.log(chalk.yellow(`Config: ${manager.getConfigurationPath()}`));
+                    
+                    console.log(chalk.blue('\n🎯 Next steps:'));
+                    console.log('  • Run "imajin context show" to see your configuration');
+                    console.log('  • Run "imajin stripe payment create --amount 1000" to test integration');
+                }
+                
+            } catch (error) {
+                console.error(chalk.red('❌ Failed to setup from recipe:'), error);
                 process.exit(1);
             }
         });

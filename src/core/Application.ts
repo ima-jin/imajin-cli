@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-06
- * @updated      2025-06-13
+ * @updated      2025-06-18
  *
  * @see         docs/architecture.md
  * 
@@ -32,6 +32,7 @@ import { ImajinConfig, ImajinConfigSchema } from '../types/Config.js';
 import type { LLMResponse, ServiceIntrospection } from '../types/LLM.js';
 import { ErrorHandler } from './ErrorHandler.js';
 import { ErrorRecovery } from './ErrorRecovery.js';
+import { BusinessContextValidator } from '../middleware/BusinessContextValidator.js';
 
 export class Application {
   public static readonly VERSION = '0.1.0';
@@ -45,6 +46,7 @@ export class Application {
   private isBooted: boolean = false;
   private errorHandler: ErrorHandler;
   private errorRecovery: ErrorRecovery;
+  private businessValidator: BusinessContextValidator;
 
   constructor(config?: Partial<ImajinConfig>) {
     // Initialize container and core services
@@ -72,6 +74,7 @@ export class Application {
     });
 
     this.errorRecovery = new ErrorRecovery();
+    this.businessValidator = new BusinessContextValidator();
 
     // Set up global error handling
     this.setupGlobalErrorHandling();
@@ -118,6 +121,7 @@ export class Application {
     this.container.singleton('container', () => this.container);
     this.container.singleton('errorHandler', () => this.errorHandler);
     this.container.singleton('errorRecovery', () => this.errorRecovery);
+    this.container.singleton('businessValidator', () => this.businessValidator);
     this.container.singleton('eventEmitter', () => new EventEmitter());
   }
 
@@ -225,6 +229,9 @@ export class Application {
 
     // Register commands from providers
     this.registerProviderCommands();
+    
+    // Register business context and recipe commands
+    this.registerBusinessContextCommands();
 
     this.isBooted = true;
     this.logger.info('Application booted successfully');
@@ -240,6 +247,27 @@ export class Application {
         this.logger.debug(`Registered commands for provider: ${provider.getName()}`);
       }
     }
+  }
+  
+  /**
+   * Register business context and recipe commands
+   */
+  private registerBusinessContextCommands(): void {
+    // Import and register business context commands
+    import('../commands/generated/BusinessContextCommands.js').then(({ createBusinessContextCommands }) => {
+      this.program.addCommand(createBusinessContextCommands());
+      this.logger.debug('Registered business context commands');
+    }).catch(err => {
+      this.logger.warn('Failed to load business context commands:', err);
+    });
+    
+    // Import and register recipe commands
+    import('../commands/generated/RecipeCommands.js').then(({ createRecipeCommands }) => {
+      this.program.addCommand(createRecipeCommands());
+      this.logger.debug('Registered recipe commands');
+    }).catch(err => {
+      this.logger.warn('Failed to load recipe commands:', err);
+    });
   }
 
   /**
@@ -369,6 +397,14 @@ export class Application {
       if (process.argv.length <= 2) {
         await this.startInteractiveMode();
       } else {
+        // Validate business context before command execution
+        const commandString = process.argv.slice(2).join(' ');
+        const isValidContext = await this.businessValidator.validateBusinessContext(commandString);
+        
+        if (!isValidContext) {
+          process.exit(1);
+        }
+        
         await this.program.parseAsync(process.argv);
       }
     } catch (error) {

@@ -1,0 +1,38 @@
+{
+  "name": "Coffee Shop",
+  "description": "Complete setup for coffee shops with POS and customer management",
+  "businessType": "coffee-shop",
+  "entities": {
+    "customer": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "email", "type": "string", "required": false },
+        { "name": "phone", "type": "string", "required": false },
+        { "name": "loyaltyPoints", "type": "number", "default": 0 },
+        { "name": "dietaryRestrictions", "type": "array", "items": "string", "required": false }
+      ]
+    },
+    "order": {
+      "fields": [
+        { "name": "items", "type": "array", "items": "orderItem", "required": true },
+        { "name": "total", "type": "number", "required": true },
+        { "name": "status", "type": "enum", "values": ["pending", "preparing", "ready", "completed"], "required": true },
+        { "name": "customerName", "type": "string", "required": false }
+      ]
+    },
+    "product": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "price", "type": "number", "required": true },
+        { "name": "category", "type": "enum", "values": ["beverage", "food", "retail"], "required": true }
+      ]
+    }
+  },
+  "workflows": [
+    {
+      "name": "Order Processing",
+      "description": "From order to completion",
+      "steps": ["Order placed", "Payment processed", "Preparation", "Order ready", "Completed"]
+    }
+  ]
+} 
