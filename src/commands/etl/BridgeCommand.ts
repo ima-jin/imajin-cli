@@ -16,6 +16,7 @@ import type { EventManager } from '../../core/events/EventManager';
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
+ * @updated      2025-06-18
  *
  * Integration Points:
  * - Bridge Registry
