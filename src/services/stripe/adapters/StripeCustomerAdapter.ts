@@ -98,16 +98,7 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, any
         return stripeCustomer;
     }
     
-    // Legacy compatibility methods
-    /** @deprecated Use toBusinessContext instead */
-    toUniversal(stripeCustomer: StripeCustomer): any {
-        return this.toBusinessContext(stripeCustomer);
-    }
-    
-    /** @deprecated Use fromBusinessContext instead */
-    fromUniversal(universalCustomer: any): StripeCustomer {
-        return this.fromBusinessContext(universalCustomer);
-    }
+    // Legacy compatibility methods removed - use toBusinessContext/fromBusinessContext directly
     
     private mapMetadataToBusinessFields(metadata: Record<string, string>, businessCustomer: any): void {
         // Map known Stripe metadata fields to business context

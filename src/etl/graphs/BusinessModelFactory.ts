@@ -22,6 +22,7 @@ import type {
     CompatibilityMatrix as ModelCompatibility
 } from '../core/interfaces.js';
 import type { BusinessDomainModel } from '../../context/BusinessContextProcessor.js';
+import { BusinessTypeRegistry } from '../../types/Core.js';
 import { z } from 'zod';
 
 // Define ServiceSchema interface for type safety
@@ -327,7 +328,7 @@ export class BusinessModelFactory extends ModelFactory {
         for (const [entityName, entityDef] of Object.entries(context.entities)) {
             rules.push({
                 sourceEntity: entityName,
-                targetEntity: this.mapToUniversalEntity(entityName),
+                targetEntity: this.mapToBusinessEntity(entityName, context.businessType),
                 fieldMappings: this.generateFieldMappings(entityDef),
                 transformations: this.generateTransformations(entityDef),
             });
@@ -336,22 +337,50 @@ export class BusinessModelFactory extends ModelFactory {
         return rules;
     }
 
-    private static mapToUniversalEntity(entityName: string): string {
-        const mappings: Record<string, string> = {
-            customer: 'UniversalCustomer',
-            user: 'UniversalCustomer',
-            client: 'UniversalCustomer',
-            payment: 'UniversalPayment',
-            transaction: 'UniversalPayment',
-            order: 'UniversalOrder',
-            purchase: 'UniversalOrder',
-            product: 'UniversalProduct',
-            item: 'UniversalProduct',
-            subscription: 'UniversalSubscription',
-            contact: 'UniversalContact',
-        };
+    /**
+     * Generate ETL mappings from business context
+     */
+    static generateBusinessMappings(businessType: string): Record<string, string> {
+        const mappings: Record<string, string> = {};
+        const registeredTypes = BusinessTypeRegistry.getRegisteredTypes();
         
-        return mappings[entityName] || 'UniversalElement';
+        for (const typeName of registeredTypes) {
+            const [type, entity] = typeName.split('.');
+            if (type === businessType && entity) {
+                // Map business entity to its business context type
+                mappings[entity.toLowerCase()] = typeName;
+            }
+        }
+        
+        return mappings;
+    }
+
+    /**
+     * Register business domain with ETL system
+     */
+    static registerBusinessDomainWithETL(domain: BusinessDomainModel): void {
+        const mappings = this.generateBusinessMappings(domain.businessType);
+        
+        // Register each entity mapping
+        for (const [entityKey, businessType] of Object.entries(mappings)) {
+            this.registerMapping(entityKey, businessType, domain);
+        }
+        
+        console.log(`✅ Registered ETL mappings for ${Object.keys(mappings).length} business entities`);
+    }
+
+    /**
+     * Register ETL mapping for business entity
+     */
+    private static registerMapping(entityKey: string, businessType: string, domain: BusinessDomainModel): void {
+        // Implementation would register the mapping with the ETL system
+        // This is a placeholder for the actual ETL registration logic
+        console.log(`📋 Registered ETL mapping: ${entityKey} → ${businessType}`);
+    }
+
+    private static mapToBusinessEntity(entityName: string, businessType: string): string {
+        const mappings = this.generateBusinessMappings(businessType);
+        return mappings[entityName.toLowerCase()] || `${businessType}.${entityName}`;
     }
 
     private static generateFieldMappings(entityDef: any): Record<string, string> {

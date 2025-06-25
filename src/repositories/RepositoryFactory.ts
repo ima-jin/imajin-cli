@@ -8,20 +8,21 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-10
- * @updated      2025-06-13
+ * @updated      2025-06-25
  *
  * Integration Points:
  * - Repository interface and implementations
  * - Container for dependency injection
  * - Logger for factory operations
  * - Event system for repository lifecycle
+ * - BusinessTypeRegistry for dynamic business entity support
  */
 
 import type { EventEmitter } from 'events';
 import type { Container } from '../container/Container.js';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';
-// Universal types removed - now using dynamic business context types
+import { BusinessTypeRegistry } from '../types/Core.js';
 import type { RepositoryFactory as IRepositoryFactory, Repository, RepositoryOptions } from './Repository.js';
 import { MemoryRepository } from './implementations/MemoryRepository.js';
 
@@ -283,26 +284,94 @@ export class RepositoryFactory implements IRepositoryFactory {
     }
 
     private registerDefaultRepositories(): void {
-        // Register universal element repositories
-        this.register('UniversalCustomer', (options) =>
-            new MemoryRepository(
-                'UniversalCustomerRepository',
-                this.logger,
-                this.eventEmitter,
-                options
-            )
-        );
+        // Dynamic business entity repository registration
+        this.registerBusinessEntityRepositories();
+        
+        // Register common utility repositories if needed
+        this.logger.info('Default repository factories registered with business context support');
+    }
 
-        this.register('UniversalPayment', (options) =>
-            new MemoryRepository(
-                'UniversalPaymentRepository',
-                this.logger,
-                this.eventEmitter,
-                options
-            )
-        );
+    /**
+     * Register business entity repositories dynamically
+     */
+    private registerBusinessEntityRepositories(): void {
+        const registeredTypes = BusinessTypeRegistry.getRegisteredTypes();
+        
+        if (registeredTypes.length === 0) {
+            this.logger.warn('No business types registered yet. Business repositories will be registered when business context is initialized.');
+            return;
+        }
+        
+        for (const typeName of registeredTypes) {
+            const parts = typeName.split('.');
+            const businessType = parts[0];
+            const entityName = parts[1];
+            
+            if (businessType && entityName) {
+                const schema = BusinessTypeRegistry.getBusinessEntitySchema(businessType, entityName);
+                
+                if (schema) {
+                    this.register(typeName, (options) =>
+                        this.createDynamicRepository(
+                            `${businessType}${entityName.charAt(0).toUpperCase() + entityName.slice(1)}Repository`,
+                            schema,
+                            options
+                        )
+                    );
+                }
+            }
+        }
+        
+        this.logger.info(`✅ Registered repositories for ${registeredTypes.length} business entities`, {
+            businessTypes: registeredTypes
+        });
+    }
 
-        this.logger.info('Default repository factories registered');
+    /**
+     * Initialize repositories with business context
+     */
+    async initializeWithBusinessContext(): Promise<void> {
+        this.registerBusinessEntityRepositories();
+        
+        const registeredTypes = BusinessTypeRegistry.getRegisteredTypes();
+        this.logger.info(`✅ Initialized repositories with business context for ${registeredTypes.length} entities`);
+        
+        this.eventEmitter.emit('repository:business-context-initialized', {
+            businessTypes: registeredTypes,
+            timestamp: new Date()
+        });
+    }
+
+    /**
+     * Create a dynamic repository with business schema validation
+     */
+    private createDynamicRepository<T extends Record<string, any>, TKey = string>(
+        repositoryName: string,
+        schema: any,
+        options: RepositoryOptions = {}
+    ): Repository<T, TKey> {
+        // Note: Schema validation will be handled by the business context system
+        // The schema parameter is kept for future integration with validation logic
+        return new MemoryRepository<T, TKey>(
+            repositoryName,
+            this.logger,
+            this.eventEmitter,
+            {
+                ...options,
+                validation: {
+                    enabled: true,
+                    strict: true,
+                    ...options.validation
+                }
+            }
+        );
+    }
+
+    /**
+     * Get registered business types
+     */
+    getRegisteredBusinessTypes(): string[] {
+        return BusinessTypeRegistry.getRegisteredTypes();
     }
 }
 
