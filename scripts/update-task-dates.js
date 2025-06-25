@@ -87,6 +87,19 @@ function formatDateForJSDoc(isoDate) {
 }
 
 /**
+ * Format date as "Month YYYY" for human-readable dates
+ */
+function formatDateForHuman(isoDate) {
+  if (!isoDate) return null;
+  const date = new Date(isoDate);
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
  * Parse YAML frontmatter from a markdown file
  */
 function parseFrontmatter(content) {
@@ -168,6 +181,35 @@ function createFrontmatter(filePath, createdDate, updatedDate) {
   }
   
   return frontmatter;
+}
+
+/**
+ * Update "**Last Updated**: Month YYYY" style dates in markdown content
+ */
+function updateMarkdownLastUpdated(content, updatedDate) {
+  if (!updatedDate) return content;
+  
+  const humanDate = formatDateForHuman(updatedDate);
+  if (!humanDate) return content;
+  
+  const lastUpdatedPattern = /\*\*Last Updated\*\*:\s*[A-Za-z]+\s+\d{4}/g;
+  
+  if (content.match(lastUpdatedPattern)) {
+    // Update existing "**Last Updated**:" line
+    return content.replace(lastUpdatedPattern, `**Last Updated**: ${humanDate}`);
+  } else {
+    // Add "**Last Updated**:" after the first heading if it exists
+    const headingMatch = content.match(/^(#{1,6}\s+.*\n)/m);
+    if (headingMatch) {
+      return content.replace(
+        headingMatch[0],
+        `${headingMatch[0]}\n**Last Updated**: ${humanDate}\n`
+      );
+    } else {
+      // Add at the beginning of the document
+      return `**Last Updated**: ${humanDate}\n\n${content}`;
+    }
+  }
 }
 
 /**
@@ -273,22 +315,42 @@ function processFile(filePath) {
   if (fileType === 'markdown') {
     // Handle YAML frontmatter
     const { frontmatterText, body } = parseFrontmatter(content);
+    let frontmatterChanged = false;
+    let bodyChanged = false;
+    let newFrontmatter = frontmatterText;
+    let newBody = body || content;
 
     if (!frontmatterText) {
       // Create new YAML frontmatter
       console.log(`   📝 Creating new YAML frontmatter`);
-      const newFrontmatter = createFrontmatter(filePath, createdDate, updatedDate);
-      updatedContent = `---\n${newFrontmatter}\n---\n\n${content}`;
-      hasChanges = true;
+      newFrontmatter = createFrontmatter(filePath, createdDate, updatedDate);
+      frontmatterChanged = true;
     } else {
       // Update existing frontmatter
       const updatedFrontmatter = updateFrontmatterDates(frontmatterText, createdDate, updatedDate);
-      updatedContent = `---\n${updatedFrontmatter}\n---\n${body}`;
-      hasChanges = updatedFrontmatter !== frontmatterText;
-      
-      if (hasChanges) {
+      if (updatedFrontmatter !== frontmatterText) {
+        newFrontmatter = updatedFrontmatter;
+        frontmatterChanged = true;
         console.log(`   📝 Adding missing date fields to existing frontmatter`);
       }
+    }
+
+    // Update "**Last Updated**:" in markdown body
+    const updatedBody = updateMarkdownLastUpdated(newBody, updatedDate);
+    if (updatedBody !== newBody) {
+      newBody = updatedBody;
+      bodyChanged = true;
+      console.log(`   📝 Updated "**Last Updated**:" in document body`);
+    }
+
+    // Reconstruct the file
+    if (frontmatterChanged || bodyChanged) {
+      if (frontmatterText || frontmatterChanged) {
+        updatedContent = `---\n${newFrontmatter}\n---\n${newBody}`;
+      } else {
+        updatedContent = newBody;
+      }
+      hasChanges = true;
     }
 
   } else if (fileType === 'code') {
@@ -370,4 +432,4 @@ if (import.meta.url.startsWith('file://') && process.argv[1] && import.meta.url.
   main();
 }
 
-export { processFile, getGitCreationDate, getGitLastModified, updateJSDocDates, formatDateForJSDoc }; 
+export { processFile, getGitCreationDate, getGitLastModified, updateJSDocDates, formatDateForJSDoc, formatDateForHuman, updateMarkdownLastUpdated }; 
