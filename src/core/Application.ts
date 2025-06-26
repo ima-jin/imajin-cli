@@ -406,6 +406,10 @@ export class Application {
         }
         
         await this.program.parseAsync(process.argv);
+        
+        // Force exit after command completion for non-interactive commands
+        // This ensures the process doesn't hang on open handles from services
+        process.exit(0);
       }
     } catch (error) {
       console.error(chalk.red('Error:'), error);

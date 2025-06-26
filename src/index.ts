@@ -26,14 +26,67 @@ import { ExceptionUtils, SystemError } from './exceptions/index.js';
 // Load environment variables
 config();
 
+/**
+ * Detect if we're running in development mode (npm link)
+ * This checks if we're running from a symlinked node_modules location
+ */
+function isNpmLinkMode(): boolean {
+  try {
+    // Check if we're running from a symlinked location
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Get the real path of the current module
+    const currentPath = path.dirname(__filename);
+    const realPath = fs.realpathSync(currentPath);
+    
+    // If real path differs from current path, we're likely in a symlink (npm link)
+    const isSymlinked = currentPath !== realPath;
+    
+    // Also check if package.json exists in parent directory (development)
+    const packageJsonPath = path.join(currentPath, '..', 'package.json');
+    const hasPackageJson = fs.existsSync(packageJsonPath);
+    
+    // Check if we're in a node_modules/.bin path but the real path is elsewhere
+    const isInNodeModulesBin = currentPath.includes('node_modules') && currentPath.includes('.bin');
+    
+    return isSymlinked || (hasPackageJson && isInNodeModulesBin);
+  } catch (error) {
+    // If we can't determine, default to false
+    return false;
+  }
+}
+
+/**
+ * Determine debug mode - auto-enable for npm link development
+ */
+function shouldEnableDebugMode(): boolean {
+  // Explicit debug flag takes precedence
+  if (process.env.DEBUG === 'true') return true;
+  if (process.env.DEBUG === 'false') return false;
+  
+  // Check for debug command line flag
+  if (process.argv.includes('--debug')) return true;
+  
+  // Auto-enable for npm link development
+  if (isNpmLinkMode()) {
+    console.log('🔧 Development mode detected (npm link) - enabling debug logging');
+    return true;
+  }
+  
+  return false;
+}
+
 // Bootstrap and run the application
 async function main(): Promise<void> {
   let app: Application | undefined;
 
   try {
+    const debugMode = shouldEnableDebugMode();
+    
     app = new Application({
-      debug: process.env.DEBUG === 'true',
-      logLevel: (process.env.LOG_LEVEL as any) ?? 'info',
+      debug: debugMode,
+      logLevel: debugMode ? 'debug' : ((process.env.LOG_LEVEL as any) ?? 'info'),
       outputFormat: 'text',
       colorOutput: !process.argv.includes('--no-color'),
     });

@@ -18,23 +18,48 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Check if we're running in npm link development mode
+ */
+function isNpmLinkMode() {
+  try {
+    const realPath = fs.realpathSync(__dirname);
+    const currentPath = __dirname;
+    
+    // If paths differ, we're likely in a symlink (npm link)
+    return currentPath !== realPath;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Main execution function
 async function main() {
   // Determine if we're running from source or built version
   const srcPath = path.join(__dirname, '..', 'src', 'index.ts');
   const distPath = path.join(__dirname, '..', 'dist', 'index.js');
+  const isDevMode = isNpmLinkMode();
+
+  if (isDevMode && !fs.existsSync(distPath)) {
+    console.log('🔧 Development mode detected - please build first:');
+    console.log('   npm run build');
+    console.log('   OR');
+    console.log('   npm run cli:dev');
+    process.exit(1);
+  }
 
   if (fs.existsSync(distPath)) {
-    // Production: Use compiled JavaScript
+    // Production or built development: Use compiled JavaScript
     const distUrl = new URL('file://' + distPath.replace(/\\/g, '/'));
     await import(distUrl);
   } else if (fs.existsSync(srcPath)) {
-    // Development: Use ts-node to run TypeScript directly
-    console.error('Development mode not supported. Please run "npm run build" first.');
+    // Development: TypeScript source exists but no build
+    console.error('❌ TypeScript source found but not compiled.');
+    console.error('   Run "npm run build" first, then try again.');
     process.exit(1);
   } else {
-    console.error('Error: Cannot find application entry point');
-    console.error('Run "npm run build" to compile TypeScript or ensure source files exist');
+    console.error('❌ Error: Cannot find application entry point');
+    console.error('   Run "npm run build" to compile TypeScript or ensure source files exist');
     process.exit(1);
   }
 }
