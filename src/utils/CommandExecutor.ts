@@ -91,10 +91,12 @@ export class CommandExecutor {
                     return result;
                 }
             } catch (error) {
-                this.logger?.error('Command validation failed', {
-                    command: fullCommand,
-                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
-                });
+                this.logger?.error('Command validation failed',
+                    error instanceof Error ? error : undefined,
+                    {
+                        command: fullCommand,
+                        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                    });
                 
                 return {
                     success: false,
@@ -116,10 +118,12 @@ export class CommandExecutor {
             
             return result;
         } catch (error) {
-            this.logger?.error('Command execution failed', {
-                command: fullCommand,
-                errorMessage: error instanceof Error ? error.message : 'Unknown error'
-            });
+            this.logger?.error('Command execution failed',
+                error instanceof Error ? error : undefined,
+                {
+                    command: fullCommand,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                });
             
             return {
                 success: false,
