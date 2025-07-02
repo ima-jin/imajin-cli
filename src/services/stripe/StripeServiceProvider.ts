@@ -19,6 +19,7 @@
  */
 
 import type { Command } from 'commander';
+import type { EventEmitter } from 'events';
 import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
@@ -87,8 +88,10 @@ export class StripeServiceProvider extends ServiceProvider {
         const hasStripeConfig = !!(apiKey);
 
         if (hasStripeConfig) {
-            // Validate Stripe configuration
-            const stripeConfig: StripeConfig = {
+            // Validate Stripe configuration with ServiceConfig
+            const serviceConfig = {
+                name: 'stripe',
+                enabled: true,
                 apiKey: apiKey!,
                 apiVersion: config?.apiVersion ?? '2024-06-20',
                 timeout: config?.timeout ?? 60000,
@@ -96,8 +99,15 @@ export class StripeServiceProvider extends ServiceProvider {
                 enableTelemetry: config?.enableTelemetry ?? false,
             };
 
-            // Initialize StripeService
-            this.stripeService = new StripeService(stripeConfig, this.logger);
+            // Initialize StripeService with new constructor
+            this.stripeService = new StripeService(
+                this.container,
+                serviceConfig,
+                this.container.resolve('eventEmitter')
+            );
+
+            // Register service in container
+            this.container.instance('stripeService', this.stripeService);
 
             // Initialize command classes
             this.customerCommands = new CustomerCommands(this.stripeService, this.logger);
@@ -124,47 +134,51 @@ export class StripeServiceProvider extends ServiceProvider {
 
         // Set up event listeners for real-time coordination
         if (this.stripeService) {
-            this.stripeService.on('customer-created', (event) => {
+            const eventEmitter = this.container.resolve<EventEmitter>('eventEmitter');
+            
+            eventEmitter.on('customer-created', (event: any) => {
                 this.logger.info('Customer created', { 
                     customerId: event.customer.id,
-                    universalContactId: event.universalContact.id 
+                    businessEntityId: event.businessEntity?.id 
                 });
             });
 
-            this.stripeService.on('payment-intent-created', (event) => {
+            eventEmitter.on('payment-intent-created', (event: any) => {
                 this.logger.info('Payment intent created', { 
                     paymentIntentId: event.paymentIntent.id,
-                    universalPaymentId: event.universalPayment.id 
+                    businessEntityId: event.businessEntity?.id 
                 });
             });
 
-            this.stripeService.on('payment-confirmed', (event) => {
+            eventEmitter.on('payment-confirmed', (event: any) => {
                 this.logger.info('Payment confirmed', { 
                     paymentIntentId: event.paymentIntent.id,
                     status: event.paymentIntent.status 
                 });
             });
 
-            this.stripeService.on('subscription-created', (event) => {
+            eventEmitter.on('subscription-created', (event: any) => {
                 this.logger.info('Subscription created', { 
                     subscriptionId: event.subscription.id,
-                    universalSubscriptionId: event.universalSubscription.id 
+                    businessEntityId: event.businessEntity?.id 
                 });
             });
 
-            this.stripeService.on('subscription-canceled', (event) => {
+            eventEmitter.on('subscription-canceled', (event: any) => {
                 this.logger.info('Subscription canceled', { 
                     subscriptionId: event.subscription.id,
                     status: event.subscription.status 
                 });
             });
 
-            this.stripeService.on('progress', (event) => {
-                this.logger.debug('Stripe operation progress', { 
-                    type: event.type,
-                    message: event.message,
-                    progress: event.progress 
-                });
+            eventEmitter.on('service:operation', (event: any) => {
+                if (event.service === 'stripe') {
+                    this.logger.debug('Stripe operation progress', { 
+                        operation: event.operation,
+                        duration: event.duration,
+                        success: event.success 
+                    });
+                }
             });
         }
 
@@ -358,7 +372,7 @@ export class StripeServiceProvider extends ServiceProvider {
      */
     async shutdown(): Promise<void> {
         if (this.stripeService) {
-            this.stripeService.removeAllListeners();
+            await this.stripeService.shutdown();
         }
         this.logger.info('StripeServiceProvider shutdown complete');
     }

@@ -19,8 +19,10 @@
  */
 
 import Stripe from 'stripe';
-import { EventEmitter } from 'events';
-import type { Logger } from '../../logging/Logger.js';
+import type { EventEmitter } from 'events';
+import type { Container } from '../../container/Container.js';
+import { BaseService } from '../BaseService.js';
+import type { ServiceConfig } from '../interfaces/ServiceInterface.js';
 import type { LLMProgressCallback, LLMProgressEvent } from '../../types/LLM.js';
 import { BusinessTypeRegistry } from '../../context/BusinessTypeRegistry.js';
 import { transformToBusinessEntity } from '../../context/BusinessSchemaRegistry.js';
@@ -38,32 +40,93 @@ import type {
     StripeServiceError,
 } from '../../types/Stripe.js';
 
+export interface StripeServiceConfig extends ServiceConfig {
+    apiKey: string;
+    apiVersion: string;
+    timeout?: number;
+    maxNetworkRetries?: number;
+    enableTelemetry?: boolean;
+}
+
 /**
  * Business Context-Aware Stripe Service
  */
-export class StripeService extends EventEmitter {
-    private stripe: Stripe;
-    private logger: Logger;
+export class StripeService extends BaseService {
+    private stripe!: Stripe;
     private businessContext?: BusinessDomainModel;
+    private stripeConfig: StripeServiceConfig;
 
     constructor(
-        private config: StripeConfig,
-        logger: Logger
+        container: Container,
+        config: StripeServiceConfig,
+        eventEmitter?: EventEmitter
     ) {
-        super();
-        this.logger = logger;
-        
-        this.stripe = new Stripe(config.apiKey, {
-            apiVersion: config.apiVersion as any,
-            timeout: config.timeout,
-            maxNetworkRetries: config.maxNetworkRetries,
-            telemetry: config.enableTelemetry,
-        });
+        super(container, config, eventEmitter);
+        this.stripeConfig = config;
+        this.initializeStripe();
+    }
 
+    public getName(): string {
+        return 'stripe';
+    }
+
+    public getVersion(): string {
+        return '1.0.0';
+    }
+
+    private initializeStripe(): void {
+        this.stripe = new Stripe(this.stripeConfig.apiKey, {
+            apiVersion: this.stripeConfig.apiVersion as any,
+            timeout: this.stripeConfig.timeout || 60000,
+            maxNetworkRetries: this.stripeConfig.maxNetworkRetries || 3,
+            telemetry: this.stripeConfig.enableTelemetry || false,
+        });
+    }
+
+    protected async onInitialize(): Promise<void> {
+        // Test Stripe API connectivity
+        await this.validateApiKey();
+        this.emit('service:ready', { service: 'stripe' });
+        
         this.logger.info('StripeService initialized', {
             service: 'stripe',
-            apiVersion: config.apiVersion,
+            apiVersion: this.stripeConfig.apiVersion,
         });
+    }
+
+    protected async onShutdown(): Promise<void> {
+        this.emit('service:shutdown', { service: 'stripe' });
+        this.logger.info('StripeService shut down');
+    }
+
+    protected async onHealthCheck(): Promise<Array<{ name: string; healthy: boolean; message?: string; }>> {
+        const checks = [];
+        
+        try {
+            // Test Stripe API connectivity
+            await this.stripe.accounts.retrieve();
+            checks.push({
+                name: 'stripe-api',
+                healthy: true,
+                message: 'Connected to Stripe API'
+            });
+        } catch (error) {
+            checks.push({
+                name: 'stripe-api',
+                healthy: false,
+                message: `Stripe API error: ${error instanceof Error ? error.message : 'Unknown error'}`
+            });
+        }
+
+        return checks;
+    }
+
+    private async validateApiKey(): Promise<void> {
+        try {
+            await this.stripe.accounts.retrieve();
+        } catch (error) {
+            throw new Error(`Invalid Stripe API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 
     /**
@@ -96,9 +159,7 @@ export class StripeService extends EventEmitter {
         },
         progressCallback?: LLMProgressCallback
     ): Promise<StripeCustomerResponse> {
-        const operationId = `create-customer-${Date.now()}`;
-        
-        try {
+        return this.execute('createCustomer', async () => {
             progressCallback?.({
                 type: 'progress',
                 message: 'Creating Stripe customer',
@@ -163,20 +224,7 @@ export class StripeService extends EventEmitter {
             });
 
             return response;
-
-        } catch (error) {
-            const stripeError = this.handleStripeError(error);
-            
-            progressCallback?.({
-                type: 'error',
-                message: 'Failed to create customer',
-                progress: 100,
-                data: { error: stripeError },
-                timestamp: new Date(),
-            });
-
-            throw stripeError;
-        }
+        });
     }
 
     /**
@@ -186,7 +234,7 @@ export class StripeService extends EventEmitter {
         customerId: string,
         progressCallback?: LLMProgressCallback
     ): Promise<StripeCustomerResponse> {
-        try {
+        return this.execute('getCustomer', async () => {
             progressCallback?.({
                 type: 'progress',
                 message: 'Retrieving customer from Stripe',
@@ -210,36 +258,26 @@ export class StripeService extends EventEmitter {
                 metadata: customer.metadata,
             };
 
+            // Map to business context
             const businessEntity = await this.mapToBusinessContext('customer', customerData);
 
-            progressCallback?.({
-                type: 'complete',
-                message: 'Customer retrieved and mapped',
-                progress: 100,
-                data: { customer: customerData },
-                timestamp: new Date(),
-            });
-
-            return {
+            const response: StripeCustomerResponse = {
                 customer: customerData,
                 businessEntity,
                 success: true,
-                message: 'Customer retrieved successfully',
+                message: `Customer retrieved successfully`,
             };
 
-        } catch (error) {
-            const stripeError = this.handleStripeError(error);
-            
             progressCallback?.({
-                type: 'error',
-                message: 'Failed to retrieve customer',
+                type: 'complete',
+                message: 'Customer retrieved and mapped to business context',
                 progress: 100,
-                data: { error: stripeError },
+                data: response,
                 timestamp: new Date(),
             });
 
-            throw stripeError;
-        }
+            return response;
+        });
     }
 
     // ==========================================================================
@@ -253,7 +291,7 @@ export class StripeService extends EventEmitter {
         params: CreatePaymentIntentParams,
         progressCallback?: LLMProgressCallback
     ): Promise<StripePaymentResponse> {
-        try {
+        return this.execute('createPaymentIntent', async () => {
             progressCallback?.({
                 type: 'progress',
                 message: 'Creating payment intent',
@@ -319,20 +357,7 @@ export class StripeService extends EventEmitter {
             });
 
             return response;
-
-        } catch (error) {
-            const stripeError = this.handleStripeError(error);
-            
-            progressCallback?.({
-                type: 'error',
-                message: 'Failed to create payment intent',
-                progress: 100,
-                data: { error: stripeError },
-                timestamp: new Date(),
-            });
-
-            throw stripeError;
-        }
+        });
     }
 
     // ==========================================================================
@@ -343,7 +368,7 @@ export class StripeService extends EventEmitter {
      * List customers
      */
     async listCustomers(options: any, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('listCustomers', async () => {
             const customers = await this.stripe.customers.list(options);
             
             return {
@@ -358,16 +383,14 @@ export class StripeService extends EventEmitter {
                 hasMore: customers.has_more,
                 totalCount: customers.data.length
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * Confirm payment intent
      */
     async confirmPaymentIntent(paymentIntentId: string, options: any = {}, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('confirmPaymentIntent', async () => {
             const paymentIntent = await this.stripe.paymentIntents.confirm(paymentIntentId, options);
             
             return {
@@ -378,16 +401,14 @@ export class StripeService extends EventEmitter {
                 clientSecret: paymentIntent.client_secret,
                 paymentMethod: paymentIntent.payment_method
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * List payment intents
      */
     async listPaymentIntents(options: any, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('listPaymentIntents', async () => {
             const paymentIntents = await this.stripe.paymentIntents.list(options);
             
             return {
@@ -402,16 +423,14 @@ export class StripeService extends EventEmitter {
                 hasMore: paymentIntents.has_more,
                 totalCount: paymentIntents.data.length
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * Create subscription
      */
     async createSubscription(params: any, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('createSubscription', async () => {
             const subscription = await this.stripe.subscriptions.create(params);
             
             return {
@@ -422,16 +441,14 @@ export class StripeService extends EventEmitter {
                 currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
                 items: subscription.items.data
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * Cancel subscription
      */
     async cancelSubscription(subscriptionId: string, options: any = {}, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('cancelSubscription', async () => {
             const subscription = await this.stripe.subscriptions.cancel(subscriptionId, options);
             
             return {
@@ -440,16 +457,14 @@ export class StripeService extends EventEmitter {
                 canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
                 currentPeriodEnd: new Date((subscription as any).current_period_end * 1000)
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * List subscriptions
      */
     async listSubscriptions(options: any, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('listSubscriptions', async () => {
             const subscriptions = await this.stripe.subscriptions.list(options);
             
             return {
@@ -464,16 +479,14 @@ export class StripeService extends EventEmitter {
                 hasMore: subscriptions.has_more,
                 totalCount: subscriptions.data.length
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * List products
      */
     async listProducts(options: any, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('listProducts', async () => {
             const products = await this.stripe.products.list(options);
             
             return {
@@ -488,16 +501,14 @@ export class StripeService extends EventEmitter {
                 hasMore: products.has_more,
                 totalCount: products.data.length
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     /**
      * List prices
      */
     async listPrices(options: any, progressCallback?: (event: any) => void): Promise<any> {
-        try {
+        return this.execute('listPrices', async () => {
             const prices = await this.stripe.prices.list(options);
             
             return {
@@ -513,9 +524,7 @@ export class StripeService extends EventEmitter {
                 hasMore: prices.has_more,
                 totalCount: prices.data.length
             };
-        } catch (error) {
-            throw this.handleStripeError(error);
-        }
+        });
     }
 
     // ==========================================================================

@@ -138,6 +138,17 @@ export interface TransformationRecord {
     error?: string;
 }
 
+/**
+ * @deprecated Use BaseService-based services instead (CloudinaryService, LocalFileService)
+ * This interface will be removed in a future version
+ * 
+ * Legacy MediaProvider interface - replaced by proper service architecture.
+ * New implementations should extend BaseService and implement proper:
+ * - Health checks and metrics
+ * - Event-driven coordination  
+ * - Container-based dependency injection
+ * - Structured error handling
+ */
 export interface MediaProvider {
     name: string;
     upload(file: Buffer, options: UploadOptions): Promise<MediaAsset>;
