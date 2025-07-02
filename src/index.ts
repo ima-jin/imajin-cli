@@ -92,19 +92,21 @@ async function main(): Promise<void> {
     });
 
     // Register service providers
-    const { StripeServiceProvider } = await import('./services/stripe/StripeServiceProvider.js');
     const { CredentialServiceProvider } = await import('./core/credentials/CredentialServiceProvider.js');
     const { ServiceLayerProvider } = await import('./providers/ServiceLayerProvider.js');
     const { PluginGeneratorServiceProvider } = await import('./providers/PluginGeneratorServiceProvider.js');
     const { MediaServiceProvider } = await import('./providers/MediaServiceProvider.js');
     const { MonitoringServiceProvider } = await import('./providers/MonitoringServiceProvider.js');
+    const { StripeServiceProvider } = await import('./services/stripe/StripeServiceProvider.js');
+    const { ContentfulServiceProvider } = await import('./services/contentful/ContentfulServiceProvider.js');
 
     app.createProvider(CredentialServiceProvider);
     app.createProvider(ServiceLayerProvider);
-    app.createProvider(MonitoringServiceProvider);
-    app.createProvider(StripeServiceProvider);
     app.createProvider(PluginGeneratorServiceProvider);
     app.createProvider(MediaServiceProvider);
+    app.createProvider(MonitoringServiceProvider);
+    app.createProvider(StripeServiceProvider);
+    app.createProvider(ContentfulServiceProvider);
 
     // Boot the application (register and initialize services)
     await app.boot();

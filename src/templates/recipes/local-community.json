@@ -1,0 +1,96 @@
+{
+  "name": "Local Community",
+  "description": "Setup for local and specialized community groups with events, resources, and member support",
+  "businessType": "local-community",
+  "display": {
+    "subCode": "LOCL",
+    "emoji": "🏘️",
+    "color": "green",
+    "promptFormat": "[{subCode}] {name}$ "
+  },
+  "context": {
+    "primaryEntities": ["member", "event", "resource"],
+    "keyMetrics": ["active_members", "upcoming_events", "available_resources"],
+    "quickActions": ["show members", "create event", "add resource"]
+  },
+  "entities": {
+    "member": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "email", "type": "string", "required": false },
+        { "name": "phone", "type": "string", "required": false },
+        { "name": "joinDate", "type": "date", "required": true },
+        { "name": "membershipStatus", "type": "enum", "values": ["active", "inactive", "volunteer"], "required": true },
+        { "name": "interests", "type": "array", "items": "string", "required": false },
+        { "name": "accommodationNeeds", "type": "array", "items": "string", "required": false },
+        { "name": "preferredContact", "type": "enum", "values": ["email", "phone", "text", "in-person"], "required": false },
+        { "name": "emergencyContact", "type": "json", "required": false },
+        { "name": "notes", "type": "text", "required": false }
+      ]
+    },
+    "event": {
+      "fields": [
+        { "name": "title", "type": "string", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "eventType", "type": "enum", "values": ["support-group", "social", "educational", "workshop", "meeting"], "required": true },
+        { "name": "date", "type": "datetime", "required": true },
+        { "name": "duration", "type": "number", "required": false },
+        { "name": "location", "type": "string", "required": true },
+        { "name": "maxAttendees", "type": "number", "required": false },
+        { "name": "accessibilityFeatures", "type": "array", "items": "string", "required": false },
+        { "name": "facilitator", "type": "reference", "entity": "member", "required": false },
+        { "name": "registrationRequired", "type": "boolean", "default": true },
+        { "name": "status", "type": "enum", "values": ["planned", "open", "full", "in-progress", "completed", "cancelled"], "required": true }
+      ]
+    },
+    "resource": {
+      "fields": [
+        { "name": "title", "type": "string", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "resourceType", "type": "enum", "values": ["guide", "template", "contact", "service", "accommodation", "tool"], "required": true },
+        { "name": "content", "type": "text", "required": false },
+        { "name": "externalUrl", "type": "string", "required": false },
+        { "name": "contactInfo", "type": "json", "required": false },
+        { "name": "tags", "type": "array", "items": "string", "required": false },
+        { "name": "isPublic", "type": "boolean", "default": true },
+        { "name": "submittedBy", "type": "reference", "entity": "member", "required": false },
+        { "name": "lastUpdated", "type": "date", "required": true }
+      ]
+    },
+    "supportRequest": {
+      "fields": [
+        { "name": "requester", "type": "reference", "entity": "member", "required": true },
+        { "name": "requestType", "type": "enum", "values": ["information", "accommodation", "referral", "emergency", "general"], "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "urgency", "type": "enum", "values": ["low", "medium", "high", "urgent"], "required": true },
+        { "name": "status", "type": "enum", "values": ["open", "in-progress", "resolved", "closed"], "required": true },
+        { "name": "assignedTo", "type": "reference", "entity": "member", "required": false },
+        { "name": "requestDate", "type": "date", "required": true },
+        { "name": "resolvedDate", "type": "date", "required": false },
+        { "name": "notes", "type": "text", "required": false }
+      ]
+    }
+  },
+  "workflows": [
+    {
+      "name": "Member Onboarding",
+      "description": "Welcome new community members and integrate them",
+      "steps": ["Initial Contact", "Welcome Meeting", "Needs Assessment", "Resource Sharing", "Integration Activities"]
+    },
+    {
+      "name": "Event Planning",
+      "description": "Organize community events with accessibility in mind",
+      "steps": ["Event Proposal", "Accessibility Planning", "Registration Setup", "Event Facilitation", "Follow-up & Feedback"]
+    },
+    {
+      "name": "Support Request Handling",
+      "description": "Address member support needs efficiently",
+      "steps": ["Request Received", "Initial Assessment", "Resource Matching", "Support Delivery", "Follow-up Check"]
+    },
+    {
+      "name": "Resource Management",
+      "description": "Maintain and share community resources",
+      "steps": ["Resource Identification", "Content Creation", "Review & Approval", "Publication", "Updates & Maintenance"]
+    }
+  ]
+} 

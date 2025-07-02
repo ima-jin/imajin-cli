@@ -17,6 +17,7 @@
 
 import { Command } from 'commander';
 import { registerSchemaCommands } from './schema/SchemaCommands.js';
+import { MarkdownCommand } from './MarkdownCommand.js';
 
 // =============================================================================
 // COMMAND REGISTRATION
@@ -28,6 +29,10 @@ import { registerSchemaCommands } from './schema/SchemaCommands.js';
 export function registerCommands(program: Command): void {
     // Schema management commands (new external schema system)
     registerSchemaCommands(program);
+    
+    // Markdown utilities and conversion commands
+    const markdownCommand = new MarkdownCommand();
+    markdownCommand.register(program);
     
     // Add other command groups here as they're implemented
     // registerServiceCommands(program);
@@ -42,6 +47,7 @@ export function registerCommands(program: Command): void {
 export function getAvailableCommandGroups(): string[] {
     return [
         'schema',
+        'markdown',
         // Add other groups as implemented
         // 'services',
         // 'generate',
@@ -56,6 +62,8 @@ export function getCommandGroupDescription(group: string): string {
     switch (group) {
         case 'schema':
             return 'External schema management and validation commands';
+        case 'markdown':
+            return 'Markdown utilities and PDF conversion commands';
         case 'services':
             return 'Service integration and management commands';
         default:

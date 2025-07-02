@@ -199,8 +199,6 @@ You build what you need. You own what you use.
 Everything is **legible**, forkable, remixable.
 Like **instruments** — not weapons.
 
-> *“Don’t fight the empire. Be too busy building your own drum kit.”*
-
 ---
 
 ### 🫂 3. **Own Governance**

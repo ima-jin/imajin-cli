@@ -79,4 +79,4 @@ my-store-cli customer:onboard --email john@acme.com --plan enterprise
 
 ---
 
-*Document Version: 1.0 | December 2024 | 1 Page* 
+*Document Version: 1.0 | June 2025 | 1 Page* 

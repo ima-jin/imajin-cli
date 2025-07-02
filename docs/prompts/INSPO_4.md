@@ -85,9 +85,7 @@ User-defined organizational schemas to simplify maintaining relationships.
 
 Organized through structured playlists, sets, individual tracks.
 
-Integration with external APIs (Beatport, etc.).
-
-Potential for affiliate monetization via APIs (e.g., Beatport affiliate keys).
+Potential for affiliate monetization via APIs.
 
 Clear distinction between raw audio files and distribution-ready media assets.
 
@@ -194,7 +192,7 @@ UserContext:
         Music:
           - tracks
           - playlists
-          - apiSources (Beatport, etc.)
+          - apiSources 
           - affiliateKeys
         Video:
           - files
@@ -242,7 +240,7 @@ Simplified User Interface: Minimize manual actions; automate via voice and conte
 2. Prototype YAML Schema: Develop initial schema templates and validation.
 
 
-3. API Integration & Proof-of-Concepts: Plex, Beatport, Contentful integrations as first PoC demonstrations.
+3. API Integration & Proof-of-Concepts: Plex, Contentful integrations as first PoC demonstrations.
 
 
 4. Encryption & Privacy Layers: Outline encryption/security for contacts and metadata.
@@ -257,7 +255,7 @@ Simplified User Interface: Minimize manual actions; automate via voice and conte
 
 🤖 Assistant Recommendation for Next Steps
 
-Given your clear enthusiasm and deep connections across multiple domains, start by prototyping a minimal viable YAML schema with simple relationships and a basic CLI to initialize contexts. Immediately follow that by integrating one or two API-based enrichments (Plex and Beatport), testing this in a voice-driven or CLI-based demo.
+Given your clear enthusiasm and deep connections across multiple domains, start by prototyping a minimal viable YAML schema with simple relationships and a basic CLI to initialize contexts. Immediately follow that by integrating one or two API-based enrichments (Plex), testing this in a voice-driven or CLI-based demo.
 
 
 
@@ -344,7 +342,7 @@ Intuitive updates via observed interactions and LLM analysis.
 
 
 Seamless API Integrations
-Automatic retrieval and enrichment of content via APIs (Plex, Beatport, Contentful) to ensure users have instant, effortless access.
+Automatic retrieval and enrichment of content via APIs (Plex, Contentful) to ensure users have instant, effortless access.
 
 
 

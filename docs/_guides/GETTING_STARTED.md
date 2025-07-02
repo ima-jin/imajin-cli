@@ -64,28 +64,6 @@ node --inspect dist/bin/imajin.js generate wer1-graph --spec ./test-schema.graph
 npx @imajin/cli generate stripe --spec https://api.stripe.com/openapi.json
 ```
 
-## 🧪 Testing Scenarios
-
-### Testing Against Local Services
-
-#### Example: wer1-graph Project
-```bash
-# Terminal 1: Start local GraphQL service
-cd D:\Projects\WeR1\wer1-graph
-npm run dev  # Usually runs on http://localhost:4000
-
-# Terminal 2: Generate CLI for local service
-cd D:\Projects\imajin\imajin-cli
-imajin generate wer1-graph \
-  --spec http://localhost:4000/graphql \
-  --business-context "music-streaming" \
-  --output-name "my-wer1-cli"
-
-# Terminal 3: Test the generated CLI
-./my-wer1-cli --help
-./my-wer1-cli query:users --format json
-```
-
 #### Example: Local REST API
 ```bash
 # If you have OpenAPI spec file locally

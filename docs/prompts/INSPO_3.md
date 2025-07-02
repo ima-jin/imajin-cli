@@ -863,7 +863,7 @@ Let recipes define **trust shape**, not just entity shape.
 
 Extend features to support:
 
-* **Revenue shares** (WeR1-style)
+* **Revenue shares** 
 * **Mutual credit systems**
 * **Conditional unlocks** (e.g. paywall unlocks a new feature flag in CLI)
 

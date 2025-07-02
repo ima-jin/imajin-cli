@@ -1,0 +1,126 @@
+{
+  "name": "Community Platform",
+  "description": "Complete setup for community platforms that connect members, organize events, and share resources",
+  "businessType": "community-platform",
+  "display": {
+    "subCode": "CMTY",
+    "emoji": "🌐",
+    "color": "blue",
+    "promptFormat": "[{subCode}] {name}$ "
+  },
+  "context": {
+    "primaryEntities": ["member", "event", "project"],
+    "keyMetrics": ["active_members", "upcoming_events", "active_projects"],
+    "quickActions": ["show members", "create event", "connect contentful"]
+  },
+  "entities": {
+    "member": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "email", "type": "string", "required": true },
+        { "name": "bio", "type": "text", "required": false },
+        { "name": "skills", "type": "array", "items": "string", "required": false },
+        { "name": "interests", "type": "array", "items": "string", "required": false },
+        { "name": "membershipType", "type": "enum", "values": ["community", "contributor", "organizer", "mentor"], "required": true },
+        { "name": "joinDate", "type": "date", "required": true },
+        { "name": "isActive", "type": "boolean", "default": true },
+        { "name": "socialLinks", "type": "json", "required": false },
+        { "name": "availableForMentoring", "type": "boolean", "default": false },
+        { "name": "lookingForMentor", "type": "boolean", "default": false }
+      ]
+    },
+    "event": {
+      "fields": [
+        { "name": "title", "type": "string", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "eventType", "type": "enum", "values": ["workshop", "meetup", "conference", "social", "hackathon", "collaboration"], "required": true },
+        { "name": "startDate", "type": "datetime", "required": true },
+        { "name": "endDate", "type": "datetime", "required": false },
+        { "name": "location", "type": "string", "required": false },
+        { "name": "isVirtual", "type": "boolean", "default": false },
+        { "name": "meetingLink", "type": "string", "required": false },
+        { "name": "maxAttendees", "type": "number", "required": false },
+        { "name": "registrationRequired", "type": "boolean", "default": true },
+        { "name": "tags", "type": "array", "items": "string", "required": false },
+        { "name": "organizer", "type": "reference", "entity": "member", "required": true },
+        { "name": "status", "type": "enum", "values": ["planning", "open", "full", "happening", "completed", "cancelled"], "required": true }
+      ]
+    },
+    "resource": {
+      "fields": [
+        { "name": "title", "type": "string", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "resourceType", "type": "enum", "values": ["article", "tutorial", "template", "tool", "book", "video", "podcast"], "required": true },
+        { "name": "url", "type": "string", "required": false },
+        { "name": "content", "type": "text", "required": false },
+        { "name": "tags", "type": "array", "items": "string", "required": false },
+        { "name": "difficulty", "type": "enum", "values": ["beginner", "intermediate", "advanced"], "required": false },
+        { "name": "submittedBy", "type": "reference", "entity": "member", "required": true },
+        { "name": "featured", "type": "boolean", "default": false },
+        { "name": "likes", "type": "number", "default": 0 },
+        { "name": "dateAdded", "type": "date", "required": true }
+      ]
+    },
+    "project": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "status", "type": "enum", "values": ["idea", "seeking-collaborators", "active", "completed", "paused"], "required": true },
+        { "name": "projectType", "type": "enum", "values": ["community-service", "tech-project", "creative", "research", "educational"], "required": true },
+        { "name": "skillsNeeded", "type": "array", "items": "string", "required": false },
+        { "name": "timeCommitment", "type": "enum", "values": ["1-5 hours", "5-10hours", "10+ hours", "ongoing"], "required": false },
+        { "name": "isRemote", "type": "boolean", "default": true },
+        { "name": "projectLead", "type": "reference", "entity": "member", "required": true },
+        { "name": "collaborators", "type": "array", "items": "reference", "entity": "member", "required": false },
+        { "name": "repositoryUrl", "type": "string", "required": false },
+        { "name": "tags", "type": "array", "items": "string", "required": false }
+      ]
+    },
+    "connection": {
+      "fields": [
+        { "name": "requester", "type": "reference", "entity": "member", "required": true },
+        { "name": "receiver", "type": "reference", "entity": "member", "required": true },
+        { "name": "connectionType", "type": "enum", "values": ["mentorship", "collaboration", "skill-share", "coffee-chat", "networking"], "required": true },
+        { "name": "message", "type": "text", "required": false },
+        { "name": "status", "type": "enum", "values": ["pending", "accepted", "declined", "completed"], "required": true },
+        { "name": "requestDate", "type": "date", "required": true },
+        { "name": "responseDate", "type": "date", "required": false }
+      ]
+    },
+    "discussion": {
+      "fields": [
+        { "name": "title", "type": "string", "required": true },
+        { "name": "content", "type": "text", "required": true },
+        { "name": "category", "type": "enum", "values": ["general", "tech-help", "project-ideas", "feedback", "announcements"], "required": true },
+        { "name": "author", "type": "reference", "entity": "member", "required": true },
+        { "name": "isPinned", "type": "boolean", "default": false },
+        { "name": "tags", "type": "array", "items": "string", "required": false },
+        { "name": "likes", "type": "number", "default": 0 },
+        { "name": "replies", "type": "number", "default": 0 },
+        { "name": "lastActivity", "type": "datetime", "required": true }
+      ]
+    }
+  },
+  "workflows": [
+    {
+      "name": "Member Onboarding",
+      "description": "From initial interest to active community participation",
+      "steps": ["Application/Interest", "Welcome & Orientation", "Profile Setup", "First Connections", "Active Participation"]
+    },
+    {
+      "name": "Event Organization",
+      "description": "From idea to successful community event",
+      "steps": ["Event Planning", "Announcement", "Registration", "Pre-event Communication", "Event Execution", "Follow-up & Feedback"]
+    },
+    {
+      "name": "Resource Sharing",
+      "description": "Community knowledge sharing process",
+      "steps": ["Resource Discovery", "Submission", "Community Review", "Publication", "Engagement & Feedback"]
+    },
+    {
+      "name": "Collaboration Matching",
+      "description": "Connecting members for projects and mentorship",
+      "steps": ["Need Identification", "Match Discovery", "Introduction", "Collaboration Setup", "Progress Check-ins", "Completion & Reflection"]
+    }
+  ]
+} 

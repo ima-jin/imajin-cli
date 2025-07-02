@@ -1,0 +1,76 @@
+{
+  "name": "Imajin Lighting",
+  "description": "Complete setup for lighting businesses that sell products, provide event services, and showcase portfolio work",
+  "businessType": "imajin-lighting",
+  "display": {
+    "subCode": "IMAJ",
+    "emoji": "💡",
+    "color": "yellow",
+    "promptFormat": "[{subCode}] {name}$ "
+  },
+  "context": {
+    "primaryEntities": ["product", "project", "showcase"],
+    "keyMetrics": ["products_in_stock", "active_projects", "featured_showcases"],
+    "quickActions": ["show products", "create project", "add showcase"]
+  },
+  "entities": {
+    "product": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "type", "type": "enum", "values": ["pcb", "other"], "required": true },
+        { "name": "model", "type": "string", "required": true },
+        { "name": "price", "type": "number", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "specifications", "type": "json", "required": false },
+        { "name": "inStock", "type": "boolean", "default": true },
+        { "name": "stockQuantity", "type": "number", "default": 0 },
+        { "name": "datasheet", "type": "string", "required": false },
+        { "name": "media", "type": "array", "items": "string", "required": false }
+      ]
+    },
+    "project": {
+      "fields": [
+        { "name": "name", "type": "string", "required": true },
+        { "name": "type", "type": "enum", "values": ["event", "festival", "installation"], "required": true },
+        { "name": "status", "type": "enum", "values": ["inquiry", "quoted", "booked", "planning", "in-progress", "completed", "archived"], "required": true },
+        { "name": "startDate", "type": "date", "required": true },
+        { "name": "endDate", "type": "date", "required": false },
+        { "name": "venue", "type": "string", "required": true },
+        { "name": "description", "type": "text", "required": true },
+        { "name": "budget", "type": "number", "required": false },
+        { "name": "quote", "type": "number", "required": false },
+        { "name": "equipmentList", "type": "array", "items": "string", "required": false },
+        { "name": "crewRequired", "type": "number", "default": 1 },
+        { "name": "clientNotes", "type": "text", "required": false },
+        { "name": "internalNotes", "type": "text", "required": false },
+        { "name": "media", "type": "array", "items": "string", "required": true }
+      ]
+    },
+    "showcase": {
+      "fields": [
+        { "name": "projectId", "type": "reference", "entity": "project", "required": true },
+        { "name": "featured", "type": "boolean", "default": false },
+        { "name": "tags", "type": "array", "items": "string", "required": false },
+        { "name": "clientTestimonial", "type": "text", "required": false },
+        { "name": "portfolioDescription", "type": "text", "required": false }
+      ]
+    }
+  },
+  "workflows": [
+    {
+      "name": "Product Sales",
+      "description": "From product inquiry to delivery",
+      "steps": ["Product browsing", "Add to cart", "Checkout", "Payment", "Processing", "Shipping", "Delivered"]
+    },
+    {
+      "name": "Project Booking",
+      "description": "From initial inquiry to project completion",
+      "steps": ["Initial inquiry", "Site visit/consultation", "Quote preparation", "Quote approval", "Deposit", "Planning", "Setup", "Event execution", "Breakdown", "Final payment"]
+    },
+    {
+      "name": "Portfolio Management",
+      "description": "Capturing and showcasing completed work",
+      "steps": ["Project documentation", "Photo/video capture", "Content editing", "Portfolio addition", "Marketing promotion"]
+    }
+  ]
+} 

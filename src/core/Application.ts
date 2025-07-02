@@ -215,6 +215,9 @@ export class Application {
 
     this.logger.info('Booting application...');
 
+    // Set global app reference so commands can access the container
+    (globalThis as any).imajinApp = this;
+
     // Registration phase
     for (const provider of this.providers) {
       this.logger.debug(`Registering provider: ${provider.getName()}`);
@@ -232,6 +235,9 @@ export class Application {
     
     // Register business context and recipe commands
     this.registerBusinessContextCommands();
+
+    // Register general CLI commands (like markdown)
+    await this.registerGeneralCommands();
 
     this.isBooted = true;
     this.logger.info('Application booted successfully');
@@ -268,6 +274,19 @@ export class Application {
     }).catch(err => {
       this.logger.warn('Failed to load recipe commands:', err);
     });
+  }
+
+  /**
+   * Register general CLI commands (like markdown, etc.)
+   */
+  private async registerGeneralCommands(): Promise<void> {
+    try {
+      const { registerCommands } = await import('../commands/index.js');
+      registerCommands(this.program);
+      this.logger.debug('Registered general CLI commands');
+    } catch (error) {
+      this.logger.warn('Failed to register general commands:', { error: String(error) });
+    }
   }
 
   /**
