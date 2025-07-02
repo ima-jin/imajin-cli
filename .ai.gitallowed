@@ -17,3 +17,8 @@ git show --name-only *
 git config --get *
 git config --list --local
 git config --list --global
+
+# Interactive assistance (prepare but don't execute) - not implimented
+git commit * [interactive]
+git add * [interactive]
+git push * [interactive]
