@@ -57,13 +57,19 @@ export class CommandExecutor {
     ): Promise<CommandResult> {
         const fullCommand = `${command} ${args.join(' ')}`.trim();
         
-        this.logger?.debug('Attempting to execute command', {
+        // Merge method-level options with instance-level settings
+        const effectiveLogger = options.logger || this.logger;
+        const shouldValidateGit = options.validateGitCommands ?? this.validateGitCommands;
+        
+        effectiveLogger?.debug('Attempting to execute command', {
             command: fullCommand,
-            validateGit: this.validateGitCommands
+            validateGit: shouldValidateGit,
+            instanceDefault: this.validateGitCommands,
+            methodOverride: options.validateGitCommands
         });
 
-        // Validate git commands if enabled
-        if (this.validateGitCommands) {
+        // Validate git commands if enabled (honor method-level flag)
+        if (shouldValidateGit) {
             try {
                 const limiter = getCommandLimiter(this.logger);
                 const validation = await limiter.validateCommand(fullCommand);
