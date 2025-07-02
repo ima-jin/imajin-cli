@@ -6,6 +6,100 @@
 
 This document provides the technical development context for imajin-cli, a TypeScript CLI framework that generates domain-specific service integrations from OpenAPI/GraphQL specifications.
 
+## 🔒 AI Assistant Security Constraints
+
+### Git Command Limiter - MANDATORY COMPLIANCE
+
+**⚠️ CRITICAL: All AI assistants working on this project MUST follow git command restrictions defined in `.ai.gitallowed`**
+
+This project implements a **Git Command Limiter** security system that prevents unauthorized repository modifications by AI assistants. The system is **ACTIVE** and all AI interactions are filtered.
+
+#### ✅ ALLOWED Git Commands (Read-Only Operations Only)
+```bash
+# Status and information commands
+git status *                     # Check repository status
+git log --oneline *              # View commit history
+git log --graph --oneline *      # Visual commit tree
+git branch -a                    # List all branches  
+git branch -r                    # List remote branches
+git remote -v                    # Show remote repositories
+git diff --name-only             # Show changed files
+git diff --stat                  # Show diff statistics
+git show --name-only *           # Show commit files
+
+# Safe diagnostic commands
+git config --get *               # Read configuration values
+git config --list --local        # Show local config
+git config --list --global       # Show global config
+```
+
+#### ❌ BLOCKED Git Commands (Repository Modifications)
+```bash
+# These commands are FORBIDDEN and will be blocked:
+git add *                        # Stage files
+git commit *                     # Create commits  
+git push *                       # Push to remote
+git pull *                       # Pull from remote
+git merge *                      # Merge branches
+git reset *                      # Reset repository state
+git checkout *                   # Switch branches/restore files
+git rebase *                     # Rewrite history
+git stash *                      # Stash changes
+git tag *                        # Create tags
+```
+
+#### How AI Assistants Should Work
+
+1. **Analysis & Code Review**: Use allowed `git status`, `git diff`, `git log` commands
+2. **Information Gathering**: Check repository state with read-only commands
+3. **Code Changes**: Create/modify files directly, let user handle git operations
+4. **Documentation**: Update files and docs as needed
+5. **Commits**: **NEVER** attempt to commit - inform user to commit manually
+
+#### Security Rationale
+
+- **Prevent Unauthorized Changes**: AI cannot accidentally modify repository history
+- **Audit Trail**: All modifications go through human review and approval
+- **Safe Collaboration**: AI can analyze and suggest without repository risks
+- **Compliance**: Ensures AI follows organizational security policies
+
+#### Example Workflow
+```bash
+# ✅ Allowed: Check current status
+git status --porcelain
+
+# ✅ Allowed: Review recent changes  
+git log --oneline -10
+
+# ✅ Allowed: See what files changed
+git diff --name-only
+
+# ❌ Blocked: DO NOT attempt to commit
+# git add . && git commit -m "changes"  # This will be blocked
+
+# Instead: Inform user to commit manually
+# "Changes are ready. Please review and commit manually."
+```
+
+#### Managing the Security System
+```bash
+# Check limiter status
+imajin limiter status
+
+# List allowed patterns
+imajin limiter list  
+
+# Test if a command is allowed
+imajin limiter test "git status --porcelain"
+
+# Initialize default configuration
+imajin limiter init
+```
+
+**📖 Full Documentation**: See `docs/security/GIT_COMMAND_LIMITER.md` for complete details.
+
+---
+
 ## 📁 Project Structure
 
 ```
