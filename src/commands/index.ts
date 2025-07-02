@@ -18,6 +18,7 @@
 import { Command } from 'commander';
 import { registerSchemaCommands } from './schema/SchemaCommands.js';
 import { MarkdownCommand } from './MarkdownCommand.js';
+import { createCommandLimiterCommands } from './system/CommandLimiterCommands.js';
 
 // =============================================================================
 // COMMAND REGISTRATION
@@ -34,6 +35,12 @@ export function registerCommands(program: Command): void {
     const markdownCommand = new MarkdownCommand();
     markdownCommand.register(program);
     
+    // Command limiter and security commands
+    const logger = (globalThis as any).imajinApp?.container?.resolve('logger');
+    if (logger) {
+        program.addCommand(createCommandLimiterCommands(logger));
+    }
+    
     // Add other command groups here as they're implemented
     // registerServiceCommands(program);
     // registerGenerateCommands(program);
@@ -48,6 +55,7 @@ export function getAvailableCommandGroups(): string[] {
     return [
         'schema',
         'markdown',
+        'command-limiter',
         // Add other groups as implemented
         // 'services',
         // 'generate',
@@ -64,6 +72,8 @@ export function getCommandGroupDescription(group: string): string {
             return 'External schema management and validation commands';
         case 'markdown':
             return 'Markdown utilities and PDF conversion commands';
+        case 'command-limiter':
+            return 'Git command filtering and security management';
         case 'services':
             return 'Service integration and management commands';
         default:

@@ -268,3 +268,8 @@ github release:create --tag v1.2.0 --notes "Latest improvements"
 - **Extensible** - Easy to add new commands and capabilities
 
 This development context ensures we build a **professional TypeScript CLI generation framework** that creates high-quality, enterprise-ready service integrations while maintaining perfect LLM compatibility. 
+
+
+### IMPORTANT
+
+- **Never run git commands** - Other than those in the allowed list - .ai.gitallowed

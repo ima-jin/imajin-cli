@@ -1,0 +1,19 @@
+# Git Commands Allowed for AI Execution
+# Use * for wildcards
+# Only add commands that are safe for automated execution
+
+# Status and information commands (safe, read-only)
+git status *
+git log --oneline *
+git log --graph --oneline *
+git branch -a
+git branch -r
+git remote -v
+git diff --name-only
+git diff --stat
+git show --name-only *
+
+# Safe diagnostic commands
+git config --get *
+git config --list --local
+git config --list --global

@@ -296,51 +296,51 @@ Important business rules:
                 const manager = new BusinessContextManager();
                 const configPath = manager.getConfigurationPath();
                 
-                // Open in default editor
-                const { spawn } = await import('child_process');
+                // Open in default editor using secure command executor
+                const { executeInteractive } = await import('../../utils/CommandExecutor.js');
                 const editor = process.env.EDITOR || 'nano';
                 
                 console.log(chalk.blue(`📝 Opening configuration in ${editor}...`));
                 console.log(chalk.yellow(`File: ${configPath}`));
                 
-                const child = spawn(editor, [configPath], { stdio: 'inherit' });
+                const result = await executeInteractive(editor, [configPath]);
                 
-                child.on('close', async (code) => {
-                    if (code === 0) {
-                        try {
-                            // Reload and validate configuration
-                            await manager.loadConfiguration();
-                            const validation = await manager.validateConfiguration(await manager.getCurrentConfiguration());
+                if (result.success) {
+                    try {
+                        // Reload and validate configuration
+                        await manager.loadConfiguration();
+                        const validation = await manager.validateConfiguration(await manager.getCurrentConfiguration());
+                        
+                        if (validation.valid) {
+                            console.log(chalk.green('✅ Configuration updated successfully!'));
                             
-                            if (validation.valid) {
-                                console.log(chalk.green('✅ Configuration updated successfully!'));
-                                
-                                if (validation.warnings.length > 0) {
-                                    console.log(chalk.yellow('\n⚠️ Warnings:'));
-                                    for (const warning of validation.warnings) {
-                                        console.log(`  • ${warning.message}`);
-                                    }
-                                }
-                                
-                                if (validation.suggestions.length > 0) {
-                                    console.log(chalk.blue('\n💡 Suggestions:'));
-                                    for (const suggestion of validation.suggestions) {
-                                        console.log(`  • ${suggestion.description}`);
-                                    }
-                                }
-                            } else {
-                                console.log(chalk.red('❌ Configuration validation failed:'));
-                                for (const error of validation.errors) {
-                                    console.log(`  • ${error.path}: ${error.message}`);
+                            if (validation.warnings.length > 0) {
+                                console.log(chalk.yellow('\n⚠️ Warnings:'));
+                                for (const warning of validation.warnings) {
+                                    console.log(`  • ${warning.message}`);
                                 }
                             }
-                        } catch (error) {
-                            console.error(chalk.red('❌ Failed to validate updated configuration:'), error);
+                            
+                            if (validation.suggestions.length > 0) {
+                                console.log(chalk.blue('\n💡 Suggestions:'));
+                                for (const suggestion of validation.suggestions) {
+                                    console.log(`  • ${suggestion.description}`);
+                                }
+                            }
+                        } else {
+                            console.log(chalk.red('❌ Configuration validation failed:'));
+                            for (const error of validation.errors) {
+                                console.log(`  • ${error.path}: ${error.message}`);
+                            }
                         }
-                    } else {
-                        console.log(chalk.yellow('⚠️ Editor closed without saving'));
+                    } catch (error) {
+                        console.error(chalk.red('❌ Failed to validate updated configuration:'), error);
                     }
-                });
+                } else if (result.blocked) {
+                    console.log(chalk.red(`❌ Command blocked: ${result.blockReason}`));
+                } else {
+                    console.log(chalk.yellow('⚠️ Editor closed without saving or failed to execute'));
+                }
                 
             } catch (error) {
                 console.error(chalk.red('❌ Failed to edit configuration:'), error);
