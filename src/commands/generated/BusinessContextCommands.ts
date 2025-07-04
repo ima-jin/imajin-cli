@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Business context initialization and management
@@ -462,7 +462,7 @@ Important business rules:
                 }
                 
                 if (options.entity) {
-                    commands = commands.filter(cmd => cmd.entity === options.entity);
+                    commands = commands.filter(cmd => cmd.entityType === options.entity);
                 }
                 
                 if (options.json) {
@@ -477,8 +477,8 @@ Important business rules:
                         console.log(chalk.green('\n🎯 Porcelain Commands (Business-focused):'));
                         for (const cmd of porcelainCommands) {
                             console.log(`  ${chalk.cyan(cmd.name)} - ${cmd.description}`);
-                            if (cmd.entity) {
-                                console.log(`    Entity: ${cmd.entity}`);
+                            if (cmd.entityType) {
+                                console.log(`    Entity: ${cmd.entityType}`);
                             }
                         }
                     }

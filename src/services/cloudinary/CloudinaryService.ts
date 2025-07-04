@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-29
+ * @since       2025-07-03
  *
  * Integration Points:
  * - Cloudinary upload API
@@ -26,9 +26,11 @@ import type { ServiceConfig } from '../interfaces/ServiceInterface.js';
 import type {
     ListOptions,
     MediaAsset,
+    MediaAssetCollection,
     MediaMetadata,
     Transformation,
-    UploadOptions
+    UploadOptions,
+    CloudinaryUploadResponse
 } from '../../types/Media.js';
 
 export interface CloudinaryConfig extends ServiceConfig {
@@ -159,40 +161,50 @@ export class CloudinaryService extends BaseService {
     }
 
     /**
-     * Transform an existing asset
+     * Transform media with proper type handling
      */
-    async transform(asset: MediaAsset, transformations: Transformation[]): Promise<MediaAsset> {
+    async transform(originalAsset: MediaAsset, transformations: Transformation[]): Promise<MediaAsset> {
         return this.execute('transform', async () => {
-            // Build transformation string
-            const transformationString = transformations
-                .map(t => this.transformationToCloudinary(t))
-                .join('/');
+            const transformResults = [];
 
-            // Generate new URL with transformations
-            const baseUrl = asset.url.split('/upload/')[0];
-            const publicId = asset.id;
-            const transformedUrl = `${baseUrl}/upload/${transformationString}/${publicId}`;
-
-            // Create transformed asset
-            const transformedAsset: MediaAsset = {
-                ...asset,
-                id: `${asset.id}_transformed_${uuidv4()}`,
-                url: transformedUrl,
-                transformations: [
-                    ...(asset.transformations || []),
-                    ...transformations.map(t => ({
+            for (const transformation of transformations) {
+                try {
+                    const cloudinaryTransform = this.transformationToCloudinary(transformation);
+                    const resultUrl = this.cloudinary.url(originalAsset.id, { transformation: cloudinaryTransform });
+                    
+                    transformResults.push({
                         id: uuidv4(),
-                        transformation: t,
+                        transformation,
                         appliedAt: new Date(),
-                        resultUrl: transformedUrl,
-                        fileSize: asset.size, // Would need to fetch actual size
+                        resultUrl,
+                        fileSize: originalAsset.size, // Would need to fetch actual size
                         success: true
-                    }))
+                    });
+                } catch (error) {
+                    transformResults.push({
+                        id: uuidv4(),
+                        transformation,
+                        appliedAt: new Date(),
+                        resultUrl: '',
+                        fileSize: 0,
+                        error: error instanceof Error ? error.message : 'Unknown error',
+                        success: false
+                    });
+                }
+            }
+
+            const transformedAsset: MediaAsset = {
+                ...originalAsset,
+                id: `${originalAsset.id}_transformed_${uuidv4()}`,
+                url: transformResults.find(r => r.success)?.resultUrl || originalAsset.url,
+                transformations: [
+                    ...originalAsset.transformations,
+                    ...transformResults
                 ]
             };
 
             this.logger.info('Asset transformed', {
-                originalId: asset.id,
+                originalId: originalAsset.id,
                 transformedId: transformedAsset.id,
                 transformations: transformations.length
             });
@@ -202,7 +214,7 @@ export class CloudinaryService extends BaseService {
     }
 
     /**
-     * Delete an asset
+     * Delete asset from Cloudinary
      */
     async delete(assetId: string): Promise<void> {
         return this.execute('delete', async () => {
@@ -212,7 +224,7 @@ export class CloudinaryService extends BaseService {
     }
 
     /**
-     * Get asset metadata
+     * Get metadata for a specific asset
      */
     async getMetadata(assetId: string): Promise<MediaMetadata> {
         return this.execute('getMetadata', async () => {
@@ -222,12 +234,12 @@ export class CloudinaryService extends BaseService {
     }
 
     /**
-     * Get asset details
+     * Get asset by ID
      */
     async getAsset(assetId: string): Promise<MediaAsset> {
         return this.execute('getAsset', async () => {
             const result = await this.cloudinary.api.resource(assetId);
-
+            
             const asset: MediaAsset = {
                 id: result.public_id,
                 originalName: result.public_id,
@@ -246,38 +258,97 @@ export class CloudinaryService extends BaseService {
     }
 
     /**
-     * List assets with pagination
+     * List media assets with proper pagination
      */
-    async listAssets(options: ListOptions): Promise<MediaAsset[]> {
-        return this.execute('listAssets', async () => {
-            const listOptions: any = {
-                max_results: options.limit || 10,
+    async listMedia(options: ListOptions = {}): Promise<MediaAssetCollection> {
+        return this.execute('listMedia', async () => {
+            const result = await this.cloudinary.api.resources({
+                type: 'upload',
+                max_results: options.limit || 50,
+                next_cursor: options.offset ? String(options.offset) : undefined,
                 resource_type: options.resourceType || 'image',
-                type: 'upload'
+                ...options
+            });
+
+            const assets = result.resources.map((resource: any) => 
+                this.mapToBusinessContext('media', resource)
+            );
+
+            return {
+                assets,
+                nextCursor: result.next_cursor,
+                total: result.total_count || assets.length
             };
-
-            // Add search expression if provided
-            if (options.folder || options.tags?.length) {
-                listOptions.expression = this.buildSearchExpression(options);
-            }
-
-            const result = await this.cloudinary.api.resources(listOptions);
-
-            const assets: MediaAsset[] = result.resources.map((resource: any) => ({
-                id: resource.public_id,
-                originalName: resource.public_id,
-                fileName: resource.public_id,
-                mimeType: resource.resource_type === 'image' ? `image/${resource.format}` : `video/${resource.format}`,
-                size: resource.bytes,
-                url: resource.secure_url,
-                provider: this.getName(),
-                uploadedAt: new Date(resource.created_at),
-                metadata: this.extractMetadata(resource),
-                transformations: []
-            }));
-
-            return assets;
         });
+    }
+
+    /**
+     * List assets (legacy method for compatibility)
+     */
+    async listAssets(options: ListOptions): Promise<MediaAssetCollection> {
+        return this.execute('listAssets', async () => {
+            const result = await this.cloudinary.api.resources({
+                type: 'upload',
+                max_results: options.limit || 50,
+                next_cursor: options.offset ? String(options.offset) : undefined,
+                resource_type: options.resourceType || 'image',
+                folder: options.folder,
+                tags: options.tags
+            });
+
+            const assets = result.resources.map((resource: any) => {
+                const asset: MediaAsset = {
+                    id: resource.public_id,
+                    originalName: resource.public_id,
+                    fileName: resource.public_id,
+                    mimeType: resource.resource_type === 'image' ? `image/${resource.format}` : `video/${resource.format}`,
+                    size: resource.bytes,
+                    url: resource.secure_url,
+                    provider: this.getName(),
+                    uploadedAt: new Date(resource.created_at),
+                    metadata: this.extractMetadata(resource),
+                    transformations: []
+                };
+                return asset;
+            });
+
+            return {
+                assets,
+                nextCursor: result.next_cursor,
+                total: result.total_count || assets.length
+            };
+        });
+    }
+
+    /**
+     * Get service capabilities
+     */
+    getCapabilities(): string[] {
+        return [
+            'media-upload',
+            'media-transformation', 
+            'media-optimization',
+            'media-delivery',
+            'business-context-mapping'
+        ];
+    }
+
+    /**
+     * Map to business context
+     */
+    private mapToBusinessContext(entityType: string, cloudinaryData: any): MediaAsset {
+        return {
+            id: cloudinaryData.public_id,
+            originalName: cloudinaryData.public_id,
+            fileName: cloudinaryData.public_id,
+            mimeType: cloudinaryData.resource_type === 'image' ? `image/${cloudinaryData.format}` : `video/${cloudinaryData.format}`,
+            size: cloudinaryData.bytes,
+            url: cloudinaryData.secure_url,
+            provider: this.getName(),
+            uploadedAt: new Date(cloudinaryData.created_at),
+            metadata: this.extractMetadata(cloudinaryData),
+            transformations: []
+        };
     }
 
     // ==========================================================================

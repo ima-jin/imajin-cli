@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Discovers available services and APIs
@@ -435,30 +435,102 @@ export class BusinessServiceDiscovery {
     private suggestServiceWorkflows(service: ServiceCapability, businessContext: BusinessDomainModel): string[] {
         const workflows: string[] = [];
         
-        // Based on service capabilities and business type
-        const businessType = businessContext.businessType;
-        const serviceName = service.name;
+        // Generate workflows based on service capabilities and business entities
+        const businessEntities = Object.keys(businessContext.entities);
+        const serviceName = service.name.toLowerCase();
         
-        const workflowSuggestions: Record<string, Record<string, string[]>> = {
-            restaurant: {
-                stripe: ['payment_processing', 'refund_management', 'subscription_billing'],
-                mailchimp: ['customer_marketing', 'loyalty_campaigns', 'event_promotion'],
-                notion: ['recipe_management', 'staff_scheduling', 'inventory_tracking'],
-            },
-            ecommerce: {
-                stripe: ['checkout_flow', 'subscription_management', 'marketplace_payments'],
-                shopify: ['inventory_sync', 'order_fulfillment', 'product_updates'],
-                mailchimp: ['abandoned_cart_recovery', 'customer_segments', 'product_recommendations'],
-            },
-            saas: {
-                stripe: ['subscription_lifecycle', 'usage_billing', 'trial_management'],
-                notion: ['knowledge_base', 'team_collaboration', 'project_management'],
-                github: ['code_integration', 'issue_tracking', 'release_management'],
-            },
-        };
+        // Universal workflow patterns based on service capabilities and business entities
+        const workflowPatterns = this.generateUniversalWorkflowPatterns(service, businessEntities);
         
-        if (workflowSuggestions[businessType] && workflowSuggestions[businessType][serviceName]) {
-            workflows.push(...workflowSuggestions[businessType][serviceName]);
+        // Service-specific workflow suggestions based on service capabilities
+        const serviceWorkflows = this.generateServiceSpecificWorkflows(service, businessEntities);
+        
+        workflows.push(...workflowPatterns, ...serviceWorkflows);
+        
+        return [...new Set(workflows)]; // Remove duplicates
+    }
+
+    /**
+     * Generate universal workflow patterns based on service capabilities
+     */
+    private generateUniversalWorkflowPatterns(service: ServiceCapability, businessEntities: string[]): string[] {
+        const workflows: string[] = [];
+        const capabilities = service.capabilities || [];
+        
+        // Payment-related workflows
+        if (capabilities.includes('payments') || service.name.toLowerCase().includes('stripe')) {
+            if (businessEntities.includes('customer') || businessEntities.includes('client')) {
+                workflows.push('payment_processing', 'customer_billing');
+            }
+            if (businessEntities.includes('order') || businessEntities.includes('transaction')) {
+                workflows.push('order_payment_workflow');
+            }
+            if (businessEntities.includes('subscription') || businessEntities.includes('member')) {
+                workflows.push('subscription_management');
+            }
+        }
+        
+        // Marketing/Communication workflows
+        if (capabilities.includes('marketing') || service.name.toLowerCase().includes('mailchimp')) {
+            if (businessEntities.includes('customer') || businessEntities.includes('member')) {
+                workflows.push('customer_engagement', 'newsletter_automation');
+            }
+            if (businessEntities.includes('event')) {
+                workflows.push('event_promotion');
+            }
+        }
+        
+        // Content/Knowledge management workflows
+        if (capabilities.includes('content') || service.name.toLowerCase().includes('notion')) {
+            workflows.push('knowledge_management', 'documentation_sync');
+            if (businessEntities.includes('project')) {
+                workflows.push('project_documentation');
+            }
+        }
+        
+        // E-commerce workflows
+        if (capabilities.includes('inventory') || service.name.toLowerCase().includes('shopify')) {
+            if (businessEntities.includes('product')) {
+                workflows.push('inventory_sync', 'product_updates');
+            }
+            if (businessEntities.includes('order')) {
+                workflows.push('order_fulfillment');
+            }
+        }
+        
+        return workflows;
+    }
+
+    /**
+     * Generate service-specific workflows based on entity operations
+     */
+    private generateServiceSpecificWorkflows(service: ServiceCapability, businessEntities: string[]): string[] {
+        const workflows: string[] = [];
+        
+        // Generate workflows based on service entities and business entities overlap
+        const serviceEntities = Object.keys(service.entities);
+        
+        for (const serviceEntity of serviceEntities) {
+            const serviceEntityDef = service.entities[serviceEntity];
+            const operations = serviceEntityDef.operations || [];
+            
+            // Find matching business entities
+            const matchingBusinessEntities = businessEntities.filter(businessEntity => 
+                this.areEntitiesSemanticallySimilar(serviceEntity, businessEntity)
+            );
+            
+            for (const businessEntity of matchingBusinessEntities) {
+                // Generate CRUD workflows
+                if (operations.includes('create') && operations.includes('update')) {
+                    workflows.push(`${businessEntity}_${serviceEntity}_sync`);
+                }
+                if (operations.includes('list')) {
+                    workflows.push(`${businessEntity}_${serviceEntity}_reporting`);
+                }
+                if (operations.includes('delete')) {
+                    workflows.push(`${businessEntity}_${serviceEntity}_cleanup`);
+                }
+            }
         }
         
         return workflows;

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/architecture/business-context.md
  * 
@@ -228,8 +228,10 @@ export async function initializeBusinessTypeSystem(config?: BusinessConfiguratio
             businessType: config.business.type,
             description: config.business.description,
             entities: config.entities,
-            workflows: config.workflows,
-            businessRules: config.businessRules,
+            workflows: config.workflows || [],
+            businessRules: config.businessRules?.map(r => r.rule) || [],
+            integrations: [],
+            commands: [],
         };
         BusinessTypeRegistry.registerBusinessDomain(domainModel);
     }

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Extends existing ModelFactory for business domain registration
@@ -148,7 +148,7 @@ export class BusinessModelFactory extends ModelFactory {
     }
 
     /**
-     * Generate suggested business workflows
+     * Suggest workflows based on business context and available services
      */
     static suggestWorkflows(
         businessContext: BusinessDomainModel,
@@ -158,26 +158,232 @@ export class BusinessModelFactory extends ModelFactory {
         
         const suggestions: WorkflowSuggestion[] = [];
         
-        // Restaurant workflows
-        if (businessContext.businessType === 'restaurant') {
-            suggestions.push(...this.generateRestaurantWorkflows(businessContext, availableServices));
+        // Load workflows from business context (recipe-based)
+        if (businessContext.workflows && businessContext.workflows.length > 0) {
+            suggestions.push(...this.generateWorkflowsFromRecipe(businessContext, availableServices));
         }
         
-        // E-commerce workflows
-        if (businessContext.businessType === 'ecommerce') {
-            suggestions.push(...this.generateEcommerceWorkflows(businessContext, availableServices));
-        }
+        // Generate universal entity-based workflows
+        suggestions.push(...this.generateEntityBasedWorkflows(businessContext, availableServices));
         
-        // SaaS workflows
-        if (businessContext.businessType === 'saas') {
-            suggestions.push(...this.generateSaasWorkflows(businessContext, availableServices));
-        }
-        
-        // Generic business workflows
-        suggestions.push(...this.generateGenericBusinessWorkflows(businessContext, availableServices));
+        // Generate universal service integration workflows
+        suggestions.push(...this.generateServiceIntegrationWorkflows(businessContext, availableServices));
         
         console.log(`✅ Generated ${suggestions.length} workflow suggestions`);
         return suggestions;
+    }
+
+    /**
+     * Generate workflows from recipe definitions
+     */
+    private static generateWorkflowsFromRecipe(
+        context: BusinessDomainModel,
+        availableServices: ServiceSchemaType[]
+    ): WorkflowSuggestion[] {
+        const suggestions: WorkflowSuggestion[] = [];
+        
+        for (const workflow of context.workflows || []) {
+            suggestions.push({
+                name: workflow.name,
+                description: workflow.description,
+                steps: workflow.steps,
+                services: this.identifyRelevantServices(workflow.steps, availableServices),
+                businessEntities: this.extractEntitiesFromWorkflow(workflow, context),
+                estimatedSavings: '2-4 hours per execution',
+                priority: 'medium',
+                complexity: 'moderate'
+            });
+        }
+        
+        return suggestions;
+    }
+
+    /**
+     * Generate workflows based on entities in the business context
+     */
+    private static generateEntityBasedWorkflows(
+        context: BusinessDomainModel,
+        availableServices: ServiceSchemaType[]
+    ): WorkflowSuggestion[] {
+        const suggestions: WorkflowSuggestion[] = [];
+        const entities = Object.keys(context.entities);
+        
+        // Generate CRUD workflows for each entity
+        for (const entityName of entities) {
+            suggestions.push({
+                name: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} Management`,
+                description: `Complete ${entityName} lifecycle management workflow`,
+                steps: [
+                    `Create ${entityName}`,
+                    `Update ${entityName} details`,
+                    `Track ${entityName} status`,
+                    `Archive ${entityName}`
+                ],
+                services: this.identifyServicesForEntity(entityName, availableServices),
+                businessEntities: [entityName],
+                estimatedSavings: '1-2 hours per operation',
+                priority: 'medium',
+                complexity: 'simple'
+            });
+        }
+        
+        return suggestions;
+    }
+
+    /**
+     * Generate workflows for service integrations
+     */
+    private static generateServiceIntegrationWorkflows(
+        context: BusinessDomainModel,
+        availableServices: ServiceSchemaType[]
+    ): WorkflowSuggestion[] {
+        const suggestions: WorkflowSuggestion[] = [];
+        
+        for (const service of availableServices) {
+            suggestions.push({
+                name: `${service.name} Integration`,
+                description: `Automated data sync with ${service.name}`,
+                steps: [
+                    `Connect to ${service.name}`,
+                    'Map business entities',
+                    'Configure sync rules',
+                    'Monitor data flow'
+                ],
+                services: [service.name],
+                businessEntities: this.identifyCompatibleEntities(service, context),
+                estimatedSavings: '3-5 hours per sync cycle',
+                priority: 'high',
+                complexity: 'moderate'
+            });
+        }
+        
+        return suggestions;
+    }
+
+    /**
+     * Identify services relevant to workflow steps
+     */
+    private static identifyRelevantServices(steps: string[], availableServices: ServiceSchemaType[]): string[] {
+        const relevantServices: string[] = [];
+        
+        for (const service of availableServices) {
+            const serviceKeywords = service.name.toLowerCase().split(/[-_\s]/);
+            
+            for (const step of steps) {
+                const stepKeywords = step.toLowerCase().split(/\s+/);
+                
+                // Check for keyword overlap
+                const hasOverlap = serviceKeywords.some(keyword => 
+                    stepKeywords.some(stepWord => 
+                        stepWord.includes(keyword) || keyword.includes(stepWord)
+                    )
+                );
+                
+                if (hasOverlap) {
+                    relevantServices.push(service.name);
+                    break;
+                }
+            }
+        }
+        
+        return [...new Set(relevantServices)];
+    }
+
+    /**
+     * Extract entities mentioned in workflow
+     */
+    private static extractEntitiesFromWorkflow(workflow: any, context: BusinessDomainModel): string[] {
+        const entities: string[] = [];
+        const entityNames = Object.keys(context.entities);
+        
+        const workflowText = `${workflow.name} ${workflow.description} ${workflow.steps.join(' ')}`.toLowerCase();
+        
+        for (const entityName of entityNames) {
+            if (workflowText.includes(entityName.toLowerCase())) {
+                entities.push(entityName);
+            }
+        }
+        
+        return entities;
+    }
+
+    /**
+     * Identify services that can work with a specific entity
+     */
+    private static identifyServicesForEntity(entityName: string, availableServices: ServiceSchemaType[]): string[] {
+        const services: string[] = [];
+        
+        for (const service of availableServices) {
+            // Check if service has entities compatible with this business entity
+            if (service.entities && Object.keys(service.entities).length > 0) {
+                const serviceEntityNames = Object.keys(service.entities);
+                
+                // Look for semantic similarity
+                const isCompatible = serviceEntityNames.some(serviceEntity => 
+                    this.areEntitiesCompatible(entityName, serviceEntity)
+                );
+                
+                if (isCompatible) {
+                    services.push(service.name);
+                }
+            }
+        }
+        
+        return services;
+    }
+
+    /**
+     * Identify entities compatible with a service
+     */
+    private static identifyCompatibleEntities(service: ServiceSchemaType, context: BusinessDomainModel): string[] {
+        const compatibleEntities: string[] = [];
+        const businessEntities = Object.keys(context.entities);
+        
+        if (service.entities) {
+            const serviceEntities = Object.keys(service.entities);
+            
+            for (const businessEntity of businessEntities) {
+                for (const serviceEntity of serviceEntities) {
+                    if (this.areEntitiesCompatible(businessEntity, serviceEntity)) {
+                        compatibleEntities.push(businessEntity);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return compatibleEntities;
+    }
+
+    /**
+     * Check if two entities are compatible based on semantic similarity
+     */
+    private static areEntitiesCompatible(entity1: string, entity2: string): boolean {
+        // Direct match
+        if (entity1.toLowerCase() === entity2.toLowerCase()) {
+            return true;
+        }
+        
+        // Common entity mappings
+        const entitySynonyms: Record<string, string[]> = {
+            'customer': ['client', 'user', 'account', 'contact', 'member'],
+            'order': ['transaction', 'purchase', 'sale', 'booking', 'reservation'],
+            'product': ['item', 'service', 'offering', 'article', 'good'],
+            'payment': ['transaction', 'charge', 'invoice', 'billing', 'subscription'],
+            'project': ['task', 'job', 'assignment', 'work', 'initiative'],
+            'event': ['activity', 'occurrence', 'happening', 'meeting', 'session']
+        };
+        
+        for (const [baseEntity, synonyms] of Object.entries(entitySynonyms)) {
+            const entity1Match = entity1.toLowerCase() === baseEntity || synonyms.includes(entity1.toLowerCase());
+            const entity2Match = entity2.toLowerCase() === baseEntity || synonyms.includes(entity2.toLowerCase());
+            
+            if (entity1Match && entity2Match) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     // =============================================================================
@@ -198,7 +404,7 @@ export class BusinessModelFactory extends ModelFactory {
                 generatedFrom: 'business-context',
                 entities: Object.keys(context.entities),
                 workflows: context.workflows?.map(w => w.name) || [],
-                businessRules: context.businessRules?.map(r => r.rule) || [],
+                businessRules: context.businessRules || [],
                 createdAt: new Date().toISOString(),
             },
         };
@@ -343,6 +549,8 @@ export class BusinessModelFactory extends ModelFactory {
      */
     static generateBusinessMappings(businessType: string): Record<string, string> {
         const mappings: Record<string, string> = {};
+        
+        // First, try to get from registered types
         const registeredTypes = BusinessTypeRegistry.getRegisteredTypes();
         
         for (const typeName of registeredTypes) {
@@ -353,7 +561,28 @@ export class BusinessModelFactory extends ModelFactory {
             }
         }
         
+        // If no mappings found from registry, generate default mappings for business type
+        if (Object.keys(mappings).length === 0) {
+            const defaultEntities = this.getDefaultEntitiesForBusinessType(businessType);
+            
+            for (const entityName of defaultEntities) {
+                mappings[entityName.toLowerCase()] = `${businessType}.${entityName}`;
+            }
+        }
+        
         return mappings;
+    }
+
+    /**
+     * Get default entity names for a business type
+     */
+    private static getDefaultEntitiesForBusinessType(businessType: string): string[] {
+        // Instead of returning defaults, throw configuration error
+        throw new Error(
+            `No business entities registered for type '${businessType}'. ` +
+            `Please register business entities using BusinessTypeRegistry.registerType() ` +
+            `or configure your business context before using generateBusinessMappings().`
+        );
     }
 
     /**
@@ -593,136 +822,6 @@ export class BusinessModelFactory extends ModelFactory {
         const coverageBoost = Math.min(entityCoverage * 0.2, 0.2);
         
         return Math.min(averageScore + coverageBoost, 1.0);
-    }
-
-    // =============================================================================
-    // WORKFLOW SUGGESTIONS
-    // =============================================================================
-
-    private static generateRestaurantWorkflows(
-        context: BusinessDomainModel,
-        availableServices: ServiceSchemaType[]
-    ): WorkflowSuggestion[] {
-        const workflows: WorkflowSuggestion[] = [];
-        
-        const hasStripe = availableServices.some(s => s.name === 'stripe');
-        const hasToast = availableServices.some(s => s.name === 'toast');
-        const hasMailchimp = availableServices.some(s => s.name === 'mailchimp');
-        
-        if (hasStripe && hasToast) {
-            workflows.push({
-                name: 'complete_order_workflow',
-                description: 'Complete order from POS to payment processing',
-                steps: [
-                    'Get order from Toast POS',
-                    'Process payment via Stripe',
-                    'Update order status in Toast',
-                    'Award loyalty points to customer',
-                ],
-                services: ['toast', 'stripe'],
-                businessEntities: ['order', 'customer', 'payment'],
-                estimatedSavings: '2-3 hours per day',
-            });
-        }
-        
-        if (hasMailchimp) {
-            workflows.push({
-                name: 'customer_engagement_workflow',
-                description: 'Automated customer engagement and marketing',
-                steps: [
-                    'Track customer visit patterns',
-                    'Segment customers by preferences',
-                    'Send targeted marketing campaigns',
-                    'Track campaign performance',
-                ],
-                services: ['mailchimp'],
-                businessEntities: ['customer'],
-                estimatedSavings: '5-8 hours per week',
-            });
-        }
-        
-        return workflows;
-    }
-
-    private static generateEcommerceWorkflows(
-        context: BusinessDomainModel,
-        availableServices: ServiceSchemaType[]
-    ): WorkflowSuggestion[] {
-        const workflows: WorkflowSuggestion[] = [];
-        
-        const hasStripe = availableServices.some(s => s.name === 'stripe');
-        const hasShopify = availableServices.some(s => s.name === 'shopify');
-        
-        if (hasStripe && hasShopify) {
-            workflows.push({
-                name: 'order_fulfillment_workflow',
-                description: 'Complete order processing from cart to delivery',
-                steps: [
-                    'Process payment via Stripe',
-                    'Update inventory in Shopify',
-                    'Generate shipping label',
-                    'Send order confirmation to customer',
-                ],
-                services: ['stripe', 'shopify'],
-                businessEntities: ['order', 'customer', 'product'],
-                estimatedSavings: '1-2 hours per day',
-            });
-        }
-        
-        return workflows;
-    }
-
-    private static generateSaasWorkflows(
-        context: BusinessDomainModel,
-        availableServices: ServiceSchemaType[]
-    ): WorkflowSuggestion[] {
-        const workflows: WorkflowSuggestion[] = [];
-        
-        const hasStripe = availableServices.some(s => s.name === 'stripe');
-        
-        if (hasStripe) {
-            workflows.push({
-                name: 'subscription_management_workflow',
-                description: 'Automated subscription lifecycle management',
-                steps: [
-                    'Handle subscription creation',
-                    'Process recurring payments',
-                    'Manage trial periods',
-                    'Handle subscription cancellations',
-                ],
-                services: ['stripe'],
-                businessEntities: ['user', 'subscription'],
-                estimatedSavings: '3-5 hours per week',
-            });
-        }
-        
-        return workflows;
-    }
-
-    private static generateGenericBusinessWorkflows(
-        context: BusinessDomainModel,
-        availableServices: ServiceSchemaType[]
-    ): WorkflowSuggestion[] {
-        const workflows: WorkflowSuggestion[] = [];
-        
-        // Customer data synchronization
-        if (availableServices.length >= 2) {
-            workflows.push({
-                name: 'customer_data_sync_workflow',
-                description: 'Keep customer data synchronized across all services',
-                steps: [
-                    'Detect customer data changes',
-                    'Validate data consistency',
-                    'Update records across services',
-                    'Log synchronization results',
-                ],
-                services: availableServices.map(s => s.name),
-                businessEntities: ['customer'],
-                estimatedSavings: '2-4 hours per week',
-            });
-        }
-        
-        return workflows;
     }
 }
 

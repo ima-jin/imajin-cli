@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-18
+ * @updated      2025-07-03
  */
 
 export interface MediaAsset {
@@ -22,7 +22,7 @@ export interface MediaAsset {
     provider: string;
     uploadedAt: Date;
     metadata: MediaMetadata;
-    transformations?: TransformationRecord[];
+    transformations: TransformationRecord[]; // Always defined, empty array by default
 }
 
 export interface MediaMetadata {
@@ -73,6 +73,7 @@ export interface UploadOptions {
     context?: Record<string, any>;
     eager?: Transformation[];
     notification_url?: string;
+    resourceType?: 'image' | 'video' | 'raw' | 'auto';
 }
 
 export interface Transformation {
@@ -95,7 +96,8 @@ export type TransformationType =
     | 'overlay'
     | 'video_transcode'
     | 'thumbnail'
-    | 'optimize';
+    | 'optimize'
+    | string; // Allow string values for additional transformation types
 
 export interface TransformationParams {
     width?: number;
@@ -253,4 +255,35 @@ export interface MediaProcessingOptions {
     folder?: string;
     public?: boolean;
     overwrite?: boolean;
+}
+
+/**
+ * Cloudinary Upload Response Interface
+ */
+export interface CloudinaryUploadResponse {
+    public_id: string;
+    version: number;
+    signature: string;
+    width: number;
+    height: number;
+    format: string;
+    resource_type: string;
+    created_at: string;
+    tags: string[];
+    bytes: number;
+    type: string;
+    etag: string;
+    placeholder: boolean;
+    url: string;
+    secure_url: string;
+    duration?: number; // For video uploads
+}
+
+/**
+ * Media Asset Collection with Pagination
+ */
+export interface MediaAssetCollection {
+    assets: MediaAsset[];      // Collection of media assets
+    nextCursor?: string;       // Pagination cursor
+    total: number;             // Total number of assets
 } 

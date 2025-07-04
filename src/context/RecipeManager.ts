@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-25
+ * @since       2025-07-03
  *
  * Integration Points:
  * - Recipe template discovery and loading
@@ -45,14 +45,13 @@ export class RecipeManager {
     private readonly recipesDir: string;
 
     constructor() {
-        // ES module equivalent of __dirname
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = dirname(__filename);
-        this.recipesDir = join(__dirname, '../templates/recipes');
+        // Use absolute path resolution to avoid import.meta.url issues
+        // This works in both ES modules and CommonJS environments
+        this.recipesDir = join(process.cwd(), 'src/templates/recipes');
     }
 
     /**
-     * List all available recipes
+     * List all available recipes from files only
      */
     async listRecipes(): Promise<Recipe[]> {
         try {
@@ -68,13 +67,14 @@ export class RecipeManager {
             
             return recipes;
         } catch (error) {
-            console.warn('No recipes directory found, using fallback recipes');
-            return this.getFallbackRecipes();
+            // No recipes directory found - return empty array
+            console.warn('No recipes directory found, no recipes available');
+            return [];
         }
     }
 
     /**
-     * Get recipe by business type
+     * Get recipe by business type from files only
      */
     async getRecipe(businessType: string): Promise<Recipe | null> {
         try {
@@ -82,8 +82,8 @@ export class RecipeManager {
             const content = await readFile(filePath, 'utf-8');
             return JSON.parse(content);
         } catch (error) {
-            // Fallback to hardcoded recipe if file doesn't exist
-            return this.getFallbackRecipe(businessType);
+            // No recipe file found - return null
+            return null;
         }
     }
 
@@ -96,6 +96,9 @@ export class RecipeManager {
             description: recipe.description,
             entities: recipe.entities,
             workflows: recipe.workflows || [],
+            businessRules: [], // Add missing property
+            integrations: [], // Add missing property
+            commands: [], // Add missing property
             // Future: Store context views for role-based access
             contextViews: recipe.contextViews || {}
         } as BusinessDomainModel;
@@ -119,147 +122,5 @@ export class RecipeManager {
             console.warn(`Failed to load recipe ${filename}:`, error);
             return null;
         }
-    }
-
-    private getFallbackRecipes(): Recipe[] {
-        return [
-            {
-                name: "Coffee Shop",
-                businessType: "coffee-shop",
-                description: "Complete setup for coffee shops with POS and customer management",
-                entities: {
-                    customer: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "email", type: "string", required: false },
-                            { name: "phone", type: "string", required: false },
-                            { name: "loyaltyPoints", type: "number", default: 0 },
-                            { name: "dietaryRestrictions", type: "array", items: "string", required: false }
-                        ]
-                    },
-                    order: {
-                        fields: [
-                            { name: "items", type: "array", items: "orderItem", required: true },
-                            { name: "total", type: "number", required: true },
-                            { name: "status", type: "enum", values: ["pending", "preparing", "ready", "completed"], required: true },
-                            { name: "customerName", type: "string", required: false }
-                        ]
-                    },
-                    product: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "price", type: "number", required: true },
-                            { name: "category", type: "enum", values: ["beverage", "food", "retail"], required: true }
-                        ]
-                    }
-                },
-                workflows: [
-                    {
-                        name: "Order Processing",
-                        description: "From order to completion",
-                        steps: ["Order placed", "Payment processed", "Preparation", "Order ready", "Completed"]
-                    }
-                ]
-            },
-            {
-                name: "Restaurant",
-                businessType: "restaurant",
-                description: "Full-service restaurant with table management and reservations",
-                entities: {
-                    customer: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "email", type: "string", required: false },
-                            { name: "phone", type: "string", required: false },
-                            { name: "dietaryRestrictions", type: "array", items: "string", required: false },
-                            { name: "favoriteTable", type: "number", required: false },
-                            { name: "loyaltyPoints", type: "number", default: 0 }
-                        ]
-                    },
-                    table: {
-                        fields: [
-                            { name: "number", type: "number", required: true },
-                            { name: "section", type: "string", required: true },
-                            { name: "capacity", type: "number", required: true },
-                            { name: "status", type: "enum", values: ["available", "occupied", "reserved"], required: true }
-                        ]
-                    },
-                    order: {
-                        fields: [
-                            { name: "table", type: "number", required: true },
-                            { name: "items", type: "array", items: "menuItem", required: true },
-                            { name: "total", type: "number", required: true },
-                            { name: "status", type: "enum", values: ["ordered", "preparing", "ready", "served"], required: true }
-                        ]
-                    }
-                }
-            },
-            {
-                name: "E-commerce Store",
-                businessType: "ecommerce",
-                description: "Online store with product catalog and order management",
-                entities: {
-                    customer: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "email", type: "string", required: true },
-                            { name: "shippingAddress", type: "object", required: false },
-                            { name: "orderHistory", type: "array", items: "order", required: false }
-                        ]
-                    },
-                    product: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "price", type: "number", required: true },
-                            { name: "sku", type: "string", required: true },
-                            { name: "inventory", type: "number", required: true },
-                            { name: "category", type: "string", required: false }
-                        ]
-                    },
-                    order: {
-                        fields: [
-                            { name: "customerId", type: "string", required: true },
-                            { name: "items", type: "array", items: "orderItem", required: true },
-                            { name: "total", type: "number", required: true },
-                            { name: "status", type: "enum", values: ["pending", "processing", "shipped", "delivered"], required: true }
-                        ]
-                    }
-                }
-            },
-            {
-                name: "SaaS Platform",
-                businessType: "saas",
-                description: "Software-as-a-service with user management and subscriptions",
-                entities: {
-                    user: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "email", type: "string", required: true },
-                            { name: "role", type: "enum", values: ["admin", "user", "viewer"], required: true },
-                            { name: "lastLogin", type: "date", required: false }
-                        ]
-                    },
-                    organization: {
-                        fields: [
-                            { name: "name", type: "string", required: true },
-                            { name: "plan", type: "string", required: true },
-                            { name: "billingEmail", type: "string", required: true }
-                        ]
-                    },
-                    subscription: {
-                        fields: [
-                            { name: "organizationId", type: "string", required: true },
-                            { name: "plan", type: "string", required: true },
-                            { name: "status", type: "enum", values: ["active", "cancelled", "past_due"], required: true }
-                        ]
-                    }
-                }
-            }
-        ];
-    }
-
-    private getFallbackRecipe(businessType: string): Recipe | null {
-        const fallbacks = this.getFallbackRecipes();
-        return fallbacks.find(r => r.businessType === businessType) || null;
     }
 } 

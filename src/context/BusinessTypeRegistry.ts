@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-13
+ * @since       2025-07-03
  *
  * Integration Points:
  * - Replaces hardcoded Universal types with user-defined business models
@@ -83,8 +83,9 @@ export class BusinessTypeRegistry {
     private static createZodSchemaFromEntity(entityDef: any): z.ZodType<any> {
         const schemaFields: Record<string, z.ZodType<any>> = {};
         
-        // Add standard fields
-        schemaFields.id = z.string().min(1).max(100);
+        // Add standard fields - these should be optional for user data input
+        // The system can provide defaults when needed
+        schemaFields.id = z.string().min(1).max(100).optional().default(() => `temp-${Date.now()}`);
         schemaFields.createdAt = z.date().optional().default(() => new Date());
         schemaFields.updatedAt = z.date().optional().default(() => new Date());
         schemaFields.sourceService = z.string().optional();
@@ -105,6 +106,7 @@ export class BusinessTypeRegistry {
         
         switch (field.type) {
             case 'string':
+            case 'text': // Recipe field type
                 zodType = z.string();
                 break;
             case 'number':
@@ -114,13 +116,25 @@ export class BusinessTypeRegistry {
                 zodType = z.boolean();
                 break;
             case 'date':
+            case 'datetime': // Recipe field type
                 zodType = z.date();
                 break;
             case 'array':
                 zodType = z.array(z.string()); // Simplified for now
                 break;
             case 'enum':
-                zodType = z.enum(field.values as [string, ...string[]]);
+                if (field.values && Array.isArray(field.values) && field.values.length > 0) {
+                    zodType = z.enum(field.values as [string, ...string[]]);
+                } else {
+                    zodType = z.string();
+                }
+                break;
+            case 'object':
+            case 'json': // Recipe field type
+                zodType = z.any(); // Flexible JSON object
+                break;
+            case 'reference': // Recipe field type for entity references
+                zodType = z.string(); // Store as ID reference
                 break;
             case 'email':
                 zodType = z.string().email();

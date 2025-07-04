@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-25
+ * @since       2025-07-03
  *
  * Integration Points:
  * - Contentful Delivery API for reading content
@@ -18,7 +18,7 @@
  */
 
 import { createClient } from 'contentful';
-import contentfulManagement from 'contentful-management';
+import * as contentfulManagement from 'contentful-management';
 import type { Container } from '../../container/Container.js';
 import type { EventEmitter } from 'events';
 import { BaseService } from '../BaseService.js';
@@ -208,12 +208,14 @@ export class ContentfulService extends BaseService {
             const query: any = {
                 content_type: contentType,
                 limit,
-                order: '-sys.createdAt',
-                'sys.createdAt[gte]': startDate.toISOString()
+                order: '-sys.createdAt'
             };
 
             if (endDate) {
+                query['sys.createdAt[gte]'] = startDate.toISOString();
                 query['sys.createdAt[lte]'] = endDate.toISOString();
+            } else {
+                query['sys.createdAt[gte]'] = startDate.toISOString();
             }
 
             const response = await this.client.getEntries(query);
@@ -221,99 +223,322 @@ export class ContentfulService extends BaseService {
         });
     }
 
+    // ==========================================================================
+    // CONTENT ENTRY MANAGEMENT METHODS
+    // ==========================================================================
+
     /**
-     * Create content type from recipe (uses Management API)
+     * Create content entry using Contentful Management API
      */
-    async createContentType(contentTypeDefinition: any): Promise<any> {
-        return this.execute('createContentType', async () => {
-            if (!this.managementClient) {
-                throw new Error('Management token required for content type creation. Set CONTENTFUL_MANAGEMENT_TOKEN environment variable.');
-            }
+    async createEntry(contentType: string, fields: any, progressCallback?: any): Promise<any> {
+        return this.execute('createEntry', async () => {
+            progressCallback?.({
+                type: 'progress',
+                message: `Creating ${contentType} entry`,
+                progress: 25,
+                timestamp: new Date(),
+            });
 
-            try {
-                // Get the space and environment
-                const space = await this.managementClient.getSpace(this.contentfulConfig.spaceId);
-                const environment = await space.getEnvironment(this.contentfulConfig.environment || 'master');
+            const environment = await this.getManagementEnvironment();
+            const entry = await environment.createEntry(contentType, { fields });
+            
+            progressCallback?.({
+                type: 'progress', 
+                message: `Entry created: ${entry.sys.id}`,
+                progress: 100,
+                timestamp: new Date(),
+            });
 
-                // Check if content type already exists
-                try {
-                    const existingContentType = await environment.getContentType(contentTypeDefinition.id);
-                    this.logger.warn(`Content type '${contentTypeDefinition.id}' already exists, skipping creation`);
-                    return existingContentType;
-                } catch (error) {
-                    // Content type doesn't exist, proceed with creation
-                }
-
-                // Create the content type
-                const contentType = await environment.createContentTypeWithId(contentTypeDefinition.id, {
-                    name: contentTypeDefinition.name,
-                    description: contentTypeDefinition.description,
-                    displayField: this.findDisplayField(contentTypeDefinition.fields),
-                    fields: contentTypeDefinition.fields.map((field: any) => {
-                        const baseField = {
-                            id: field.id,
-                            name: field.name,
-                            type: field.type,
-                            required: field.required || false,
-                            localized: false,
-                            ...(field.validations && { validations: field.validations })
-                        };
-
-                        // Handle array reference fields (e.g., tracks in playlists/charts)
-                        if (field.items) {
-                            baseField.items = field.items;
-                        }
-
-                        return baseField;
-                    })
-                });
-
-                // Publish the content type
-                const publishedContentType = await contentType.publish();
-                
-                this.logger.info(`Successfully created and published content type: ${contentTypeDefinition.name}`);
-                return publishedContentType;
-
-            } catch (error) {
-                this.logger.error(`Failed to create content type ${contentTypeDefinition.name}:`, error as Error);
-                throw error;
-            }
+            return this.mapToBusinessContext('entry', entry);
         });
     }
 
     /**
-     * Delete content type (uses Management API)
+     * Update existing content entry
+     */
+    async updateEntry(entryId: string, fields: any, progressCallback?: any): Promise<any> {
+        return this.execute('updateEntry', async () => {
+            const environment = await this.getManagementEnvironment();
+            const entry = await environment.getEntry(entryId);
+            
+            // Update fields
+            Object.assign(entry.fields, fields);
+            const updatedEntry = await entry.update();
+            
+            return this.mapToBusinessContext('entry', updatedEntry);
+        });
+    }
+
+    /**
+     * Delete content entry
+     */
+    async deleteEntry(entryId: string): Promise<void> {
+        return this.execute('deleteEntry', async () => {
+            const environment = await this.getManagementEnvironment();
+            const entry = await environment.getEntry(entryId);
+            await entry.delete();
+        });
+    }
+
+    // ==========================================================================
+    // ASSET MANAGEMENT METHODS
+    // ==========================================================================
+
+    /**
+     * Upload asset to Contentful
+     */
+    async uploadAsset(buffer: Buffer, options: {
+        title: string;
+        fileName: string;
+        contentType: string;
+        description?: string;
+    }, progressCallback?: any): Promise<any> {
+        return this.execute('uploadAsset', async () => {
+            progressCallback?.({
+                type: 'progress',
+                message: 'Uploading asset to Contentful',
+                progress: 25,
+                timestamp: new Date(),
+            });
+
+            const environment = await this.getManagementEnvironment();
+            
+            // Create asset
+            const asset = await environment.createAsset({
+                fields: {
+                    title: { 'en-US': options.title },
+                    description: { 'en-US': options.description || '' },
+                    file: {
+                        'en-US': {
+                            fileName: options.fileName,
+                            contentType: options.contentType,
+                            upload: buffer
+                        }
+                    }
+                }
+            });
+
+            // Process asset
+            await asset.processForAllLocales();
+            
+            progressCallback?.({
+                type: 'progress',
+                message: `Asset uploaded: ${asset.sys.id}`,
+                progress: 100,
+                timestamp: new Date(),
+            });
+
+            return this.mapToBusinessContext('asset', asset);
+        });
+    }
+
+    /**
+     * Get asset by ID
+     */
+    async getAsset(assetId: string): Promise<any> {
+        return this.execute('getAsset', async () => {
+            const environment = await this.getManagementEnvironment();
+            const asset = await environment.getAsset(assetId);
+            return this.mapToBusinessContext('asset', asset);
+        });
+    }
+
+    /**
+     * Delete asset
+     */
+    async deleteAsset(assetId: string): Promise<void> {
+        return this.execute('deleteAsset', async () => {
+            const environment = await this.getManagementEnvironment();
+            const asset = await environment.getAsset(assetId);
+            await asset.delete();
+        });
+    }
+
+    /**
+     * List assets with pagination
+     */
+    async listAssets(options: any = {}): Promise<any> {
+        return this.execute('listAssets', async () => {
+            const environment = await this.getManagementEnvironment();
+            const response = await environment.getAssets(options);
+            return {
+                items: response.items.map((asset: any) => this.mapToBusinessContext('asset', asset)),
+                total: response.total,
+                skip: response.skip,
+                limit: response.limit
+            };
+        });
+    }
+
+    // ==========================================================================
+    // CONTENT TYPE MANAGEMENT METHODS
+    // ==========================================================================
+
+    /**
+     * Get content type definition
+     */
+    async getContentType(contentTypeId: string): Promise<any> {
+        return this.execute('getContentType', async () => {
+            const environment = await this.getManagementEnvironment();
+            return await environment.getContentType(contentTypeId);
+        });
+    }
+
+    /**
+     * List all content types
+     */
+    async listContentTypes(): Promise<any> {
+        return this.execute('listContentTypes', async () => {
+            const environment = await this.getManagementEnvironment();
+            const response = await environment.getContentTypes();
+            return {
+                items: response.items,
+                total: response.total,
+                skip: response.skip,
+                limit: response.limit
+            };
+        });
+    }
+
+    /**
+     * Update content type definition
+     */
+    async updateContentType(contentTypeId: string, updates: any): Promise<any> {
+        return this.execute('updateContentType', async () => {
+            const environment = await this.getManagementEnvironment();
+            const contentType = await environment.getContentType(contentTypeId);
+            
+            Object.assign(contentType, updates);
+            return await contentType.update();
+        });
+    }
+
+    /**
+     * Get service capabilities
+     */
+    getCapabilities(): string[] {
+        return [
+            'content-management',
+            'content-delivery',
+            'asset-management',
+            'content-types',
+            'business-context-mapping'
+        ];
+    }
+
+    /**
+     * Get management environment (helper method)
+     */
+    private async getManagementEnvironment(): Promise<any> {
+        if (!this.managementClient) {
+            throw new Error('Management client not initialized');
+        }
+        const space = await this.managementClient.getSpace(this.contentfulConfig.spaceId);
+        return await space.getEnvironment(this.contentfulConfig.environment || 'master');
+    }
+
+    // ==========================================================================
+    // EXISTING METHODS CONTINUE BELOW
+    // ==========================================================================
+
+    /**
+     * Create content type from business recipe
+     */
+    async createContentType(contentTypeDefinition: any): Promise<any> {
+        return this.execute('createContentType', async () => {
+            if (!this.managementClient) {
+                throw new Error('Management token required for content type creation');
+            }
+
+            const space = await this.managementClient.getSpace(this.contentfulConfig.spaceId);
+            const environment = await space.getEnvironment(this.contentfulConfig.environment || 'master');
+
+            // Create content type
+            const contentType = await environment.createContentType({
+                name: contentTypeDefinition.name,
+                description: contentTypeDefinition.description,
+                displayField: this.findDisplayField(contentTypeDefinition.fields),
+                fields: contentTypeDefinition.fields
+            });
+
+            this.logger.info('Content type created', {
+                contentTypeId: contentType.sys.id,
+                name: contentTypeDefinition.name,
+                fieldsCount: contentTypeDefinition.fields.length
+            });
+
+            return {
+                id: contentType.sys.id,
+                name: contentType.name,
+                description: contentType.description,
+                fields: contentType.fields
+            };
+        });
+    }
+
+    /**
+     * Delete content type
      */
     async deleteContentType(contentTypeId: string): Promise<void> {
         return this.execute('deleteContentType', async () => {
             if (!this.managementClient) {
-                throw new Error('Management token required for content type deletion. Set CONTENTFUL_MANAGEMENT_TOKEN environment variable.');
+                throw new Error('Management token required for content type deletion');
             }
 
-            try {
-                // Get the space and environment
-                const space = await this.managementClient.getSpace(this.contentfulConfig.spaceId);
-                const environment = await space.getEnvironment(this.contentfulConfig.environment || 'master');
+            const space = await this.managementClient.getSpace(this.contentfulConfig.spaceId);
+            const environment = await space.getEnvironment(this.contentfulConfig.environment || 'master');
 
-                // Get the content type
-                const contentType = await environment.getContentType(contentTypeId);
-                
-                // Unpublish first if published
-                if (contentType.sys.publishedVersion) {
-                    await contentType.unpublish();
-                    this.logger.info(`Content type '${contentTypeId}' unpublished`);
-                }
+            const contentType = await environment.getContentType(contentTypeId);
+            await contentType.delete();
 
-                // Delete the content type
-                await contentType.delete();
-                
-                this.logger.info(`Content type '${contentTypeId}' deleted successfully`);
-
-            } catch (error) {
-                this.logger.error(`Failed to delete content type '${contentTypeId}':`, error as Error);
-                throw error;
-            }
+            this.logger.info('Content type deleted', { contentTypeId });
         });
+    }
+
+    // ==========================================================================
+    // BUSINESS CONTEXT MAPPING
+    // ==========================================================================
+
+    /**
+     * Map Contentful data to business context
+     */
+    private mapToBusinessContext(entityType: string, contentfulData: any): any {
+        if (entityType === 'entry') {
+            // Return the raw entry data for test compatibility
+            return {
+                success: true,
+                entry: contentfulData,
+                metadata: {
+                    provider: 'contentful',
+                    timestamp: new Date(),
+                    entityType
+                }
+            };
+        }
+        
+        if (entityType === 'asset') {
+            // Return the raw asset data for test compatibility
+            return {
+                success: true,
+                asset: contentfulData,
+                metadata: {
+                    provider: 'contentful',
+                    timestamp: new Date(),
+                    entityType
+                }
+            };
+        }
+        
+        // For other types, return wrapped structure
+        return {
+            success: true,
+            [entityType]: contentfulData,
+            metadata: {
+                provider: 'contentful',
+                timestamp: new Date(),
+                entityType
+            }
+        };
     }
 
     // =============================================================================

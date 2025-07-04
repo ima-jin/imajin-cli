@@ -17,7 +17,7 @@ import type { PipelineDefinition } from '../core/interfaces';
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-13
+ * @since       2025-07-03
  *
  * Integration Points:
  * - Bridge Registry
@@ -56,26 +56,56 @@ export class ETLServiceProvider extends ServiceProvider {
         this.container.singleton('etl.events', () => this.events);
 
         // Register bridge component factory
-        this.container.bind('etl.bridgeComponent', (bridge: any) => {
-            return new BridgeComponent(bridge, this.bridgeRegistry);
+        this.container.singleton('etl.bridgeComponent', () => {
+            return (bridge: any) => new BridgeComponent(bridge, this.bridgeRegistry);
         });
     }
 
     public boot(): void {
-        // Register event listeners
         const logger = this.container.resolve<Logger>('logger');
+        let eventManager: any;
+        
+        try {
+            eventManager = this.container.resolve('eventManager');
+        } catch {
+            // Event manager might not be available
+            eventManager = null;
+        }
 
-        this.events.on('etl.bridge.registered', (bridge: any) => {
-            logger.info(`Bridge registered: ${bridge.id}`);
-        });
+        // Initialize bridge registry if method exists
+        if (this.bridgeRegistry && typeof (this.bridgeRegistry as any).initialize === 'function') {
+            (this.bridgeRegistry as any).initialize();
+        }
+        
+        // Don't execute pipeline during boot - it should be executed when needed with proper context
+        // Pipeline execution requires ETLContext which should be provided at runtime
+        
+        // Register event listeners with event manager if available
+        if (eventManager && typeof eventManager.registerListener === 'function') {
+            eventManager.registerListener({
+                eventType: 'etl.bridge.registered'
+            }, {
+                handle: (bridge: any) => {
+                    logger.info(`Bridge registered: ${bridge.id}`);
+                }
+            });
 
-        this.events.on('pipeline:start', (pipelineId: string) => {
-            logger.info(`Pipeline started: ${pipelineId}`);
-        });
+            eventManager.registerListener({
+                eventType: 'etl.pipeline.started'
+            }, {
+                handle: (pipelineId: string) => {
+                    logger.info(`Pipeline started: ${pipelineId}`);
+                }
+            });
 
-        this.events.on('pipeline:complete', (pipelineId: string, result: any) => {
-            logger.info(`Pipeline completed: ${pipelineId}`);
-        });
+            eventManager.registerListener({
+                eventType: 'etl.pipeline.completed'
+            }, {
+                handle: (pipelineId: string, result: any) => {
+                    logger.info(`Pipeline completed: ${pipelineId}`);
+                }
+            });
+        }
     }
 
     public registerCommands(program: Command): void {

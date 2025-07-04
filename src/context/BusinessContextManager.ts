@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Manages user business context configuration files
@@ -27,6 +27,7 @@ import type {
     BusinessDomainModelSchema 
 } from './BusinessContextProcessor.js';
 import type { ServiceMapping } from '../discovery/BusinessServiceDiscovery.js';
+import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
 
 // =============================================================================
 // CONFIGURATION SCHEMAS
@@ -45,7 +46,7 @@ export const BusinessConfigurationSchema = z.object({
     entities: z.record(z.object({
         fields: z.array(z.object({
             name: z.string(),
-            type: z.enum(['string', 'number', 'boolean', 'date', 'array', 'object', 'enum']),
+            type: z.enum(['string', 'number', 'boolean', 'date', 'array', 'object', 'enum', 'text', 'json', 'datetime', 'reference']),
             required: z.boolean().default(false),
             optional: z.boolean().default(true),
             default: z.any().optional(),
@@ -179,8 +180,15 @@ export class BusinessContextManager {
                 description: domainModel.description,
             },
             entities: this.transformEntitiesToConfig(domainModel.entities),
-            workflows: domainModel.workflows?.map(w => ({ ...w, enabled: true })),
-            businessRules: domainModel.businessRules?.map(r => ({ ...r, enabled: true })),
+            workflows: domainModel.workflows?.map(w => 
+                typeof w === 'string' ? { name: w, description: w, steps: [], enabled: true } : { ...w, enabled: true }
+            ),
+            businessRules: domainModel.businessRules?.map(r => ({ 
+                rule: r, 
+                enabled: true, 
+                priority: 'medium' as const, 
+                enforcement: 'soft' as const 
+            })),
             translations: {
                 services: {},
             },
@@ -358,8 +366,10 @@ export class BusinessContextManager {
             businessType: config.business.type,
             description: config.business.description,
             entities: this.transformConfigToEntities(config.entities),
-            workflows: config.workflows,
-            businessRules: config.businessRules,
+            workflows: config.workflows || [],
+            businessRules: config.businessRules?.map(r => r.rule) || [],
+            integrations: [],
+            commands: [],
         };
     }
 
@@ -598,7 +608,7 @@ export class BusinessContextManager {
         
         for (const commonEntity of commonEntities) {
             if (!existingEntities.includes(commonEntity)) {
-                const isRelevant = this.isEntityRelevantForBusiness(commonEntity, config.business.type);
+                const isRelevant = await this.isEntityRelevantForBusiness(commonEntity, config.business.type);
                 if (isRelevant) {
                     result.suggestions.push({
                         type: 'enhancement',
@@ -628,18 +638,65 @@ export class BusinessContextManager {
         }
     }
 
-    private isEntityRelevantForBusiness(entityName: string, businessType: string): boolean {
-        const relevance: Record<string, string[]> = {
-            customer: ['restaurant', 'ecommerce', 'saas', 'professional_services'],
-            order: ['restaurant', 'ecommerce'],
-            payment: ['restaurant', 'ecommerce', 'saas'],
-            product: ['ecommerce', 'restaurant'],
-            appointment: ['healthcare', 'professional_services'],
-            patient: ['healthcare'],
-            student: ['education'],
+    private async isEntityRelevantForBusiness(entityName: string, businessType: string): Promise<boolean> {
+        // Try to get business entities from registry to check if entity is part of the current business model
+        const registeredEntities = BusinessTypeRegistry.getEntityTypes();
+        
+        // Check if entity is in the currently registered business entities
+        if (registeredEntities.includes(entityName)) {
+            return true;
+        }
+        
+        // Check if entity is in the current configuration
+        if (this.currentConfig && this.currentConfig.entities[entityName]) {
+            return true;
+        }
+        
+        // Universal entity relevance based on semantic similarity
+        return this.isEntityUniversallyRelevant(entityName, businessType);
+    }
+
+    /**
+     * Check if an entity is universally relevant using semantic analysis
+     */
+    private isEntityUniversallyRelevant(entityName: string, businessType: string): boolean {
+        // Universal core entities that are relevant to most business types
+        const universalEntities = ['customer', 'user', 'client', 'member', 'contact'];
+        
+        if (universalEntities.includes(entityName.toLowerCase())) {
+            return true;
+        }
+        
+        // Check semantic similarity with business type keywords
+        const businessKeywords = businessType.toLowerCase().split(/[-_\s]/);
+        const entityKeywords = entityName.toLowerCase().split(/[-_\s]/);
+        
+        // Entity-business type semantic mappings
+        const semanticMappings: Record<string, string[]> = {
+            'order': ['commerce', 'shop', 'store', 'retail', 'restaurant', 'food'],
+            'payment': ['financial', 'commerce', 'subscription', 'service', 'business'],
+            'product': ['commerce', 'retail', 'shop', 'store', 'inventory'],
+            'appointment': ['service', 'healthcare', 'professional', 'consulting'],
+            'patient': ['healthcare', 'medical', 'clinic', 'hospital'],
+            'student': ['education', 'school', 'university', 'learning'],
+            'project': ['consulting', 'service', 'professional', 'creative'],
+            'event': ['community', 'social', 'platform', 'gathering'],
+            'resource': ['community', 'platform', 'sharing', 'collaboration'],
+            'showcase': ['creative', 'portfolio', 'display', 'exhibition']
         };
         
-        return relevance[entityName]?.includes(businessType) || false;
+        // Check if entity has semantic relevance to business type
+        const entityMappings = semanticMappings[entityName.toLowerCase()];
+        if (entityMappings) {
+            return businessKeywords.some(keyword => 
+                entityMappings.some(mapping => 
+                    keyword.includes(mapping) || mapping.includes(keyword)
+                )
+            );
+        }
+        
+        // Default to false for unknown entities
+        return false;
     }
 
     private flattenFieldMappings(mappings: Record<string, any>): Record<string, string> {

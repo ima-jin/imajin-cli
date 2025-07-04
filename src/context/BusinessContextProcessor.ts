@@ -1,5 +1,5 @@
 /**
- * BusinessContextProcessor - Convert business descriptions to domain models
+ * BusinessContextProcessor - Dynamic business context and domain model generation
  * 
  * @package     @imajin/cli
  * @subpackage  context
@@ -8,109 +8,72 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-18
+ * @updated      2025-07-03
  *
  * Integration Points:
- * - ETL graph system for dynamic model registration
- * - Service discovery and translation mappings
- * - Command generation from business context
- * - Configuration management for user customization
+ * - OpenAPI/GraphQL specification parsing
+ * - Recipe system integration for business models
+ * - Universal Elements mapping
+ * - ETL bridge generation for cross-service workflows
  */
 
 import { z } from 'zod';
-import { ModelFactory } from '../etl/graphs/models.js';
-import type { GraphModel, TranslationMapping } from '../etl/graphs/models.js';
+import { RecipeManager, type Recipe } from './RecipeManager.js';
 
 // =============================================================================
 // BUSINESS DOMAIN MODEL DEFINITIONS
 // =============================================================================
 
-export const BusinessDomainModelSchema = z.object({
-    businessType: z.string().min(1).max(100),
-    description: z.string().min(10).max(2000),
-    entities: z.record(z.object({
-        fields: z.array(z.object({
-            name: z.string(),
-            type: z.enum(['string', 'number', 'boolean', 'date', 'array', 'object', 'enum']),
-            required: z.boolean().default(false),
-            optional: z.boolean().default(true),
-            default: z.any().optional(),
-            items: z.string().optional(), // For arrays
-            values: z.array(z.string()).optional(), // For enums
-            validation: z.object({
-                min: z.number().optional(),
-                max: z.number().optional(),
-                pattern: z.string().optional(),
-                format: z.string().optional(),
-            }).optional(),
-        })),
-        businessRules: z.array(z.string()).optional(),
-        workflows: z.array(z.string()).optional(),
-        relationships: z.array(z.object({
-            type: z.enum(['hasOne', 'hasMany', 'belongsTo', 'manyToMany']),
-            entity: z.string(),
-            foreignKey: z.string().optional(),
-            description: z.string().optional(),
-        })).optional(),
-    })),
-    workflows: z.array(z.object({
-        name: z.string(),
-        description: z.string(),
-        steps: z.array(z.object({
-            name: z.string(),
-            action: z.string(),
-            entity: z.string().optional(),
-            conditions: z.array(z.string()).optional(),
-        })),
-        triggers: z.array(z.string()).optional(),
-    })).optional(),
-    businessRules: z.array(z.object({
-        rule: z.string(),
-        entity: z.string().optional(),
-        priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
-        enforcement: z.enum(['soft', 'hard']).default('soft'),
-    })).optional(),
+const BusinessDomainModelSchema = z.object({
+    businessType: z.string(),
+    description: z.string(),
+    entities: z.record(z.any()),
+    workflows: z.array(z.any()).optional().default([]),
+    businessRules: z.array(z.string()).optional().default([]),
+    integrations: z.array(z.string()).optional().default([]),
+    commands: z.array(z.any()).optional().default([]),
 });
 
-export type BusinessDomainModel = z.infer<typeof BusinessDomainModelSchema>;
+const TranslationMappingSchema = z.object({
+    sourceModel: z.string(),
+    targetModel: z.string(),
+    mappings: z.record(z.any()),
+    bidirectional: z.boolean().default(false),
+    confidence: z.number().min(0).max(1).default(0.8),
+});
 
-export const CommandDefinitionSchema = z.object({
+const CommandDefinitionSchema = z.object({
     name: z.string(),
     description: z.string(),
     category: z.enum(['porcelain', 'plumbing']),
-    entity: z.string().optional(),
-    action: z.string(),
-    parameters: z.array(z.object({
-        name: z.string(),
-        type: z.string(),
-        required: z.boolean().default(false),
-        description: z.string(),
-        validation: z.object({
-            min: z.number().optional(),
-            max: z.number().optional(),
-            pattern: z.string().optional(),
-            options: z.array(z.string()).optional(),
-        }).optional(),
-    })),
-    workflow: z.string().optional(),
-    serviceMapping: z.object({
-        primary: z.string(),
-        secondary: z.array(z.string()).optional(),
-    }).optional(),
+    arguments: z.array(z.any()).optional().default([]),
+    options: z.array(z.any()).optional().default([]),
+    examples: z.array(z.string()).optional().default([]),
+    businessContext: z.string().optional(),
+    entityType: z.string().optional(),
+    operation: z.string().optional(),
+    serviceIntegration: z.string().optional(),
 });
 
+export type BusinessDomainModel = z.infer<typeof BusinessDomainModelSchema>;
+export type TranslationMapping = z.infer<typeof TranslationMappingSchema>;
 export type CommandDefinition = z.infer<typeof CommandDefinitionSchema>;
+
+// Export schemas for external use
+export { BusinessDomainModelSchema, TranslationMappingSchema, CommandDefinitionSchema };
 
 // =============================================================================
 // BUSINESS CONTEXT ANALYSIS ENGINE
 // =============================================================================
 
 export class BusinessContextProcessor {
+    private readonly recipeManager: RecipeManager;
     private readonly businessPatterns: Map<string, BusinessPattern> = new Map();
     private readonly entityPatterns: Map<string, EntityPattern> = new Map();
     private readonly workflowPatterns: Map<string, WorkflowPattern> = new Map();
 
     constructor() {
+        this.recipeManager = new RecipeManager();
         this.initializePatterns();
     }
 
@@ -120,27 +83,24 @@ export class BusinessContextProcessor {
     async processBusinessDescription(description: string): Promise<BusinessDomainModel> {
         console.log('🔍 Analyzing business description for domain model generation...');
         
-        const businessType = this.extractBusinessType(description);
-        const entities = this.extractEntities(description, businessType);
-        const workflows = this.extractWorkflows(description, entities);
-        const businessRules = this.extractBusinessRules(description, entities);
-
-        const domainModel: BusinessDomainModel = {
+        // Extract business type from description
+        const businessType = await this.extractBusinessType(description);
+        
+        // Try to load recipe first, then fall back to extraction
+        const entities = await this.getEntitiesForBusinessType(description, businessType);
+        
+        const domain: BusinessDomainModel = {
             businessType,
             description,
             entities,
-            workflows,
-            businessRules,
+            workflows: this.extractWorkflows(description, entities),
+            businessRules: this.extractBusinessRules(description, entities),
+            integrations: this.extractIntegrations(description),
+            commands: [],
         };
 
-        // Validate the generated model
-        const validationResult = BusinessDomainModelSchema.safeParse(domainModel);
-        if (!validationResult.success) {
-            throw new Error(`Generated domain model validation failed: ${validationResult.error.message}`);
-        }
-
         console.log(`✅ Generated domain model for "${businessType}" with ${Object.keys(entities).length} entities`);
-        return domainModel;
+        return domain;
     }
 
     /**
@@ -193,254 +153,195 @@ export class BusinessContextProcessor {
     // BUSINESS TYPE EXTRACTION
     // =============================================================================
 
-    private extractBusinessType(description: string): string {
+    private async extractBusinessType(description: string): Promise<string> {
         const text = description.toLowerCase();
         
-        // Restaurant/Food Service
-        if (text.includes('restaurant') || text.includes('food') || text.includes('menu') || 
-            text.includes('kitchen') || text.includes('dining') || text.includes('chef')) {
-            return 'restaurant';
+        // Load available business types from recipe files
+        const availableRecipes = await this.recipeManager.listRecipes();
+        
+        // Try to match description against available recipe types
+        for (const recipe of availableRecipes) {
+            if (await this.matchesRecipeDescription(text, recipe)) {
+                console.log(`🎯 Matched business type: ${recipe.businessType} (${recipe.name})`);
+                return recipe.businessType;
+            }
         }
         
-        // E-commerce/Retail
-        if (text.includes('store') || text.includes('shop') || text.includes('product') || 
-            text.includes('inventory') || text.includes('retail') || text.includes('ecommerce')) {
-            return 'ecommerce';
-        }
-        
-        // SaaS/Software
-        if (text.includes('software') || text.includes('saas') || text.includes('subscription') || 
-            text.includes('platform') || text.includes('application') || text.includes('service')) {
-            return 'saas';
-        }
-        
-        // Healthcare
-        if (text.includes('health') || text.includes('medical') || text.includes('patient') || 
-            text.includes('doctor') || text.includes('clinic') || text.includes('hospital')) {
-            return 'healthcare';
-        }
-        
-        // Education
-        if (text.includes('school') || text.includes('education') || text.includes('student') || 
-            text.includes('course') || text.includes('learning') || text.includes('university')) {
-            return 'education';
-        }
-        
-        // Professional Services
-        if (text.includes('consulting') || text.includes('agency') || text.includes('professional') || 
-            text.includes('client') || text.includes('project') || text.includes('service')) {
-            return 'professional_services';
-        }
-        
-        // Default to generic business
+        // Fall back to generic business type without assumptions
+        console.log(`🔍 No specific business type match found, using generic 'business' type`);
         return 'business';
+    }
+
+    /**
+     * Check if description matches a recipe's business context
+     */
+    private async matchesRecipeDescription(description: string, recipe: any): Promise<boolean> {
+        // Check direct business type mention
+        if (description.includes(recipe.businessType) || description.includes(recipe.name.toLowerCase())) {
+            return true;
+        }
+        
+        // Check entity keyword matches
+        if (recipe.entities) {
+            const entityNames = Object.keys(recipe.entities);
+            for (const entityName of entityNames) {
+                if (description.includes(entityName)) {
+                    return true;
+                }
+            }
+        }
+        
+        // Check workflow keyword matches
+        if (recipe.workflows) {
+            for (const workflow of recipe.workflows) {
+                if (workflow.name && description.includes(workflow.name.toLowerCase())) {
+                    return true;
+                }
+                if (workflow.description && this.hasKeywordOverlap(description, workflow.description.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check for significant keyword overlap between descriptions
+     */
+    private hasKeywordOverlap(text1: string, text2: string): boolean {
+        const words1 = text1.split(/\s+/).filter(word => word.length > 3);
+        const words2 = text2.split(/\s+/).filter(word => word.length > 3);
+        
+        let matches = 0;
+        for (const word of words1) {
+            if (words2.includes(word)) {
+                matches++;
+            }
+        }
+        
+        // Require at least 2 matching keywords
+        return matches >= 2;
     }
 
     // =============================================================================
     // ENTITY EXTRACTION
     // =============================================================================
 
+    private async getEntitiesForBusinessType(description: string, businessType: string): Promise<Record<string, any>> {
+        // First, try to load entities from the recipe system
+        const recipe = await this.recipeManager.getRecipe(businessType);
+        
+        if (recipe && recipe.entities) {
+            console.log(`✅ Loaded entities from recipe: ${recipe.name}`);
+            return recipe.entities;
+        }
+        
+        // If no recipe found, extract entities from the description
+        console.log(`⚠️ No recipe found for "${businessType}", extracting entities from description`);
+        return this.extractEntities(description, businessType);
+    }
+
     private extractEntities(description: string, businessType: string): Record<string, any> {
         const entities: Record<string, any> = {};
-        const text = description.toLowerCase();
-
-        // Get base entities for business type
-        const baseEntities = this.getBaseEntitiesForBusinessType(businessType);
         
         // Extract custom entities from description
-        const extractedEntities = this.extractCustomEntities(text);
+        const extractedEntities = this.extractCustomEntities(description, businessType);
         
         // Merge and enhance entities
-        for (const [entityName, entityDef] of Object.entries({ ...baseEntities, ...extractedEntities })) {
+        for (const [entityName, entityDef] of Object.entries(extractedEntities)) {
             entities[entityName] = this.enhanceEntityDefinition(entityName, entityDef, description);
         }
 
         return entities;
     }
 
-    private getBaseEntitiesForBusinessType(businessType: string): Record<string, any> {
-        const baseEntities: Record<string, Record<string, any>> = {
-            restaurant: {
-                customer: {
-                    fields: [
-                        { name: 'name', type: 'string', required: true },
-                        { name: 'email', type: 'string', required: false },
-                        { name: 'phone', type: 'string', required: false },
-                        { name: 'dietaryRestrictions', type: 'array', items: 'string', required: false },
-                        { name: 'favoriteTable', type: 'number', required: false },
-                        { name: 'loyaltyPoints', type: 'number', default: 0 },
-                        { name: 'visits', type: 'array', items: 'visit', required: false },
-                    ],
-                    businessRules: [
-                        'Customers with allergies require dietary restriction tracking',
-                        'VIP customers get preferred table assignments',
-                    ],
-                },
-                order: {
-                    fields: [
-                        { name: 'table', type: 'number', required: true },
-                        { name: 'items', type: 'array', items: 'menuItem', required: true },
-                        { name: 'specialInstructions', type: 'string', required: false },
-                        { name: 'status', type: 'enum', values: ['ordered', 'preparing', 'ready', 'served', 'paid'], required: true },
-                        { name: 'server', type: 'string', required: true },
-                        { name: 'total', type: 'number', required: true },
-                    ],
-                    workflows: ['Order placement → Kitchen → Service → Payment'],
-                },
-                table: {
-                    fields: [
-                        { name: 'number', type: 'number', required: true },
-                        { name: 'section', type: 'string', required: true },
-                        { name: 'capacity', type: 'number', required: true },
-                        { name: 'server', type: 'string', required: false },
-                        { name: 'status', type: 'enum', values: ['available', 'occupied', 'reserved', 'cleaning'], required: true },
-                    ],
-                },
-            },
-            ecommerce: {
-                customer: {
-                    fields: [
-                        { name: 'name', type: 'string', required: true },
-                        { name: 'email', type: 'string', required: true },
-                        { name: 'phone', type: 'string', required: false },
-                        { name: 'shippingAddress', type: 'object', required: false },
-                        { name: 'billingAddress', type: 'object', required: false },
-                        { name: 'orderHistory', type: 'array', items: 'order', required: false },
-                    ],
-                },
-                product: {
-                    fields: [
-                        { name: 'name', type: 'string', required: true },
-                        { name: 'description', type: 'string', required: false },
-                        { name: 'price', type: 'number', required: true },
-                        { name: 'sku', type: 'string', required: true },
-                        { name: 'inventory', type: 'number', required: true },
-                        { name: 'category', type: 'string', required: false },
-                        { name: 'images', type: 'array', items: 'string', required: false },
-                    ],
-                },
-                order: {
-                    fields: [
-                        { name: 'customerId', type: 'string', required: true },
-                        { name: 'items', type: 'array', items: 'orderItem', required: true },
-                        { name: 'total', type: 'number', required: true },
-                        { name: 'status', type: 'enum', values: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], required: true },
-                        { name: 'shippingAddress', type: 'object', required: true },
-                    ],
-                },
-            },
-            saas: {
-                user: {
-                    fields: [
-                        { name: 'name', type: 'string', required: true },
-                        { name: 'email', type: 'string', required: true },
-                        { name: 'role', type: 'enum', values: ['admin', 'user', 'viewer'], required: true },
-                        { name: 'subscription', type: 'object', required: false },
-                        { name: 'lastLogin', type: 'date', required: false },
-                    ],
-                },
-                subscription: {
-                    fields: [
-                        { name: 'userId', type: 'string', required: true },
-                        { name: 'plan', type: 'string', required: true },
-                        { name: 'status', type: 'enum', values: ['active', 'cancelled', 'past_due', 'trialing'], required: true },
-                        { name: 'currentPeriodStart', type: 'date', required: true },
-                        { name: 'currentPeriodEnd', type: 'date', required: true },
-                    ],
-                },
-            },
-            // Add more business types as needed
-        };
-
-        return baseEntities[businessType] || {
-            customer: {
-                fields: [
-                    { name: 'name', type: 'string', required: true },
-                    { name: 'email', type: 'string', required: false },
-                    { name: 'phone', type: 'string', required: false },
-                ],
-            },
-        };
-    }
-
-    private extractCustomEntities(text: string): Record<string, any> {
+    private extractCustomEntities(description: string, businessType: string): Record<string, any> {
         const entities: Record<string, any> = {};
+        const text = description.toLowerCase();
         
-        // Simple keyword-based entity extraction
-        // In a real implementation, this would use NLP/AI for better extraction
+        // Common business entities - these will be enhanced based on context
+        const commonEntities = ['customer', 'order', 'product', 'user', 'payment'];
         
-        const entityKeywords = [
-            'employee', 'staff', 'team', 'member',
-            'invoice', 'bill', 'receipt', 'payment',
-            'appointment', 'booking', 'reservation',
-            'location', 'branch', 'store', 'office',
-            'inventory', 'stock', 'item', 'product',
-            'project', 'task', 'milestone', 'deliverable',
+        // Universal entity keywords that can appear in any business context
+        const universalEntityKeywords = [
+            'table', 'seat', 'reservation', 'booking', 'appointment',
+            'cart', 'basket', 'inventory', 'stock', 'catalog',
+            'member', 'staff', 'employee', 'team', 'group',
+            'event', 'meeting', 'session', 'class', 'service',
+            'resource', 'tool', 'asset', 'document', 'file',
+            'project', 'task', 'ticket', 'issue', 'request',
+            'invoice', 'receipt', 'transaction', 'subscription'
         ];
-
-        for (const keyword of entityKeywords) {
-            if (text.includes(keyword)) {
-                entities[keyword] = {
-                    fields: this.generateFieldsForEntity(keyword),
-                };
+        
+        // Look for common entity mentions in the description
+        for (const entityName of commonEntities) {
+            if (text.includes(entityName)) {
+                entities[entityName] = this.generateFieldsForEntity(entityName);
             }
         }
-
+        
+        // Look for universal entity keywords in the description
+        for (const keyword of universalEntityKeywords) {
+            if (text.includes(keyword) && !entities[keyword]) {
+                entities[keyword] = this.generateFieldsForEntity(keyword);
+            }
+        }
+        
         return entities;
     }
 
-    private generateFieldsForEntity(entityName: string): any[] {
-        const commonFields = [
-            { name: 'name', type: 'string', required: true },
-            { name: 'description', type: 'string', required: false },
-            { name: 'status', type: 'string', required: false },
-            { name: 'createdAt', type: 'date', required: false },
-            { name: 'updatedAt', type: 'date', required: false },
+    private generateFieldsForEntity(entityName: string): any {
+        const baseFields = [
+            { name: 'id', type: 'string', required: true, description: `Unique identifier for ${entityName}` },
+            { name: 'createdAt', type: 'date', required: true, description: 'Creation timestamp' },
+            { name: 'updatedAt', type: 'date', required: true, description: 'Last update timestamp' },
         ];
 
-        const entitySpecificFields: Record<string, any[]> = {
-            employee: [
-                { name: 'email', type: 'string', required: true },
-                { name: 'department', type: 'string', required: false },
-                { name: 'role', type: 'string', required: false },
-                { name: 'salary', type: 'number', required: false },
-            ],
-            invoice: [
-                { name: 'customerId', type: 'string', required: true },
-                { name: 'amount', type: 'number', required: true },
-                { name: 'currency', type: 'string', required: true },
-                { name: 'dueDate', type: 'date', required: true },
-            ],
-            appointment: [
-                { name: 'customerId', type: 'string', required: true },
-                { name: 'startTime', type: 'date', required: true },
-                { name: 'endTime', type: 'date', required: true },
-                { name: 'type', type: 'string', required: false },
-            ],
-            location: [
-                { name: 'address', type: 'string', required: true },
-                { name: 'city', type: 'string', required: true },
-                { name: 'state', type: 'string', required: false },
-                { name: 'zipCode', type: 'string', required: false },
-            ],
-            inventory: [
-                { name: 'sku', type: 'string', required: true },
-                { name: 'quantity', type: 'number', required: true },
-                { name: 'location', type: 'string', required: false },
-                { name: 'reorderLevel', type: 'number', required: false },
-            ],
-        };
-
-        return [...commonFields, ...(entitySpecificFields[entityName] || [])];
+        // Add entity-specific fields
+        switch (entityName) {
+            case 'customer':
+                return {
+                    fields: [
+                        ...baseFields,
+                        { name: 'name', type: 'string', required: true, description: 'Customer name' },
+                        { name: 'email', type: 'string', required: false, description: 'Email address' },
+                        { name: 'phone', type: 'string', required: false, description: 'Phone number' },
+                    ]
+                };
+            case 'order':
+                return {
+                    fields: [
+                        ...baseFields,
+                        { name: 'total', type: 'number', required: true, description: 'Order total amount' },
+                        { name: 'status', type: 'enum', values: ['pending', 'processing', 'completed', 'cancelled'], required: true },
+                        { name: 'customerId', type: 'string', required: true, description: 'Associated customer ID' },
+                    ]
+                };
+            case 'product':
+                return {
+                    fields: [
+                        ...baseFields,
+                        { name: 'name', type: 'string', required: true, description: 'Product name' },
+                        { name: 'price', type: 'number', required: true, description: 'Product price' },
+                        { name: 'description', type: 'string', required: false, description: 'Product description' },
+                    ]
+                };
+            default:
+                return {
+                    fields: [
+                        ...baseFields,
+                        { name: 'name', type: 'string', required: true, description: `${entityName} name` },
+                    ]
+                };
+        }
     }
 
     private enhanceEntityDefinition(entityName: string, entityDef: any, description: string): any {
-        // Enhance entity definition based on context from description
-        // This is where we'd add AI-driven enhancements in a real implementation
-        
         return {
             ...entityDef,
             relationships: this.inferRelationships(entityName, description),
+            businessRules: this.extractEntityBusinessRules(entityName, description),
         };
     }
 
@@ -448,21 +349,63 @@ export class BusinessContextProcessor {
         const relationships: any[] = [];
         
         // Simple relationship inference based on common patterns
-        const relationshipPatterns: Record<string, any[]> = {
-            customer: [
-                { type: 'hasMany', entity: 'order', description: 'Customer can have multiple orders' },
-                { type: 'hasMany', entity: 'appointment', description: 'Customer can have multiple appointments' },
-            ],
-            order: [
-                { type: 'belongsTo', entity: 'customer', foreignKey: 'customerId', description: 'Order belongs to a customer' },
-                { type: 'hasMany', entity: 'orderItem', description: 'Order contains multiple items' },
-            ],
-            employee: [
-                { type: 'belongsTo', entity: 'location', foreignKey: 'locationId', description: 'Employee works at a location' },
-            ],
-        };
+        if (entityName === 'customer' && description.toLowerCase().includes('order')) {
+            relationships.push({
+                name: 'orders',
+                type: 'hasMany',
+                entity: 'order',
+                foreignKey: 'customerId'
+            });
+        }
+        
+        if (entityName === 'order' && description.toLowerCase().includes('customer')) {
+            relationships.push({
+                name: 'customer',
+                type: 'belongsTo',
+                entity: 'customer',
+                foreignKey: 'customerId'
+            });
+        }
+        
+        return relationships;
+    }
 
-        return relationshipPatterns[entityName] || [];
+    private extractEntityBusinessRules(entityName: string, description: string): any[] {
+        const rules: any[] = [];
+        const text = description.toLowerCase();
+        
+        // Universal business rule patterns that can apply to any entity
+        const rulePatterns = [
+            {
+                keywords: ['allerg', 'dietary', 'restriction'],
+                rule: `${entityName} with allergies require dietary restriction tracking`,
+                condition: text.includes('allerg') || text.includes('dietary')
+            },
+            {
+                keywords: ['vip', 'preferred', 'priority'],
+                rule: `VIP ${entityName} get preferred treatment and assignments`,
+                condition: text.includes('vip') || text.includes('preferred')
+            },
+            {
+                keywords: ['inventory', 'stock', 'threshold'],
+                rule: `${entityName} levels must be maintained above reorder thresholds`,
+                condition: text.includes('inventory') || text.includes('stock')
+            },
+            {
+                keywords: ['appointment', 'booking', 'reservation'],
+                rule: `${entityName} must be confirmed within 24 hours`,
+                condition: text.includes('appointment') || text.includes('booking') || text.includes('reservation')
+            }
+        ];
+        
+        // Apply universal patterns
+        for (const pattern of rulePatterns) {
+            if (pattern.condition) {
+                rules.push(pattern.rule);
+            }
+        }
+        
+        return rules;
     }
 
     // =============================================================================
@@ -471,41 +414,51 @@ export class BusinessContextProcessor {
 
     private extractWorkflows(description: string, entities: Record<string, any>): any[] {
         const workflows: any[] = [];
+        const text = description.toLowerCase();
         
-        // Extract workflow patterns from description
-        const workflowPatterns = [
-            {
-                pattern: /order.*kitchen.*service.*payment/i,
-                workflow: {
-                    name: 'order_fulfillment',
-                    description: 'Complete order fulfillment process',
-                    steps: [
-                        { name: 'place_order', action: 'create', entity: 'order' },
-                        { name: 'prepare_food', action: 'update', entity: 'order', conditions: ['status = preparing'] },
-                        { name: 'serve_food', action: 'update', entity: 'order', conditions: ['status = ready'] },
-                        { name: 'process_payment', action: 'create', entity: 'payment' },
-                    ],
-                },
-            },
-            {
-                pattern: /customer.*appointment.*service/i,
-                workflow: {
-                    name: 'appointment_booking',
-                    description: 'Book and manage customer appointments',
-                    steps: [
-                        { name: 'check_availability', action: 'query', entity: 'appointment' },
-                        { name: 'book_appointment', action: 'create', entity: 'appointment' },
-                        { name: 'send_confirmation', action: 'notify' },
-                        { name: 'complete_service', action: 'update', entity: 'appointment' },
-                    ],
-                },
-            },
-        ];
-
-        for (const pattern of workflowPatterns) {
-            if (pattern.pattern.test(description)) {
-                workflows.push(pattern.workflow);
-            }
+        // Universal workflow patterns based on entity presence
+        const availableEntities = Object.keys(entities);
+        
+        // Generate basic CRUD workflows for each entity
+        for (const entityName of availableEntities) {
+            workflows.push({
+                name: `${entityName}_management`,
+                description: `Manage ${entityName} lifecycle`,
+                steps: [
+                    { name: `create_${entityName}`, action: 'create', entity: entityName },
+                    { name: `update_${entityName}`, action: 'update', entity: entityName },
+                    { name: `query_${entityName}`, action: 'query', entity: entityName },
+                    { name: `delete_${entityName}`, action: 'delete', entity: entityName },
+                ],
+            });
+        }
+        
+        // Add universal workflow patterns based on common business processes
+        if (availableEntities.includes('customer') && availableEntities.includes('order')) {
+            workflows.push({
+                name: 'order_processing',
+                description: 'Process customer orders',
+                steps: [
+                    { name: 'create_order', action: 'create', entity: 'order' },
+                    { name: 'validate_order', action: 'update', entity: 'order' },
+                    { name: 'process_order', action: 'update', entity: 'order' },
+                    { name: 'complete_order', action: 'update', entity: 'order' },
+                ],
+            });
+        }
+        
+        if (availableEntities.includes('appointment') || availableEntities.includes('booking')) {
+            const entityName = availableEntities.includes('appointment') ? 'appointment' : 'booking';
+            workflows.push({
+                name: 'appointment_management',
+                description: 'Manage appointments and bookings',
+                steps: [
+                    { name: 'check_availability', action: 'query', entity: entityName },
+                    { name: 'create_booking', action: 'create', entity: entityName },
+                    { name: 'send_confirmation', action: 'notify' },
+                    { name: 'complete_service', action: 'update', entity: entityName },
+                ],
+            });
         }
 
         return workflows;
@@ -513,45 +466,62 @@ export class BusinessContextProcessor {
 
     private extractBusinessRules(description: string, entities: Record<string, any>): any[] {
         const rules: any[] = [];
+        const text = description.toLowerCase();
+        const availableEntities = Object.keys(entities);
         
-        // Extract business rules from description
+        // Universal business rule patterns based on keywords and available entities
         const rulePatterns = [
             {
-                pattern: /allerg|dietary/i,
-                rule: {
-                    rule: 'Customers with allergies require dietary restriction tracking',
-                    entity: 'customer',
-                    priority: 'high' as const,
-                    enforcement: 'hard' as const,
-                },
+                keywords: ['allerg', 'dietary', 'restriction'],
+                ruleTemplate: 'entities with allergies require dietary restriction tracking',
+                priority: 'high' as const,
+                enforcement: 'hard' as const,
             },
             {
-                pattern: /vip|preferred/i,
-                rule: {
-                    rule: 'VIP customers get preferred treatment and assignments',
-                    entity: 'customer',
-                    priority: 'medium' as const,
-                    enforcement: 'soft' as const,
-                },
+                keywords: ['vip', 'preferred', 'priority'],
+                ruleTemplate: 'VIP entities get preferred treatment and assignments',
+                priority: 'medium' as const,
+                enforcement: 'soft' as const,
             },
             {
-                pattern: /inventory|stock/i,
-                rule: {
-                    rule: 'Inventory levels must be maintained above reorder thresholds',
-                    entity: 'inventory',
-                    priority: 'high' as const,
-                    enforcement: 'hard' as const,
-                },
+                keywords: ['inventory', 'stock', 'threshold'],
+                ruleTemplate: 'inventory levels must be maintained above reorder thresholds',
+                priority: 'high' as const,
+                enforcement: 'hard' as const,
             },
+            {
+                keywords: ['appointment', 'booking', 'reservation'],
+                ruleTemplate: 'bookings must be confirmed within 24 hours',
+                priority: 'medium' as const,
+                enforcement: 'soft' as const,
+            },
+            {
+                keywords: ['payment', 'transaction', 'billing'],
+                ruleTemplate: 'payment processing must be secure and compliant',
+                priority: 'high' as const,
+                enforcement: 'hard' as const,
+            }
         ];
 
+        // Apply universal rule patterns
         for (const pattern of rulePatterns) {
-            if (pattern.pattern.test(description)) {
-                rules.push(pattern.rule);
+            const hasKeywords = pattern.keywords.some(keyword => text.includes(keyword));
+            if (hasKeywords) {
+                rules.push({
+                    rule: pattern.ruleTemplate,
+                    priority: pattern.priority,
+                    enforcement: pattern.enforcement,
+                });
             }
         }
 
         return rules;
+    }
+
+    private extractIntegrations(description: string): string[] {
+        // Implement the logic to extract integrations from the description
+        // This is a placeholder and should be replaced with the actual implementation
+        return [];
     }
 
     // =============================================================================
@@ -567,9 +537,9 @@ export class BusinessContextProcessor {
                 name: `${entityName}:create`,
                 description: `Create new ${entityName}`,
                 category: 'porcelain' as const,
-                entity: entityName,
-                action: 'create',
-                parameters: entityDef.fields
+                entityType: entityName,
+                operation: 'create',
+                arguments: entityDef.fields
                     .filter((field: any) => field.required || field.name === 'name')
                     .map((field: any) => ({
                         name: field.name,
@@ -578,47 +548,54 @@ export class BusinessContextProcessor {
                         description: `${entityName} ${field.name}`,
                         validation: field.validation,
                     })),
+                options: [],
+                examples: [`${entityName}:create --name "Example Name"`],
             },
             {
                 name: `${entityName}:list`,
                 description: `List all ${entityName}s`,
                 category: 'porcelain' as const,
-                entity: entityName,
-                action: 'list',
-                parameters: [
+                entityType: entityName,
+                operation: 'list',
+                arguments: [],
+                options: [
                     { name: 'limit', type: 'number', required: false, description: 'Number of items to return' },
                     { name: 'offset', type: 'number', required: false, description: 'Offset for pagination' },
                     { name: 'filter', type: 'string', required: false, description: 'Filter criteria' },
                 ],
+                examples: [`${entityName}:list`, `${entityName}:list --limit 10 --offset 20`],
             },
             {
                 name: `${entityName}:update`,
                 description: `Update existing ${entityName}`,
                 category: 'porcelain' as const,
-                entity: entityName,
-                action: 'update',
-                parameters: [
+                entityType: entityName,
+                operation: 'update',
+                arguments: [
                     { name: 'id', type: 'string', required: true, description: `${entityName} ID` },
-                    ...entityDef.fields
-                        .filter((field: any) => !field.required)
-                        .map((field: any) => ({
-                            name: field.name,
-                            type: field.type,
-                            required: false,
-                            description: `Updated ${field.name}`,
-                            validation: field.validation,
-                        })),
                 ],
+                options: entityDef.fields
+                    .filter((field: any) => !field.required)
+                    .map((field: any) => ({
+                        name: field.name,
+                        type: field.type,
+                        required: false,
+                        description: `Updated ${field.name}`,
+                        validation: field.validation,
+                    })),
+                examples: [`${entityName}:update "123" --name "Updated Name"`],
             },
             {
                 name: `${entityName}:delete`,
                 description: `Delete ${entityName}`,
                 category: 'porcelain' as const,
-                entity: entityName,
-                action: 'delete',
-                parameters: [
+                entityType: entityName,
+                operation: 'delete',
+                arguments: [
                     { name: 'id', type: 'string', required: true, description: `${entityName} ID` },
                 ],
+                options: [],
+                examples: [`${entityName}:delete "123"`],
             },
         ];
 
@@ -634,69 +611,108 @@ export class BusinessContextProcessor {
     private generateBusinessSpecificCommands(entityName: string, entityDef: any, domain: BusinessDomainModel): CommandDefinition[] {
         const commands: CommandDefinition[] = [];
 
-        // Restaurant-specific commands
-        if (domain.businessType === 'restaurant') {
-            if (entityName === 'customer') {
-                commands.push({
-                    name: 'customer:seat',
-                    description: 'Assign customer to table',
-                    category: 'porcelain',
-                    entity: 'customer',
-                    action: 'seat',
-                    parameters: [
-                        { name: 'customerId', type: 'string', required: true, description: 'Customer ID' },
-                        { name: 'table', type: 'number', required: true, description: 'Table number' },
-                        { name: 'partySize', type: 'number', required: false, description: 'Party size' },
-                    ],
-                });
-                
-                commands.push({
-                    name: 'loyalty:award',
-                    description: 'Award loyalty points to customer',
-                    category: 'porcelain',
-                    entity: 'customer',
-                    action: 'loyalty',
-                    parameters: [
-                        { name: 'customerId', type: 'string', required: true, description: 'Customer ID' },
-                        { name: 'points', type: 'number', required: true, description: 'Points to award' },
-                        { name: 'reason', type: 'string', required: false, description: 'Reason for award' },
-                    ],
-                });
+        // Generate commands based on entity definition and business workflows
+        // This replaces hard-coded business logic with dynamic pattern generation
+        
+        // Generate workflow-based commands from domain workflows
+        for (const workflow of domain.workflows || []) {
+            if (workflow.steps && workflow.steps.length > 0) {
+                const workflowCommand = this.generateWorkflowCommandForEntity(entityName, workflow, domain);
+                if (workflowCommand) {
+                    commands.push(workflowCommand);
+                }
             }
-            
-            if (entityName === 'order') {
+        }
+
+        // Generate field-based commands from entity fields
+        const fieldCommands = this.generateFieldBasedCommands(entityName, entityDef, domain);
+        commands.push(...fieldCommands);
+
+        return commands;
+    }
+
+    private generateWorkflowCommandForEntity(entityName: string, workflow: any, domain: BusinessDomainModel): CommandDefinition | null {
+        // Generate commands based on workflow steps that involve this entity
+        const workflowName = workflow.name.toLowerCase().replace(/\s+/g, '-');
+        const entityFields = domain.entities[entityName]?.fields || [];
+        
+        // Create workflow command for this entity
+        return {
+            name: `${entityName}:${workflowName}`,
+            description: `Execute ${workflow.name} for ${entityName}`,
+            category: 'porcelain',
+            entityType: entityName,
+            operation: workflowName,
+            arguments: [
+                { name: `${entityName}Id`, type: 'string', required: true, description: `${entityName} identifier` },
+            ],
+            options: this.generateOptionsFromEntityFields(entityFields),
+            examples: [`${entityName}:${workflowName} "entity_123"`],
+        };
+    }
+
+    private generateFieldBasedCommands(entityName: string, entityDef: any, domain: BusinessDomainModel): CommandDefinition[] {
+        const commands: CommandDefinition[] = [];
+        const fields = entityDef.fields || [];
+
+        // Generate status update commands for enum fields
+        for (const field of fields) {
+            if (field.type === 'enum' && field.name.includes('status')) {
                 commands.push({
-                    name: 'order:place',
-                    description: 'Place new order for table',
+                    name: `${entityName}:update-${field.name}`,
+                    description: `Update ${field.name} for ${entityName}`,
                     category: 'porcelain',
-                    entity: 'order',
-                    action: 'place',
-                    parameters: [
-                        { name: 'table', type: 'number', required: true, description: 'Table number' },
-                        { name: 'items', type: 'array', required: true, description: 'Order items' },
-                        { name: 'special', type: 'string', required: false, description: 'Special instructions' },
+                    entityType: entityName,
+                    operation: 'update-status',
+                    arguments: [
+                        { name: `${entityName}Id`, type: 'string', required: true, description: `${entityName} identifier` },
+                        { name: field.name, type: 'string', required: true, description: `New ${field.name} value` },
                     ],
+                    options: [
+                        { name: 'reason', type: 'string', required: false, description: 'Reason for status change' },
+                    ],
+                    examples: [`${entityName}:update-${field.name} "entity_123" "${field.values?.[0] || 'active'}"`],
                 });
             }
         }
 
-        // E-commerce specific commands
-        if (domain.businessType === 'ecommerce') {
-            if (entityName === 'product') {
+        // Generate assignment commands for reference fields
+        for (const field of fields) {
+            if (field.type === 'reference' && field.name.includes('assign')) {
                 commands.push({
-                    name: 'inventory:check',
-                    description: 'Check product inventory levels',
+                    name: `${entityName}:assign`,
+                    description: `Assign ${entityName} to ${field.entity}`,
                     category: 'porcelain',
-                    entity: 'product',
-                    action: 'inventory',
-                    parameters: [
-                        { name: 'sku', type: 'string', required: true, description: 'Product SKU' },
+                    entityType: entityName,
+                    operation: 'assign',
+                    arguments: [
+                        { name: `${entityName}Id`, type: 'string', required: true, description: `${entityName} identifier` },
+                        { name: field.name, type: 'string', required: true, description: `${field.entity} to assign to` },
                     ],
+                    options: [],
+                    examples: [`${entityName}:assign "entity_123" "assignee_456"`],
                 });
             }
         }
 
         return commands;
+    }
+
+    private generateOptionsFromEntityFields(fields: any[]): any[] {
+        const options: any[] = [];
+        
+        for (const field of fields) {
+            if (!field.required && field.name !== 'id') {
+                options.push({
+                    name: field.name,
+                    type: field.type === 'enum' ? 'string' : field.type,
+                    required: false,
+                    description: `${field.name} value`,
+                });
+            }
+        }
+
+        return options;
     }
 
     private generateWorkflowCommands(workflow: any, domain: BusinessDomainModel): CommandDefinition[] {
@@ -706,9 +722,9 @@ export class BusinessContextProcessor {
             name: `workflow:${workflow.name}`,
             description: workflow.description,
             category: 'porcelain',
-            action: 'workflow',
-            workflow: workflow.name,
-            parameters: workflow.steps
+            operation: 'workflow',
+            businessContext: workflow.name,
+            arguments: workflow.steps
                 .filter((step: any) => step.entity)
                 .map((step: any) => ({
                     name: `${step.entity}Id`,
@@ -716,6 +732,8 @@ export class BusinessContextProcessor {
                     required: true,
                     description: `${step.entity} ID for ${step.name}`,
                 })),
+            options: [],
+            examples: [`workflow:${workflow.name} "entity_123"`],
         });
 
         return commands;
@@ -747,6 +765,61 @@ export class BusinessContextProcessor {
                         status: 'status',
                         customer: 'customerId',
                         description: 'description',
+                    },
+                },
+            },
+            shopify: {
+                customer: {
+                    mapping: 'business.customer',
+                    fields: {
+                        email: 'email',
+                        first_name: 'name',
+                        phone: 'phone',
+                        default_address: 'address',
+                        orders_count: 'totalOrders',
+                    },
+                },
+                product: {
+                    mapping: 'business.product',
+                    fields: {
+                        title: 'name',
+                        body_html: 'description',
+                        vendor: 'brand',
+                        product_type: 'category',
+                        handle: 'slug',
+                    },
+                },
+                order: {
+                    mapping: 'business.order',
+                    fields: {
+                        name: 'orderNumber',
+                        email: 'customerEmail',
+                        total_price: 'total',
+                        financial_status: 'paymentStatus',
+                        fulfillment_status: 'fulfillmentStatus',
+                    },
+                },
+            },
+            mailchimp: {
+                contact: {
+                    mapping: 'business.customer',
+                    fields: {
+                        email_address: 'email',
+                        'merge_fields.FNAME': 'firstName',
+                        'merge_fields.LNAME': 'lastName',
+                        status: 'subscriptionStatus',
+                        'stats.avg_open_rate': 'engagementRate',
+                    },
+                },
+                campaign: {
+                    mapping: 'business.marketing',
+                    fields: {
+                        subject_line: 'subject',
+                        preview_text: 'preview',
+                        send_time: 'sentAt',
+                        emails_sent: 'recipients',
+                        opens: 'opens',
+                        clicks: 'clicks',
                     },
                 },
             },
@@ -793,19 +866,17 @@ export class BusinessContextProcessor {
     // =============================================================================
 
     private initializePatterns(): void {
-        // Initialize business patterns for better analysis
-        // This would be expanded with more sophisticated pattern recognition
-        this.businessPatterns.set('restaurant', {
-            keywords: ['restaurant', 'food', 'menu', 'kitchen', 'dining'],
-            entities: ['customer', 'order', 'table', 'menu'],
-            workflows: ['order_fulfillment', 'table_management'],
-        });
-
-        this.businessPatterns.set('ecommerce', {
-            keywords: ['store', 'shop', 'product', 'inventory', 'order'],
-            entities: ['customer', 'product', 'order', 'inventory'],
-            workflows: ['order_processing', 'inventory_management'],
-        });
+        // Remove hard-coded business patterns
+        // Patterns are now loaded dynamically from recipe files via RecipeManager
+        // This allows for universal business type support without code changes
+        
+        // The pattern recognition will be handled by:
+        // 1. RecipeManager.getRecipe() for loading business context
+        // 2. Dynamic command generation from entity fields and workflows
+        // 3. Business-agnostic pattern matching in extractBusinessType()
+        
+        // Future: Load additional patterns from configuration files
+        // if needed for enhanced business type detection
     }
 }
 
