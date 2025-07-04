@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-26
+ * @since       2025-07-01
  *
  * Integration Points:
  * - Markdown to PDF conversion using md-to-pdf

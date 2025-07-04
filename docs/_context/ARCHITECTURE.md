@@ -191,6 +191,69 @@ async postPublish(notionId: string, schedule: Date, channels: string[]) {
 }
 ```
 
+## AI-Enhanced Business Analysis (Task 008)
+
+### BAML Integration Strategy
+
+**The Problem**: Rule-based business analysis limits scalability
+```typescript
+// Current: Hardcoded pattern matching
+private extractBusinessType(description: string): string {
+    const text = description.toLowerCase();
+    if (text.includes('restaurant') || text.includes('food')) {
+        return 'restaurant';
+    }
+    // ... 50+ hardcoded patterns
+}
+```
+
+**The Solution**: AI-powered analysis with reliable fallbacks
+```typescript
+// Enhanced: AI analysis with rule-based fallbacks
+async processBusinessDescription(description: string): Promise<BusinessDomainModel> {
+    try {
+        // BAML AI analysis - handles ANY business type
+        const analysis = await b.AnalyzeBusinessDescription(description);
+        return this.transformBAMLAnalysis(analysis);
+    } catch (error) {
+        // Fallback to existing rule-based logic
+        return this.processBusinessDescriptionLegacy(description);
+    }
+}
+```
+
+### AI-Enhanced Multi-Service Orchestration
+
+**Smart Command Generation**: AI understands business workflows
+```typescript
+// Generated with business context understanding
+my-coffee-shop-cli customer:loyalty-signup --email --points-tier --app-notification
+my-coffee-shop-cli inventory:restock --supplier --delivery-date --auto-pricing
+my-coffee-shop-cli staff:schedule --shift --coverage --break-rotation
+```
+
+**Intelligent Service Discovery**: AI finds integration opportunities
+```typescript
+// AI discovers business workflow patterns
+const integrations = await b.DiscoverServiceIntegrations(businessAnalysis, availableServices);
+// → Suggests: Square POS → Notion inventory → Mailchimp customer sync
+```
+
+### Democratic AI Philosophy
+
+**AI serves the gateway-opening mission:**
+- **Enhanced Analysis**: AI understands ANY business type, not just hardcoded patterns
+- **Faster Generation**: Minutes instead of hours for CLI creation
+- **Smarter Integration**: AI discovers cross-service workflows
+- **User Ownership**: Generated CLIs belong to users, not AI platforms
+- **Fallback Reliability**: Rule-based logic ensures consistent operation
+
+**AI does NOT change the core mission:**
+- Still about **multi-service orchestration**
+- Still about **business context awareness**
+- Still about **democratic CLI generation**
+- Still about **user-owned tools**
+
 ## Technical Implementation
 
 ### Service Provider System
@@ -254,10 +317,12 @@ class MultiServiceTransaction {
 - Multi-API service integration
 - Error handling and rollback mechanisms
 
-### ⏳ Phase 3: AI-Enhanced Generation (Planned)
-- Smart business context analysis from natural language
-- Workflow optimization and learning
-- Intelligent command suggestion and completion
+### 🔄 Phase 3: AI-Enhanced Generation (In Progress - Task 008)
+- **BAML Integration**: AI tooling framework for intelligent business analysis
+- **Enhanced Business Context**: AI-powered understanding of ANY business type
+- **Smart Command Generation**: AI-enhanced business workflow analysis
+- **Intelligent Service Discovery**: AI-powered cross-service integration recommendations
+- **Democratic AI**: AI serves the gateway-opening mission, not the other way around
 
 ## Why This Architecture Enables Unique Value
 
@@ -280,10 +345,39 @@ src/
 ├── providers/              # Service Provider System (15+ providers)
 ├── core/                   # Universal Elements & Transaction Management  
 ├── context/               # Business Context Processing
+│   └── ai/                # BAML AI Functions (Task 008)
 ├── commands/              # Generated Business Commands
 ├── etl/                   # Cross-Service Data Translation
-└── generators/            # CLI Generation Engine
+├── generators/            # CLI Generation Engine
+└── baml_client/           # Generated BAML TypeScript Client
 ```
+
+### BAML CLI Integration (Development Tools)
+
+**BAML CLI commands integrate into the development workflow:**
+
+```bash
+# Development workflow with BAML CLI
+npm run baml:generate     # Generate TypeScript client from .baml files
+npm run baml:test         # Test AI functions during development
+npm run baml:fmt          # Format BAML code
+
+# Build process integration
+npm run build             # Runs baml:generate → tsc → fix-imports
+```
+
+**Generated CLI commands remain business-focused:**
+```bash
+# End-user CLI stays focused on business workflows
+my-business-cli customer:onboard --email --plan
+my-business-cli inventory:restock --supplier --auto-pricing
+
+# NOT AI-focused commands like:
+# my-business-cli baml:analyze (users don't need this)
+# my-business-cli ai:generate (not the point)
+```
+
+**The key insight**: BAML CLI is a **development tool** that enhances the **generation process**, not a user-facing feature. Users still get business-focused CLIs, just generated faster and smarter.
 
 ---
 

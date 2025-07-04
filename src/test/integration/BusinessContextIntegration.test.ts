@@ -177,7 +177,7 @@ describe('Business Context Integration', () => {
         
         const invalidValidation = BusinessTypeRegistry.validateEntity('client', invalidClient);
         expect(invalidValidation.valid).toBe(false);
-        expect(invalidValidation.errors).toContain(expect.stringContaining('contactEmail'));
+        expect(invalidValidation.errors).toContainEqual(expect.stringContaining('contactEmail'));
         
         console.log('✅ Business entity validation working correctly');
     });

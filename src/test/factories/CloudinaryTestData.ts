@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-02
+ * @since       2025-07-02
  *
  * Integration Points:
  * - Cloudinary service testing
@@ -280,6 +280,7 @@ export interface CloudinaryUploadResponse {
     original_filename?: string;
     original_extension?: string;
     api_key: string;
+    duration?: number; // Optional duration for video uploads
 }
 
 export interface CloudinaryVideoUploadResponse extends CloudinaryUploadResponse {

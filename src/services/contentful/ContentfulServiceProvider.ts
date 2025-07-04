@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-06-25
+ * @since       2025-07-01
  *
  * Integration Points:
  * - Service provider registration system

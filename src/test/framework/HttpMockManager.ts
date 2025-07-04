@@ -7,7 +7,7 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-01-02
+ * @since       2025-07-02
  *
  * Integration Points:
  * - Axios HTTP client mocking
@@ -61,7 +61,8 @@ export class HttpMockManager {
 
     constructor() {
         this.setupMocks();
-        this.registerGlobalCleanup();
+        // Do not auto-register cleanup to avoid Jest timing issues
+        // Cleanup should be called manually in test teardown
     }
 
     /**

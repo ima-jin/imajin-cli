@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-18
+ * @updated      2025-06-25
  *
  * @see        docs/architecture/business-context.md
  * 
@@ -80,6 +80,38 @@ export class BusinessTypeRegistry {
      */
     static getBusinessDomain(businessType: string): BusinessDomainModel | undefined {
         return this.businessDomains.get(businessType);
+    }
+
+    /**
+     * Validate entity against business type schema
+     */
+    static validateEntity(entityType: string, entity: unknown): { valid: boolean; data?: any; errors?: any[] } {
+        // For now, we'll return a simple validation result
+        // In a real implementation, this would use the registered Zod schemas
+        try {
+            if (!entity || typeof entity !== 'object') {
+                return { valid: false, errors: ['Entity must be an object'] };
+            }
+            
+            // Basic validation - check if entity has required basic fields
+            const entityObj = entity as any;
+            const hasId = 'id' in entityObj;
+            const hasRequiredProps = hasId && entityObj.id;
+            
+            if (!hasRequiredProps) {
+                return { valid: false, errors: ['Entity must have valid id'] };
+            }
+            
+            return { 
+                valid: true, 
+                data: entity 
+            };
+        } catch (error) {
+            return { 
+                valid: false, 
+                errors: [error instanceof Error ? error.message : 'Validation failed'] 
+            };
+        }
     }
 
     /**

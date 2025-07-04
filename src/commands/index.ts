@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
+ * @updated      2025-07-01
  *
  * Integration Points:
  * - Registers all CLI commands with the main program

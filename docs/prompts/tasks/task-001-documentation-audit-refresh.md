@@ -2,7 +2,7 @@
 # Task Metadata (YAML Frontmatter)
 task_id: "TASK-001"
 title: "Documentation Audit & README Refresh"
-updated: "2025-06-25T13:23:32-04:00"
+updated: "2025-06-25T19:19:04-04:00"
 ---
 **Last Updated**: June 2025
 
