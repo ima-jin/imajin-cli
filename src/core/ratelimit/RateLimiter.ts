@@ -17,10 +17,10 @@
 
 import { EventEmitter } from 'events';
 import { injectable } from 'tsyringe';
-import { FixedWindowStrategy } from './strategies/FixedWindowStrategy';
-import { RateLimitStrategy } from './strategies/RateLimitStrategy';
-import { SlidingWindowStrategy } from './strategies/SlidingWindowStrategy';
-import { TokenBucketStrategy } from './strategies/TokenBucketStrategy';
+import { FixedWindowStrategy } from './strategies/FixedWindowStrategy.js';
+import { RateLimitStrategy } from './strategies/RateLimitStrategy.js';
+import { SlidingWindowStrategy } from './strategies/SlidingWindowStrategy.js';
+import { TokenBucketStrategy } from './strategies/TokenBucketStrategy.js';
 
 /**
  * Rate limit configuration for a service

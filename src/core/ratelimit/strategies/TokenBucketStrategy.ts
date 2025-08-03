@@ -15,8 +15,8 @@
  * - Token refill based on time intervals
  */
 
-import { RateLimitStatus } from '../RateLimiter';
-import { RateLimitStrategy } from './RateLimitStrategy';
+import { RateLimitStatus } from '../RateLimiter.js';
+import { RateLimitStrategy } from './RateLimitStrategy.js';
 
 /**
  * Token bucket information for a service

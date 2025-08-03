@@ -211,9 +211,9 @@ export abstract class BaseException extends Error {
      * Create BaseException from any error type
      * Static factory method for backwards compatibility
      */
-    public static from(error: any, context: ErrorContext = {}): BaseException {
+    public static async from(error: any, context: ErrorContext = {}): Promise<BaseException> {
         // Delegate to ExceptionUtils.normalize for consistent behavior
-        const { ExceptionUtils } = require('./index.js');
+        const { ExceptionUtils } = await import('./index.js');
         return ExceptionUtils.normalize(error, context);
     }
 } 

@@ -18,9 +18,9 @@
 
 import type { Command } from 'commander';
 import type { Container } from '../container/Container.js';
-import { ApiManager } from '../core/api/ApiManager';
-import { CircuitBreaker } from '../core/api/CircuitBreaker';
-import { RateLimiter } from '../core/ratelimit/RateLimiter';
+import { ApiManager } from '../core/api/ApiManager.js';
+import { CircuitBreaker } from '../core/api/CircuitBreaker.js';
+import { RateLimiter } from '../core/ratelimit/RateLimiter.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
 /**

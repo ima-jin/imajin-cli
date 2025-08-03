@@ -15,7 +15,7 @@
  * - OAuth flow handling
  */
 
-import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException';
+import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException.js';
 
 export type AuthErrorType = 'invalid_credentials' | 'expired_token' | 'insufficient_permissions' | 'oauth_error' | 'missing_credentials';
 

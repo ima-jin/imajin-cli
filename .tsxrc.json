@@ -1,0 +1,14 @@
+{
+  "watch": {
+    "ignore": [
+      "**/node_modules/**",
+      "**/dist/**", 
+      "**/*.log",
+      "**/logs/**",
+      "**/.git/**",
+      "**/coverage/**",
+      "**/temp/**",
+      "**/tmp/**"
+    ]
+  }
+}

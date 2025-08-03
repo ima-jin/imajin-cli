@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-08
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/commands/stripe.md
  * 
@@ -79,7 +79,7 @@ export class CreatePaymentCommand {
                 ...(validatedParams.customerId && { customerId: validatedParams.customerId }),
                 ...(validatedParams.paymentMethodId && { paymentMethodId: validatedParams.paymentMethodId }),
                 ...(validatedParams.description && { description: validatedParams.description }),
-                ...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata }),
+...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata as Record<string, string> }),
             };
 
             const _startTime = Date.now();

@@ -17,7 +17,7 @@
 
 import winston from 'winston';
 import Transport from 'winston-transport';
-import { LoggerConfig } from '../LoggerConfig';
+import { LoggerConfig } from '../LoggerConfig.js';
 
 export class MonitoringTransport extends Transport {
     private config: LoggerConfig;

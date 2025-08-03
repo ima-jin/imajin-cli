@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Registers all CLI commands with the main program
@@ -19,6 +19,7 @@
 import { Command } from 'commander';
 import { registerSchemaCommands } from './schema/SchemaCommands.js';
 import { MarkdownCommand } from './MarkdownCommand.js';
+import { StatusCommand } from './StatusCommand.js';
 import { createCommandLimiterCommands } from './system/CommandLimiterCommands.js';
 
 // =============================================================================
@@ -35,6 +36,10 @@ export function registerCommands(program: Command): void {
     // Markdown utilities and conversion commands
     const markdownCommand = new MarkdownCommand();
     markdownCommand.register(program);
+    
+    // System status and health monitoring
+    const statusCommand = new StatusCommand();
+    statusCommand.register(program);
     
     // Command limiter and security commands
     const logger = (globalThis as any).imajinApp?.container?.resolve('logger');
@@ -56,6 +61,7 @@ export function getAvailableCommandGroups(): string[] {
     return [
         'schema',
         'markdown',
+        'status',
         'command-limiter',
         // Add other groups as implemented
         // 'services',
@@ -73,6 +79,8 @@ export function getCommandGroupDescription(group: string): string {
             return 'External schema management and validation commands';
         case 'markdown':
             return 'Markdown utilities and PDF conversion commands';
+        case 'status':
+            return 'System status and health monitoring commands';
         case 'command-limiter':
             return 'Git command filtering and security management';
         case 'services':

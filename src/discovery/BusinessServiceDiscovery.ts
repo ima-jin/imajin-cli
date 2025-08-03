@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Discovers available services and APIs
@@ -30,7 +30,7 @@ import { z } from 'zod';
 export const ServiceMappingSchema = z.object({
     serviceName: z.string(),
     businessDomain: z.string(),
-    mappings: z.record(z.any()),
+    mappings: z.record(z.string(), z.any()),
     workflows: z.array(z.string()),
     integrationComplexity: z.enum(['simple', 'moderate', 'complex']),
     estimatedSetupTime: z.string(),
@@ -49,7 +49,7 @@ export const ServiceCapabilitySchema = z.object({
         requests: z.number(),
         period: z.string(),
     }),
-    entities: z.record(z.any()),
+    entities: z.record(z.string(), z.any()),
     capabilities: z.array(z.string()),
 });
 

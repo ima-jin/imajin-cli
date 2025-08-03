@@ -1,3 +1,3 @@
-export { BridgeCommand } from './BridgeCommand';
-export { GraphCommand } from './GraphCommand';
-export { ETLCommand } from './ETLCommand'; 
+export { BridgeCommand } from './BridgeCommand.js';
+export { GraphCommand } from './GraphCommand.js';
+export { ETLCommand } from './ETLCommand.js'; 

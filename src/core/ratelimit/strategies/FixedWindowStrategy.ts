@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - RateLimitStrategy interface implementation
@@ -16,8 +16,8 @@
  * - Automatic window reset at defined intervals
  */
 
-import { RateLimitStatus } from '../RateLimiter';
-import { RateLimitStrategy } from './RateLimitStrategy';
+import { RateLimitStatus } from '../RateLimiter.js';
+import { RateLimitStrategy } from './RateLimitStrategy.js';
 
 /**
  * Fixed window information for a service

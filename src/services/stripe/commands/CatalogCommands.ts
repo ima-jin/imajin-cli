@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Commander.js command registration
@@ -19,8 +19,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import type { StripeService } from '../StripeService';
-import type { Logger } from '../../../logging/Logger';
+import type { StripeService } from '../StripeService.js';
+import type { Logger } from '../../../logging/Logger.js';
 
 export class CatalogCommands {
     constructor(

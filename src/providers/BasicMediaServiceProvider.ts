@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/providers/media.md
  * 
@@ -37,8 +37,8 @@ export class BasicMediaServiceProvider extends ServiceProvider {
      * Bootstrap services after all providers have been registered
      */
     public boot(): void {
-        // Register CLI commands
-        this.registerCommands();
+        // Services are already registered, no additional boot actions needed
+        // Commands will be registered by Application.registerProviderCommands()
     }
 
     /**

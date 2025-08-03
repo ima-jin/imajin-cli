@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/media/providers.md
  * 
@@ -29,9 +29,9 @@ import type {
     MediaProvider,
     Transformation,
     UploadOptions
-} from '../../types/Media';
+} from '../../types/Media.js';
 
-import { ExceptionUtils } from '../../exceptions/index';
+import { ExceptionUtils } from '../../exceptions/index.js';
 
 export interface CloudinaryConfig {
     cloudName: string;

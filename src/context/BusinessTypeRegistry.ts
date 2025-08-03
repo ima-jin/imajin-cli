@@ -7,7 +7,8 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-07-03
+ * @since       2025-06-13
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Replaces hardcoded Universal types with user-defined business models
@@ -193,7 +194,7 @@ export class BusinessTypeRegistry {
             if (error instanceof z.ZodError) {
                 return { 
                     valid: false, 
-                    errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+                    errors: error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`)
                 };
             }
             return { valid: false, errors: [String(error)] };

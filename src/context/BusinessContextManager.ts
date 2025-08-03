@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Manages user business context configuration files
@@ -43,7 +43,7 @@ export const BusinessConfigurationSchema = z.object({
         industry: z.string().optional(),
         size: z.enum(['startup', 'small', 'medium', 'large', 'enterprise']).optional(),
     }),
-    entities: z.record(z.object({
+    entities: z.record(z.string(), z.object({
         fields: z.array(z.object({
             name: z.string(),
             type: z.enum(['string', 'number', 'boolean', 'date', 'array', 'object', 'enum', 'text', 'json', 'datetime', 'reference']),
@@ -90,15 +90,15 @@ export const BusinessConfigurationSchema = z.object({
         enabled: z.boolean().default(true),
     })).optional(),
     translations: z.object({
-        services: z.record(z.object({
+        services: z.record(z.string(), z.object({
             enabled: z.boolean().default(true),
             mapping: z.string(),
-            fields: z.record(z.string()),
+            fields: z.record(z.string(), z.string()),
             transformations: z.array(z.string()).optional(),
-            overrides: z.record(z.any()).optional(),
+            overrides: z.record(z.string(), z.any()).optional(),
         })).optional(),
     }).optional(),
-    porcelainCommands: z.record(z.array(z.object({
+    porcelainCommands: z.record(z.string(), z.array(z.object({
         name: z.string(),
         description: z.string(),
         enabled: z.boolean().default(true),
@@ -318,7 +318,7 @@ export class BusinessContextManager {
             const schemaValidation = BusinessConfigurationSchema.safeParse(config);
             if (!schemaValidation.success) {
                 result.valid = false;
-                for (const error of schemaValidation.error.errors) {
+                for (const error of schemaValidation.error.issues) {
                     result.errors.push({
                         path: error.path.join('.'),
                         message: error.message,

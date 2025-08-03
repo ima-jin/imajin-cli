@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges';
+import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
 
 export class GraphCommand {
     private readonly registry: DefaultBridgeRegistry;
@@ -92,7 +92,7 @@ export class GraphCommand {
                 const bridges = this.registry.getBridges();
                 const compatibleModels = new Set<string>();
 
-                bridges.forEach(bridge => {
+                bridges.forEach((bridge: any) => {
                     if (options.model) {
                         if (bridge.source === options.model) {
                             compatibleModels.add(bridge.target);

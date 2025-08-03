@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-10
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - WebhookManager for webhook information

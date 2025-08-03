@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - OpenAPI/GraphQL specification parsing
@@ -27,7 +27,7 @@ import { RecipeManager, type Recipe } from './RecipeManager.js';
 const BusinessDomainModelSchema = z.object({
     businessType: z.string(),
     description: z.string(),
-    entities: z.record(z.any()),
+    entities: z.record(z.string(), z.any()),
     workflows: z.array(z.any()).optional().default([]),
     businessRules: z.array(z.string()).optional().default([]),
     integrations: z.array(z.string()).optional().default([]),
@@ -37,7 +37,7 @@ const BusinessDomainModelSchema = z.object({
 const TranslationMappingSchema = z.object({
     sourceModel: z.string(),
     targetModel: z.string(),
-    mappings: z.record(z.any()),
+    mappings: z.record(z.string(), z.any()),
     bidirectional: z.boolean().default(false),
     confidence: z.number().min(0).max(1).default(0.8),
 });

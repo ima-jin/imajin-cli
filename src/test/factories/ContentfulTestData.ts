@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-02
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Contentful service testing
@@ -362,6 +363,65 @@ export class ContentfulTestData {
             },
             name: 'master',
             ...overrides
+        };
+    }
+
+    // Instance methods for performance testing
+    createMockEntry(overrides?: any): any {
+        return ContentfulTestData.createEntry(overrides);
+    }
+
+    createMockEntriesResponse(entries?: any[]): any {
+        const items = entries || [
+            ContentfulTestData.createEntry(),
+            ContentfulTestData.createEntry({ sys: { ...ContentfulTestData.createEntry().sys, id: 'test-entry-456' } }),
+            ContentfulTestData.createEntry({ sys: { ...ContentfulTestData.createEntry().sys, id: 'test-entry-789' } })
+        ];
+        return ContentfulTestData.createQueryResponse(items);
+    }
+
+    createMockAsset(overrides?: any): any {
+        return ContentfulTestData.createAsset(overrides);
+    }
+
+    createMockAssetsResponse(assets?: any[]): any {
+        const items = assets || [
+            ContentfulTestData.createAsset(),
+            ContentfulTestData.createAsset({ sys: { ...ContentfulTestData.createAsset().sys, id: 'test-asset-456' } })
+        ];
+        return ContentfulTestData.createQueryResponse(items);
+    }
+
+    createMockContentType(overrides?: any): any {
+        return ContentfulTestData.createContentType(overrides);
+    }
+
+    createMockContentTypesResponse(contentTypes?: any[]): any {
+        const items = contentTypes || [
+            ContentfulTestData.createContentType(),
+            ContentfulTestData.createContentType({ sys: { id: 'testContentType2' } })
+        ];
+        return ContentfulTestData.createQueryResponse(items);
+    }
+
+    createValidEntryData(): any {
+        return {
+            title: 'Performance Test Entry',
+            description: 'Test entry for performance testing',
+            body: 'Test content body'
+        };
+    }
+
+    createValidAssetData(): any {
+        return {
+            fields: {
+                title: 'Performance Test Asset',
+                description: 'Test asset for performance testing',
+                file: {
+                    contentType: 'image/jpeg',
+                    fileName: 'test.jpg'
+                }
+            }
         };
     }
 }

@@ -16,10 +16,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { ApiError } from '../exceptions/ApiError';
-import { AuthenticationError } from '../exceptions/AuthenticationError';
-import { BaseException } from '../exceptions/BaseException';
-import { SystemError } from '../exceptions/SystemError';
+import { ApiError } from '../exceptions/ApiError.js';
+import { AuthenticationError } from '../exceptions/AuthenticationError.js';
+import { BaseException } from '../exceptions/BaseException.js';
+import { SystemError } from '../exceptions/SystemError.js';
 
 export interface RecoveryContext {
     originalOperation?: () => Promise<any>;

@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-02
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Stripe service testing
@@ -406,6 +407,73 @@ export class StripeTestData {
             url: '/v1/test',
             total_count: data.length
         };
+    }
+
+    /**
+     * Create valid customer data for testing
+     */
+    createValidCustomerData(): any {
+        return {
+            email: 'test@example.com',
+            name: 'Test Customer',
+            description: 'Performance test customer'
+        };
+    }
+
+    /**
+     * Create valid payment data for testing  
+     */
+    createValidPaymentData(): any {
+        return {
+            amount: 2000,
+            currency: 'usd',
+            payment_method_types: ['card'],
+            description: 'Performance test payment'
+        };
+    }
+
+    /**
+     * Create valid subscription data for testing
+     */
+    createValidSubscriptionData(): any {
+        return {
+            customer: 'cus_test_123',
+            items: [{
+                price: 'price_test_123'
+            }]
+        };
+    }
+
+    /**
+     * Create mock customer for testing
+     */
+    createMockCustomer(overrides?: any): any {
+        return StripeTestData.createCustomer(overrides);
+    }
+
+    /**
+     * Create mock customer list for testing
+     */
+    createMockCustomerList(): any {
+        return StripeTestData.createListResponse([
+            StripeTestData.createCustomer(),
+            StripeTestData.createCustomer({ id: 'cus_test_456' }),
+            StripeTestData.createCustomer({ id: 'cus_test_789' })
+        ]);
+    }
+
+    /**
+     * Create mock payment intent for testing
+     */
+    createMockPaymentIntent(overrides?: any): any {
+        return StripeTestData.createPaymentIntent(overrides);
+    }
+
+    /**
+     * Create mock subscription for testing
+     */
+    createMockSubscription(overrides?: any): any {
+        return StripeTestData.createSubscription(overrides);
     }
 }
 

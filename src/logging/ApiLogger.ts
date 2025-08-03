@@ -17,9 +17,9 @@
  * - Retry mechanisms
  */
 
-import { Logger, LogContext } from './Logger';
-import { LoggerConfig } from './LoggerConfig';
-import { ApiLogContext } from './formatters/ApiFormatter';
+import { Logger, LogContext } from './Logger.js';
+import { LoggerConfig } from './LoggerConfig.js';
+import { ApiLogContext } from './formatters/ApiFormatter.js';
 
 export interface ApiMetrics {
     totalRequests: number;

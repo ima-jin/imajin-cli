@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Pipeline } from '../../etl/core';
+import { Pipeline } from '../../etl/core.js';
 
 export class ETLCommand {
     private readonly pipeline: Pipeline;

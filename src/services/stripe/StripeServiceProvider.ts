@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Service provider pattern for modular architecture
@@ -24,11 +24,11 @@ import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import type { StripeConfig } from '../../types/Stripe.js';
-import { StripeService } from './StripeService';
-import { CustomerCommands } from './commands/CustomerCommands';
-import { PaymentCommands } from './commands/PaymentCommands';
-import { SubscriptionCommands } from './commands/SubscriptionCommands';
-import { CatalogCommands } from './commands/CatalogCommands';
+import { StripeService } from './StripeService.js';
+import { CustomerCommands } from './commands/CustomerCommands.js';
+import { PaymentCommands } from './commands/PaymentCommands.js';
+import { SubscriptionCommands } from './commands/SubscriptionCommands.js';
+import { CatalogCommands } from './commands/CatalogCommands.js';
 
 export class StripeServiceProvider extends ServiceProvider {
     private stripeService?: StripeService;

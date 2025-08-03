@@ -18,8 +18,8 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { EventEmitter } from 'events';
 import { inject, injectable } from 'tsyringe';
-import { RateLimiter } from '../ratelimit/RateLimiter';
-import { CircuitBreaker } from './CircuitBreaker';
+import { RateLimiter } from '../ratelimit/RateLimiter.js';
+import { CircuitBreaker } from './CircuitBreaker.js';
 
 /**
  * API service configuration

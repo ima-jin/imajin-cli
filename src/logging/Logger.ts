@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-08
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/logging.md
  * 
@@ -22,9 +22,9 @@
 
 import winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
-import { LoggerConfig, LogLevel, defaultConfig } from './LoggerConfig';
-import { JsonFormatter } from './formatters/JsonFormatter';
-import { MonitoringTransport } from './transports/MonitoringTransport';
+import { LoggerConfig, LogLevel, defaultConfig } from './LoggerConfig.js';
+import { JsonFormatter } from './formatters/JsonFormatter.js';
+import { MonitoringTransport } from './transports/MonitoringTransport.js';
 
 export interface LogContext {
     service?: string;

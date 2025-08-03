@@ -1,4 +1,4 @@
-import { ETLComponent, ETLContext, ETLResult } from '../core';
+import type { ETLComponent, ETLContext, ETLResult } from '../core/index.js';
 
 export interface BridgeRule {
     name: string;

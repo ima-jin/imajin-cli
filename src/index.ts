@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-06
- * @updated      2025-07-01
+ * @updated      2025-07-03
  *
  * @see         docs/architecture.md
  * 
@@ -22,6 +22,10 @@ import { config } from 'dotenv';
 import 'reflect-metadata';
 import { Application } from './core/Application.js';
 import { ExceptionUtils, SystemError } from './exceptions/index.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 // Load environment variables
 config();
@@ -32,12 +36,12 @@ config();
  */
 function isNpmLinkMode(): boolean {
   try {
-    // Check if we're running from a symlinked location
-    const fs = require('fs');
-    const path = require('path');
+    // Get the current module's directory (ES module equivalent of __dirname)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
     
     // Get the real path of the current module
-    const currentPath = path.dirname(__filename);
+    const currentPath = __dirname;
     const realPath = fs.realpathSync(currentPath);
     
     // If real path differs from current path, we're likely in a symlink (npm link)

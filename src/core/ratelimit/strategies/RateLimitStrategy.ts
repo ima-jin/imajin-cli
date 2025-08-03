@@ -15,7 +15,7 @@
  * - Monitoring system for metrics collection
  */
 
-import { RateLimitStatus } from '../RateLimiter';
+import { RateLimitStatus } from '../RateLimiter.js';
 
 /**
  * Base interface for all rate limiting strategies

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Application bootstrap error handling
@@ -17,9 +17,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { BaseException } from '../exceptions/BaseException';
-import { SystemError } from '../exceptions/SystemError';
-import { ValidationError } from '../exceptions/ValidationError';
+import { BaseException } from '../exceptions/BaseException.js';
+import { SystemError } from '../exceptions/SystemError.js';
+import { ValidationError } from '../exceptions/ValidationError.js';
 
 export interface ErrorHandlerOptions {
     enableConsoleOutput: boolean;
