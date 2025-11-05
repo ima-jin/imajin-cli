@@ -473,17 +473,48 @@ export class TaskMigrationCommand {
   }
 
   private extractEstimatedEffort(body: string): string | undefined {
-    // Use bounded quantifiers to avoid ReDoS vulnerability
-    const effortPatterns = [
-      /estimated effort[:\s]{0,5}([^.\n]{1,100})/i,
-      /effort[:\s]{0,5}([^.\n]{1,100})/i,
-      /(\d+(?:\.\d+)?[\s]{0,3}(?:hours?|days?|weeks?))/i
-    ];
+    // Use string search instead of regex to completely avoid ReDoS vulnerability
+    const searchTerms = ['estimated effort:', 'estimated effort', 'effort:'];
+    const timeUnits = ['hour', 'hours', 'day', 'days', 'week', 'weeks'];
 
-    for (const pattern of effortPatterns) {
-      const match = body.match(pattern);
-      if (match && match[1]) {
-        return match[1].trim();
+    // First, try to find effort keywords
+    for (const term of searchTerms) {
+      const index = body.toLowerCase().indexOf(term);
+      if (index === -1) continue;
+
+      // Extract text after the keyword (up to next newline or 100 chars)
+      const startPos = index + term.length;
+      const endOfLine = body.indexOf('\n', startPos);
+      const endPos = endOfLine !== -1 ? Math.min(endOfLine, startPos + 100) : startPos + 100;
+      const candidate = body.slice(startPos, endPos).trim();
+
+      if (candidate.length > 0 && candidate.length < 100) {
+        // Extract up to first sentence/period
+        const periodIndex = candidate.indexOf('.');
+        const effort = periodIndex !== -1 ? candidate.slice(0, periodIndex) : candidate;
+        return effort.trim();
+      }
+    }
+
+    // Second, try to find time unit patterns (e.g., "3 hours", "2.5 days")
+    for (const unit of timeUnits) {
+      const unitIndex = body.toLowerCase().indexOf(unit);
+      if (unitIndex === -1) continue;
+
+      // Look backwards for a number (max 20 chars back)
+      const searchStart = Math.max(0, unitIndex - 20);
+      const beforeUnit = body.slice(searchStart, unitIndex);
+
+      // Simple number extraction (no regex at all)
+      const tokens = beforeUnit.trim().split(' ').filter(t => t.length > 0);
+      const lastToken = tokens[tokens.length - 1];
+
+      // Check if last token is a number (integer or decimal) without regex
+      if (lastToken) {
+        const parsed = parseFloat(lastToken);
+        if (!isNaN(parsed) && parsed > 0 && parsed < 10000) {
+          return `${lastToken} ${unit}`;
+        }
       }
     }
 
