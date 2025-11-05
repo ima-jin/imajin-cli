@@ -21,6 +21,7 @@ import { RecipeManager } from '../../context/RecipeManager.js';
 import { BusinessContextManager } from '../../context/BusinessContextManager.js';
 import chalk from 'chalk';
 import type { Logger } from '../../logging/Logger.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export function createRecipeCommands(): Command {
     const cmd = new Command('recipes');
@@ -40,7 +41,7 @@ export function createRecipeCommands(): Command {
     // List available recipes
     cmd.command('list')
         .description('List available business recipe templates')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('Listing recipe templates', { json: !!options.json });

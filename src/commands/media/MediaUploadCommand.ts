@@ -30,6 +30,7 @@ import type { MediaProcessingEvent, MediaProcessingOptions } from '../../types/M
 
 import { BaseException } from '../../exceptions/BaseException.js';
 import { ValidationError } from '../../exceptions/ValidationError.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export interface MediaUploadOptions {
     provider?: string;
@@ -73,12 +74,12 @@ export class MediaUploadCommand {
             .option('-t, --tags <tags>', 'Comma-separated tags', this.parseTags)
             .option('--optimize', 'Automatically optimize uploaded files')
             .option('--resize <dimensions>', 'Resize images (e.g., 1920x1080)')
-            .option('--format <format>', 'Convert to specific format (webp, avif, etc.)')
+            .addOption(CommonOptions.format())
             .option('-q, --quality <quality>', 'Set quality (1-100)', parseInt)
             .option('--public', 'Make files publicly accessible')
             .option('--overwrite', 'Overwrite existing files')
             .option('--batch', 'Process files in batch mode')
-            .option('-o, --output <path>', 'Output directory for processed files')
+            .addOption(CommonOptions.output())
             .action(async (files: string[], options: MediaUploadOptions) => {
                 await this.execute(files, options);
             });

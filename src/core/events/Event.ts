@@ -90,7 +90,7 @@ export abstract class BaseEvent<T = any> implements IEvent<T> {
      * Generate unique event ID
      */
     private generateId(): string {
-        return `${this.type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `${this.type}_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
     }
 
     /**

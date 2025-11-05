@@ -24,6 +24,7 @@ import { glob } from 'glob';
 import { mdToPdf } from 'md-to-pdf';
 import type { LLMResponse } from '../types/LLM.js';
 import type { Logger } from '../logging/Logger.js';
+import { CommonOptions } from '../utils/commonOptions.js';
 
 export interface MarkdownToPdfOptions {
     output?: string;
@@ -59,11 +60,11 @@ export class MarkdownCommand {
         markdownCmd
             .command('to-pdf <input>')
             .description('Convert markdown files to PDF')
-            .option('-o, --output <path>', 'Output directory or file path')
+            .addOption(CommonOptions.output())
             .option('--css <path>', 'Custom CSS file for styling')
-            .option('--format <format>', 'Paper format (A4, A3, A5, Letter, Legal)', 'A4')
+            .addOption(CommonOptions.format())
             .option('--margin <margin>', 'Page margins (e.g., "1in" or "20mm")', '1in')
-            .option('--json', 'Output results in JSON format')
+            .addOption(CommonOptions.json())
             .option('-r, --recursive', 'Process files recursively')
             .action(async (input: string, options: MarkdownToPdfOptions) => {
                 await this.convertToPdf(input, options);
@@ -73,9 +74,9 @@ export class MarkdownCommand {
         markdownCmd
             .command('watch <input>')
             .description('Watch markdown files and auto-convert to PDF on changes')
-            .option('-o, --output <path>', 'Output directory')
+            .addOption(CommonOptions.output())
             .option('--css <path>', 'Custom CSS file for styling')
-            .option('--format <format>', 'Paper format (A4, A3, A5, Letter, Legal)', 'A4')
+            .addOption(CommonOptions.format())
             .option('--margin <margin>', 'Page margins', '1in')
             .action(async (input: string, options: MarkdownToPdfOptions) => {
                 await this.watchAndConvert(input, { ...options, watch: true });

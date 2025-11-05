@@ -24,6 +24,7 @@ import { SchemaRegistry } from '../../schemas/SchemaRegistry.js';
 // import { initializeCompatibilityLayer, getSchemaRegistry } from '../../schemas/CompatibilityLayer.js';
 import type { Logger } from '../../logging/Logger.js';
 import chalk from 'chalk';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 // =============================================================================
 // SCHEMA COMMANDS
@@ -70,7 +71,7 @@ export function registerSchemaCommands(program: Command): void {
         .command('show <entityName>')
         .description('Show schema definition for an entity')
         .option('-d, --directory <dir>', 'Schema directory', 'schemas')
-        .option('-f, --format <format>', 'Output format (json|yaml|typescript)', 'json')
+        .addOption(CommonOptions.format())
         .action(async (entityName, options) => {
             try {
                 logger?.debug('schema show command starting', { entityName, directory: options.directory, format: options.format });
@@ -107,7 +108,7 @@ export function registerSchemaCommands(program: Command): void {
         .command('generate-types')
         .description('Generate TypeScript types from schemas')
         .option('-d, --directory <dir>', 'Schema directory', 'schemas')
-        .option('-o, --output <file>', 'Output file path', 'src/types/Generated.ts')
+        .addOption(CommonOptions.output())
         .action(async (options) => {
             try {
                 logger?.debug('schema generate-types command starting', { directory: options.directory, output: options.output });
@@ -147,7 +148,7 @@ export function registerSchemaCommands(program: Command): void {
         .option('--from <version>', 'Source schema version', 'core')
         .option('--to <version>', 'Target schema version', 'core')
         .option('-f, --file <file>', 'Data file to migrate')
-        .option('-o, --output <file>', 'Output file for migrated data')
+        .addOption(CommonOptions.output())
         .action(async (options) => {
             try {
                 logger?.debug('schema migrate command starting', { directory: options.directory, from: options.from, to: options.to, file: options.file });

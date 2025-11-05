@@ -23,6 +23,7 @@ import { homedir } from 'os';
 import * as yaml from 'js-yaml';
 import chalk from 'chalk';
 import type { Logger } from '../logging/Logger.js';
+import { CommonOptions } from '../utils/commonOptions.js';
 
 export interface TaskEntity {
   id: string;
@@ -93,7 +94,7 @@ export class TaskMigrationCommand {
       .option('--from <path>', 'Source directory containing task markdown files', 'docs/prompts/tasks')
       .option('--to <context>', 'Target context name', 'project-management')
       .option('--validate', 'Validate tasks during migration', false)
-      .option('--dry-run', 'Show what would be migrated without actually doing it', false)
+      .addOption(CommonOptions.dryRun())
       .action(async (options) => {
         await this.executeMigration(options);
       });
@@ -113,7 +114,7 @@ export class TaskMigrationCommand {
       .command('status')
       .description('Show task status summary')
       .option('--path <path>', 'Task directory path', 'docs/prompts/tasks')
-      .option('--format <format>', 'Output format (table|json|summary)', 'summary')
+      .addOption(CommonOptions.format())
       .option('--filter <status>', 'Filter by status')
       .action(async (options) => {
         await this.executeStatusCommand(options);
@@ -144,7 +145,7 @@ export class TaskMigrationCommand {
       .command('standardize')
       .description('Standardize frontmatter across all tasks')
       .option('--path <path>', 'Task directory path', 'docs/prompts/tasks')
-      .option('--dry-run', 'Show what would be changed without making changes', false)
+      .addOption(CommonOptions.dryRun())
       .action(async (options) => {
         await this.executeStandardizeCommand(options);
       });
@@ -300,10 +301,21 @@ export class TaskMigrationCommand {
   }
 
   private parseMarkdown(content: string): { frontmatter: any; body: string } {
-    const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
-    const match = content.match(frontmatterRegex);
+    // Use indexOf/substring instead of regex to avoid ReDoS vulnerability
+    const startDelim = '---\n';
+    const endDelim = '\n---\n';
 
-    if (!match) {
+    if (!content.startsWith(startDelim)) {
+      return {
+        frontmatter: {},
+        body: content
+      };
+    }
+
+    const contentAfterStart = content.slice(startDelim.length);
+    const endIndex = contentAfterStart.indexOf(endDelim);
+
+    if (endIndex === -1) {
       return {
         frontmatter: {},
         body: content
@@ -311,8 +323,9 @@ export class TaskMigrationCommand {
     }
 
     try {
-      const frontmatter = yaml.load(match[1] || '') || {};
-      const body = match[2] || '';
+      const frontmatterText = contentAfterStart.slice(0, endIndex);
+      const body = contentAfterStart.slice(endIndex + endDelim.length);
+      const frontmatter = yaml.load(frontmatterText) || {};
       return { frontmatter, body };
     } catch (error) {
       throw new Error(`Failed to parse YAML frontmatter: ${error instanceof Error ? error.message : error}`);
@@ -373,18 +386,19 @@ export class TaskMigrationCommand {
     }
 
     // Extract from body content (Task-004, Task-005a, etc.)
+    // Use simpler, non-backtracking patterns to avoid ReDoS vulnerability
     const dependencyPatterns = [
-      /Task-(\d+[a-z]*)/gi,
-      /task-(\d+[a-z]*)/gi,
-      /depends on.*?task[- ](\d+[a-z]*)/gi,
-      /prerequisite.*?task[- ](\d+[a-z]*)/gi
+      /Task-(\d+[a-z]{0,5})/gi,  // Limited quantifier instead of *
+      /task-(\d+[a-z]{0,5})/gi,  // Limited quantifier instead of *
+      /depends on[^\n]{0,50}task[- ](\d+[a-z]{0,5})/gi,  // Limited range instead of .*?
+      /prerequisite[^\n]{0,50}task[- ](\d+[a-z]{0,5})/gi  // Limited range instead of .*?
     ];
 
     for (const pattern of dependencyPatterns) {
       const matches = body.match(pattern);
       if (matches) {
         dependencies.push(...matches.map(match => {
-          const taskId = match.match(/(\d+[a-z]*)/i)?.[1];
+          const taskId = match.match(/(\d+[a-z]{0,5})/i)?.[1];
           return taskId ? `task-${taskId.toLowerCase()}` : match;
         }));
       }
@@ -427,16 +441,31 @@ export class TaskMigrationCommand {
   }
 
   private extractArchitectureImpact(body: string): string | undefined {
-    const architecturePatterns = [
-      /## Architecture[^#]*\n([\s\S]*?)(?=\n## |\n# |\Z)/i,
-      /## Implementation[^#]*\n([\s\S]*?)(?=\n## |\n# |\Z)/i,
-      /## Technical Requirements[^#]*\n([\s\S]*?)(?=\n## |\n# |\Z)/i
+    // Use string search instead of complex regex to avoid ReDoS vulnerability
+    const sectionHeaders = [
+      '## Architecture',
+      '## Implementation',
+      '## Technical Requirements'
     ];
 
-    for (const pattern of architecturePatterns) {
-      const match = body.match(pattern);
-      if (match && match[1]) {
-        return match[1].trim().substring(0, 500); // Limit length
+    for (const header of sectionHeaders) {
+      const headerIndex = body.toLowerCase().indexOf(header.toLowerCase());
+      if (headerIndex === -1) continue;
+
+      // Find the start of content after the header
+      const contentStart = body.indexOf('\n', headerIndex);
+      if (contentStart === -1) continue;
+
+      // Find the next header (## or #) or end of string
+      let contentEnd = body.length;
+      const nextHeaderMatch = body.slice(contentStart + 1).search(/\n#+ /);
+      if (nextHeaderMatch !== -1) {
+        contentEnd = contentStart + 1 + nextHeaderMatch;
+      }
+
+      const content = body.slice(contentStart + 1, contentEnd).trim();
+      if (content.length > 0) {
+        return content.substring(0, 500); // Limit length
       }
     }
 
@@ -444,10 +473,11 @@ export class TaskMigrationCommand {
   }
 
   private extractEstimatedEffort(body: string): string | undefined {
+    // Use bounded quantifiers to avoid ReDoS vulnerability
     const effortPatterns = [
-      /estimated effort[:\s]*([^.\n]+)/i,
-      /effort[:\s]*([^.\n]+)/i,
-      /(\d+(?:\.\d+)?\s*(?:hours?|days?|weeks?))/i
+      /estimated effort[:\s]{0,5}([^.\n]{1,100})/i,
+      /effort[:\s]{0,5}([^.\n]{1,100})/i,
+      /(\d+(?:\.\d+)?[\s]{0,3}(?:hours?|days?|weeks?))/i
     ];
 
     for (const pattern of effortPatterns) {
@@ -495,9 +525,10 @@ export class TaskMigrationCommand {
     }
 
     // Extract from content
+    // Use bounded quantifiers to avoid ReDoS vulnerability
     const tagPatterns = [
       /Phase \d+/gi,
-      /Task-\d+[a-z]*/gi
+      /Task-\d+[a-z]{0,5}/gi  // Limited to 5 chars instead of unbounded *
     ];
 
     for (const pattern of tagPatterns) {
@@ -512,7 +543,8 @@ export class TaskMigrationCommand {
 
   private extractIdFromFilename(filePath: string): string {
     const filename = basename(filePath, extname(filePath));
-    const match = filename.match(/task-(.+)/);
+    // Use bounded quantifier to avoid ReDoS vulnerability
+    const match = filename.match(/task-(.{1,100})/);
     return match ? `task-${match[1]}` : filename;
   }
 
@@ -528,8 +560,9 @@ export class TaskMigrationCommand {
     }
 
     // Dependency validation (basic - could be enhanced)
+    // Use bounded quantifier to avoid ReDoS vulnerability
     for (const depId of task.dependencies) {
-      if (!depId.match(/^task-\d+[a-z]*$/)) {
+      if (!depId.match(/^task-\d+[a-z]{0,5}$/)) {
         warnings.push(`Dependency ID format may be invalid: ${depId}`);
       }
     }

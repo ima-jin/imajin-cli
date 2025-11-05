@@ -339,9 +339,10 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
 
     /**
      * Begin a transaction
+     * Uses cryptographically secure random generation
      */
     protected async beginTransaction(_context: ETLContext): Promise<string> {
-        const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const transactionId = `txn_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
         this.activeTransactions.add(transactionId);
         return transactionId;
     }

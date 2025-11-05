@@ -25,6 +25,7 @@ import { Logger } from '../../logging/Logger.js';
 import { StripeService } from '../../services/stripe/StripeService.js';
 import { CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js';
 import type { LLMResponse } from '../../types/LLM.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export interface CreateCustomerOptions {
     name?: string;
@@ -51,8 +52,8 @@ export class CreateCustomerCommand {
             .option('--phone <phone>', 'Customer phone number')
             .option('--description <description>', 'Customer description')
             .option('--metadata <metadata>', 'Customer metadata as JSON string')
-            .option('--json', CLI_DESCRIPTIONS.JSON_OUTPUT)
-            .option('--watch', 'Watch for real-time updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options: CreateCustomerOptions) => {
                 await this.execute(options);
             });

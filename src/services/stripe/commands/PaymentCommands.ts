@@ -22,6 +22,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import type { StripeService } from '../StripeService.js';
 import type { Logger } from '../../../logging/Logger.js';
+import { CommonOptions } from '../../../utils/commonOptions.js';
 
 export class PaymentCommands {
     constructor(
@@ -49,8 +50,8 @@ export class PaymentCommands {
             .option('--metadata <metadata>', 'JSON metadata object')
             .option('--capture-method <method>', 'Capture method: automatic or manual', 'automatic')
             .option('--automatic-payment-methods', 'Enable automatic payment methods')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Creating payment intent', {
@@ -112,8 +113,8 @@ export class PaymentCommands {
             .command('confirm <paymentIntentId>')
             .description('Confirm a payment intent')
             .option('--payment-method <paymentMethodId>', 'Payment method ID to confirm with')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (paymentIntentId, options) => {
                 try {
                     this.logger.debug('Confirming payment intent', {
@@ -162,12 +163,12 @@ export class PaymentCommands {
         paymentCmd
             .command('list')
             .description('List payment intents with optional filtering')
-            .option('--limit <limit>', 'Number of payment intents to retrieve', '10')
+            .addOption(CommonOptions.limit(10))
             .option('--customer <customerId>', 'Filter by customer ID')
             .option('--created-after <date>', 'Filter payments created after date (ISO 8601)')
             .option('--created-before <date>', 'Filter payments created before date (ISO 8601)')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Listing payment intents', {

@@ -22,6 +22,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import type { StripeService } from '../StripeService.js';
 import type { Logger } from '../../../logging/Logger.js';
+import { CommonOptions } from '../../../utils/commonOptions.js';
 
 export class SubscriptionCommands {
     constructor(
@@ -45,8 +46,8 @@ export class SubscriptionCommands {
             .requiredOption('--price <priceId>', 'Price ID')
             .option('--payment-behavior <behavior>', 'Payment behavior: default_incomplete, error_if_incomplete, allow_incomplete', 'default_incomplete')
             .option('--metadata <metadata>', 'JSON metadata object')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Creating subscription', {
@@ -97,8 +98,8 @@ export class SubscriptionCommands {
             .description('Cancel a subscription')
             .option('--immediately', 'Cancel immediately instead of at period end')
             .option('--reason <reason>', 'Cancellation reason')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (subscriptionId, options) => {
                 try {
                     this.logger.debug('Canceling subscription', {
@@ -150,11 +151,11 @@ export class SubscriptionCommands {
         subscriptionCmd
             .command('list')
             .description('List subscriptions with optional filtering')
-            .option('--limit <limit>', 'Number of subscriptions to retrieve', '10')
+            .addOption(CommonOptions.limit(10))
             .option('--customer <customerId>', 'Filter by customer ID')
             .option('--status <status>', 'Filter by status: active, canceled, incomplete, past_due, trialing, unpaid')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Listing subscriptions', {

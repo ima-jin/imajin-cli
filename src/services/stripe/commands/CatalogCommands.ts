@@ -21,6 +21,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import type { StripeService } from '../StripeService.js';
 import type { Logger } from '../../../logging/Logger.js';
+import { CommonOptions } from '../../../utils/commonOptions.js';
 
 export class CatalogCommands {
     constructor(
@@ -40,11 +41,11 @@ export class CatalogCommands {
         catalogCmd
             .command('products')
             .description('List products')
-            .option('--limit <limit>', 'Number of products to retrieve', '10')
+            .addOption(CommonOptions.limit(10))
             .option('--active', 'Only show active products')
             .option('--inactive', 'Only show inactive products')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Listing products', {
@@ -105,12 +106,12 @@ export class CatalogCommands {
         catalogCmd
             .command('prices')
             .description('List prices')
-            .option('--limit <limit>', 'Number of prices to retrieve', '10')
+            .addOption(CommonOptions.limit(10))
             .option('--product <productId>', 'Filter by product ID')
             .option('--active', 'Only show active prices')
             .option('--inactive', 'Only show inactive prices')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Listing prices', {

@@ -24,6 +24,8 @@ import { TaskValidationWorkflow } from '../workflows/TaskValidationWorkflow.js';
 import type { TaskEntity } from './TaskMigrationCommand.js';
 import type { Logger } from '../logging/Logger.js';
 import { Container } from '../container/Container.js';
+import { CommonOptions } from '../utils/commonOptions.js';
+import { generateTaskId } from '../utils/secureRandom.js';
 
 export class TaskManagementCommands {
   private contextManager: BusinessContextManager;
@@ -70,7 +72,7 @@ export class TaskManagementCommands {
       .option('-p, --priority <priority>', 'Filter by priority')
       .option('-a, --assignee <assignee>', 'Filter by assignee')
       .option('--context <context>', 'Context name', 'project-management')
-      .option('--format <format>', 'Output format (table, json, yaml)', 'table')
+      .addOption(CommonOptions.format())
       .action(async (options) => {
         await this.listTasks(options);
       });
@@ -114,7 +116,7 @@ export class TaskManagementCommands {
       .description('Show task details')
       .argument('<taskId>', 'Task ID')
       .option('--context <context>', 'Context name', 'project-management')
-      .option('--format <format>', 'Output format (yaml, json)', 'yaml')
+      .addOption(CommonOptions.format())
       .action(async (taskId, options) => {
         await this.showTask(taskId, options);
       });
@@ -140,7 +142,7 @@ export class TaskManagementCommands {
       .command('validate-all')
       .description('Validate all tasks in context')
       .option('--context <context>', 'Context name', 'project-management')
-      .option('--format <format>', 'Output format (table, json)', 'table')
+      .addOption(CommonOptions.format())
       .action(async (options) => {
         await this.validateAllTasks(options);
       });
@@ -570,9 +572,8 @@ export class TaskManagementCommands {
   }
 
   private generateTaskId(): string {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 5);
-    return `task-${timestamp}${random}`;
+    // Use cryptographically secure random generation (SonarCloud security requirement)
+    return generateTaskId();
   }
 
   private getStatusColor(status: TaskEntity['status']): (text: string) => string {

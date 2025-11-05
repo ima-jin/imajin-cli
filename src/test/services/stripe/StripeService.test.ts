@@ -341,7 +341,13 @@ describe('StripeService', () => {
             expect(result.paymentIntent.amount).toBe(2000);
             expect(progressCallback).toHaveBeenCalled();
 
-            expect(mockStripePaymentIntents.create).toHaveBeenCalledWith(params);
+            expect(mockStripePaymentIntents.create).toHaveBeenCalledWith({
+                amount: 2000,
+                currency: 'usd',
+                customer: 'cus_test_123',
+                capture_method: 'automatic',
+                metadata: {}
+            });
         });
 
         it('should handle payment intent creation error', async () => {

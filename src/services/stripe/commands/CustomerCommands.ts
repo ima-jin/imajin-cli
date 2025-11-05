@@ -20,6 +20,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { CommonOptions } from '../../../utils/commonOptions.js';
 import type { StripeService } from '../StripeService.js';
 import type { Logger } from '../../../logging/Logger.js';
 
@@ -46,8 +47,8 @@ export class CustomerCommands {
             .option('--phone <phone>', 'Customer phone number')
             .option('--description <description>', 'Customer description')
             .option('--metadata <metadata>', 'JSON metadata object')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Creating Stripe customer', {
@@ -97,12 +98,12 @@ export class CustomerCommands {
         customerCmd
             .command('list')
             .description('List customers with optional filtering')
-            .option('--limit <limit>', 'Number of customers to retrieve', '10')
+            .addOption(CommonOptions.limit(10))
             .option('--email <email>', 'Filter by email address')
             .option('--created-after <date>', 'Filter customers created after date (ISO 8601)')
             .option('--created-before <date>', 'Filter customers created before date (ISO 8601)')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 try {
                     this.logger.debug('Listing Stripe customers', {
@@ -166,8 +167,8 @@ export class CustomerCommands {
             .command('show <customerId>')
             .description('Show detailed information about a customer')
             .option('--include-subscriptions', 'Include customer subscriptions')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (customerId, options) => {
                 try {
                     this.logger.debug('Getting Stripe customer', {

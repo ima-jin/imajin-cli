@@ -7,8 +7,7 @@
       "Bash(npx tsc:*)",
       "Bash(find:*)",
       "Bash(for file in *)",
-      "Bash(do echo \"=== $file ===\")",
-      "Bash(done)"
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

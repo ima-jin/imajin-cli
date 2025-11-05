@@ -23,6 +23,7 @@ import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import { LocalFileService, type LocalFileConfig } from './LocalFileService.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class LocalFileServiceProvider extends ServiceProvider {
     private localFileService?: LocalFileService;
@@ -149,7 +150,7 @@ export class LocalFileServiceProvider extends ServiceProvider {
                 .command('list')
                 .description('List local media files')
                 .option('-f, --folder <folder>', 'List files in specific folder')
-                .option('-l, --limit <limit>', 'Limit number of results', parseInt)
+                .addOption(CommonOptions.limit(10))
                 .action(async (options: any) => {
                     const assets = await this.localFileService!.listAssets({
                         folder: options.folder,

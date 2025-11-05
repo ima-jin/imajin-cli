@@ -25,6 +25,7 @@ import type { Logger } from '../../logging/Logger.js';
 import { StripeService } from '../../services/stripe/StripeService.js';
 import type { LLMProgressCallback, LLMResponse } from '../../types/LLM.js';
 import { CreatePaymentIntentParams, CreatePaymentIntentSchema } from '../../types/Stripe.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class CreatePaymentCommand {
     private stripeService: StripeService;
@@ -56,8 +57,8 @@ export class CreatePaymentCommand {
             .option('--description <description>', 'Payment description')
             .option('--metadata <metadata>', 'JSON metadata', this.parseMetadata)
             .option('--capture-method <method>', 'Capture method: automatic or manual', 'automatic')
-            .option('--json', 'Output in JSON format')
-            .option('--watch', 'Enable real-time progress updates')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
             .action(async (options) => {
                 await this.execute(options);
             });

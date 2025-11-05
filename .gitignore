@@ -119,3 +119,6 @@ storage/
 # Test artifacts
 test-results/
 test-reports/ 
+
+# Claude
+.claude/settings.local.json

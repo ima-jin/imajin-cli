@@ -24,6 +24,7 @@ import { Command } from 'commander';
 import { SystemMonitor } from '../diagnostics/index.js';
 import type { LLMResponse } from '../types/LLM.js';
 import type { Logger } from '../logging/Logger.js';
+import { CommonOptions } from '../utils/commonOptions.js';
 
 export interface StatusOptions {
     json?: boolean;
@@ -54,9 +55,9 @@ export class StatusCommand {
         program
             .command('status')
             .description('Show system status and health')
-            .option('--json', 'Output in JSON format for LLM parsing')
+            .addOption(CommonOptions.json())
             .option('--detailed', 'Show detailed status information')
-            .option('--watch', 'Watch status in real-time')
+            .addOption(CommonOptions.watch())
             .option('--interval <seconds>', 'Update interval for watch mode (default: 5)', '5')
             .action(async (options: StatusOptions) => {
                 await this.execute(options);

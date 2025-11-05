@@ -302,7 +302,7 @@ export class StripeService extends BaseService {
             });
 
             const createParams: any = {
-                amount: Math.round(params.amount * 100), // Convert to cents
+                amount: Math.round(params.amount), // Amount should be in cents
                 currency: params.currency.toLowerCase(),
                 capture_method: params.captureMethod || 'automatic',
                 metadata: params.metadata || {},
@@ -326,7 +326,7 @@ export class StripeService extends BaseService {
 
             const paymentData: StripePaymentData = {
                 id: paymentIntent.id,
-                amount: paymentIntent.amount / 100, // Convert back from cents
+                amount: paymentIntent.amount, // Keep in cents for consistency with Stripe API
                 currency: paymentIntent.currency.toUpperCase(),
                 status: paymentIntent.status,
                 clientSecret: paymentIntent.client_secret,
@@ -371,17 +371,19 @@ export class StripeService extends BaseService {
     async listCustomers(options: any, progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listCustomers', async () => {
             const customers = await this.stripe.customers.list(options);
-            
+
             return {
-                customers: customers.data.map(customer => ({
-                    id: customer.id,
-                    email: customer.email,
-                    name: customer.name,
-                    phone: customer.phone,
-                    created: new Date(customer.created * 1000),
-                    metadata: customer.metadata
+                data: customers.data.map(customer => ({
+                    customer: {
+                        id: customer.id,
+                        email: customer.email,
+                        name: customer.name,
+                        phone: customer.phone,
+                        created: new Date(customer.created * 1000),
+                        metadata: customer.metadata
+                    }
                 })),
-                hasMore: customers.has_more,
+                has_more: customers.has_more,
                 totalCount: customers.data.length
             };
         });
@@ -393,14 +395,20 @@ export class StripeService extends BaseService {
     async confirmPaymentIntent(paymentIntentId: string, options: any = {}, progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('confirmPaymentIntent', async () => {
             const paymentIntent = await this.stripe.paymentIntents.confirm(paymentIntentId, options);
-            
-            return {
+
+            const paymentData = {
                 id: paymentIntent.id,
                 status: paymentIntent.status,
-                amount: paymentIntent.amount / 100,
+                amount: paymentIntent.amount, // Keep in cents
                 currency: paymentIntent.currency,
                 clientSecret: paymentIntent.client_secret,
                 paymentMethod: paymentIntent.payment_method
+            };
+
+            return {
+                success: true,
+                message: 'Payment intent confirmed successfully',
+                paymentIntent: paymentData
             };
         });
     }
@@ -411,17 +419,17 @@ export class StripeService extends BaseService {
     async listPaymentIntents(options: any, progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listPaymentIntents', async () => {
             const paymentIntents = await this.stripe.paymentIntents.list(options);
-            
+
             return {
-                payments: paymentIntents.data.map(pi => ({
+                data: paymentIntents.data.map(pi => ({
                     id: pi.id,
-                    amount: pi.amount / 100,
+                    amount: pi.amount, // Keep in cents
                     currency: pi.currency,
                     status: pi.status,
                     created: new Date(pi.created * 1000),
                     customerId: pi.customer as string
                 })),
-                hasMore: paymentIntents.has_more,
+                has_more: paymentIntents.has_more,
                 totalCount: paymentIntents.data.length
             };
         });
@@ -433,14 +441,20 @@ export class StripeService extends BaseService {
     async createSubscription(params: any, progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('createSubscription', async () => {
             const subscription = await this.stripe.subscriptions.create(params);
-            
-            return {
+
+            const subscriptionData = {
                 id: subscription.id,
                 status: subscription.status,
                 customerId: subscription.customer as string,
                 currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
                 currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
                 items: subscription.items.data
+            };
+
+            return {
+                success: true,
+                message: 'Subscription created successfully',
+                subscription: subscriptionData
             };
         });
     }
@@ -451,12 +465,18 @@ export class StripeService extends BaseService {
     async cancelSubscription(subscriptionId: string, options: any = {}, progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('cancelSubscription', async () => {
             const subscription = await this.stripe.subscriptions.cancel(subscriptionId, options);
-            
-            return {
+
+            const subscriptionData = {
                 id: subscription.id,
                 status: subscription.status,
                 canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
                 currentPeriodEnd: new Date((subscription as any).current_period_end * 1000)
+            };
+
+            return {
+                success: true,
+                message: 'Subscription canceled successfully',
+                subscription: subscriptionData
             };
         });
     }
@@ -467,9 +487,9 @@ export class StripeService extends BaseService {
     async listSubscriptions(options: any, progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listSubscriptions', async () => {
             const subscriptions = await this.stripe.subscriptions.list(options);
-            
+
             return {
-                subscriptions: subscriptions.data.map(sub => ({
+                data: subscriptions.data.map(sub => ({
                     id: sub.id,
                     status: sub.status,
                     customerId: sub.customer as string,
@@ -477,7 +497,7 @@ export class StripeService extends BaseService {
                     currentPeriodEnd: new Date((sub as any).current_period_end * 1000),
                     items: sub.items.data
                 })),
-                hasMore: subscriptions.has_more,
+                has_more: subscriptions.has_more,
                 totalCount: subscriptions.data.length
             };
         });

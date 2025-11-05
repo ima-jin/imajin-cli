@@ -24,6 +24,7 @@ import { CLI_OPTIONS, CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js'
 import { CredentialManager } from '../../core/credentials/CredentialManager.js';
 import type { CredentialData } from '../../core/credentials/interfaces.js';
 import { Logger } from '../../logging/Logger.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class AuthCommands {
     private credentialManager: CredentialManager;
@@ -75,14 +76,14 @@ export class AuthCommands {
         authCommand
             .command('remove')
             .argument('<service>', 'Service name to remove')
-            .option('--force', 'Skip confirmation prompt')
+            .addOption(CommonOptions.force())
             .description('Remove credentials for a service')
             .action(this.handleRemove.bind(this));
 
         // Clear command
         authCommand
             .command('clear')
-            .option('--force', 'Skip confirmation prompt')
+            .addOption(CommonOptions.force())
             .description('Remove all stored credentials')
             .action(this.handleClear.bind(this));
 

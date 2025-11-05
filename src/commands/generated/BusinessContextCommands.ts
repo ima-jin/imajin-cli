@@ -26,6 +26,7 @@ import { BusinessTypeRegistry, initializeBusinessTypeSystem } from '../../types/
 import { RecipeManager } from '../../context/RecipeManager.js';
 import type { Logger } from '../../logging/Logger.js';
 import chalk from 'chalk';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 // =============================================================================
 // BUSINESS CONTEXT COMMANDS
@@ -52,7 +53,7 @@ export function createBusinessContextCommands(): Command {
         .option('-n, --name <name>', 'Business name')
         .option('-d, --description <description>', 'Business description')
         .option('-i, --interactive', 'Interactive mode')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('context init command starting', { name: options.name, hasDescription: !!options.description, interactive: options.interactive, json: options.json });
@@ -162,7 +163,7 @@ Important business rules:
         .option('-t, --type <type>', 'Recipe type (e.g., coffee-shop, restaurant, ecommerce, saas)')
         .option('-n, --name <name>', 'Business name')
         .option('--preview', 'Preview recipe without creating')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('context recipe command starting', { type: options.type, name: options.name, preview: options.preview, json: options.json });
@@ -271,7 +272,7 @@ Important business rules:
     // Show configuration
     cmd.command('show')
         .description('Show current business context configuration')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .option('--yaml', 'Output in YAML format')
         .action(async (options) => {
             try {
@@ -396,7 +397,7 @@ Important business rules:
     // Validate configuration
     cmd.command('validate')
         .description('Validate business context configuration')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('context validate command starting', { json: options.json });
@@ -458,7 +459,7 @@ Important business rules:
     cmd.command('inspect')
         .description('Inspect service mappings and translations')
         .argument('<service>', 'Service name to inspect')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (serviceName, options) => {
             try {
                 logger?.debug('context inspect command starting', { serviceName, json: options.json });
@@ -511,7 +512,7 @@ Important business rules:
         .description('List available business commands')
         .option('--category <category>', 'Filter by category (porcelain|plumbing)')
         .option('--entity <entity>', 'Filter by entity')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('context commands command starting', { category: options.category, entity: options.entity, json: options.json });
@@ -574,7 +575,7 @@ Important business rules:
     // Workflow suggestions
     cmd.command('workflows')
         .description('Get workflow suggestions for your business')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('context workflows command starting', { json: options.json });

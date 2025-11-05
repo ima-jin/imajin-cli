@@ -16,7 +16,7 @@ Systematic review: catch leaks, enforce consistency, prevent debt. Champion simp
 - ❌ **No backward compatibility code** - Delete old properties, don't keep deprecated fields
 - ❌ **No implementation date comments** - No "Added in Phase 2.3" or version markers
 - ❌ **No migration snapshots** - Clean init from scratch only, no historical data preservation
-- ❌ **No console.log/error/warn** anywhere - Use `logger` utility exclusively (from Winston logging system)
+- ⚠️ **Console.log policy for CLI apps** - See Console Usage Policy below
 
 **Code Quality**
 - No `any` types, unused vars, dead code, secrets
@@ -47,6 +47,45 @@ Systematic review: catch leaks, enforce consistency, prevent debt. Champion simp
 - Proper streaming for large files (digiKam, media)
 - Database queries optimized (when using local DBs)
 - CLI startup time <2 seconds
+
+---
+
+## Console Usage Policy (CLI-Specific)
+
+**IMPORTANT:** imajin-cli is a CLI application, not a web service. Console output IS the user interface.
+
+**✅ ALLOWED - User-Facing CLI Output:**
+- Commands (`src/commands/**`) - Console with chalk formatting is the UI
+- Entry point (`src/index.ts`) - Fatal startup errors
+- Examples (`**/examples/**`) - Demonstration code
+- Scripts (`scripts/**`) - Build/tooling output
+- Tests - Debugging output
+
+**❌ PROHIBITED - Internal/Service Layer:**
+- Services (`src/services/**/*.ts` excluding `**/commands/**`)
+- Providers (`src/providers/**`)
+- Middleware (`src/middleware/**`)
+- Core internal logic (`src/core/**` excluding Application.ts user messages)
+- ETL pipeline (`src/etl/**`)
+- Jobs (`src/jobs/**`)
+- Schemas (`src/schemas/**`)
+
+**Policy Rationale:**
+- **Commands are the CLI interface** - console.log(chalk.green('✅ Success')) is how users see output
+- **Services are business logic** - Should only use structured logger for debugging
+- **ESLint enforces this** - `no-console` rule configured per directory
+
+**Example - Correct Command Pattern:**
+```typescript
+// In src/commands/customer.ts - User-facing output
+console.log(chalk.green('✅ Customer created successfully!'));
+console.log(chalk.cyan(`ID: ${customer.id}`));
+this.logger.info('Customer created', { customerId: customer.id }); // Parallel logging
+
+// In src/services/stripe/StripeService.ts - NO console, only logger
+this.logger.debug('Creating Stripe customer', { email });
+this.logger.info('Customer created', { customerId: customer.id });
+```
 
 ---
 

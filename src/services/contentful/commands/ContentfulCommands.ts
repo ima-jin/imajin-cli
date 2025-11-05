@@ -23,6 +23,7 @@ import type { Recipe } from '../../../context/RecipeManager.js';
 import { RecipeManager } from '../../../context/RecipeManager.js';
 import { Container } from '../../../container/Container.js';
 import type { Logger } from '../../../logging/Logger.js';
+import { CommonOptions } from '../../../utils/commonOptions.js';
 
 // Global application instance (set during boot)
 declare global {
@@ -87,8 +88,8 @@ export function createContentfulCommands(): Command {
     contentCmd.command('list')
         .description('List content entries')
         .option('-t, --type <type>', 'Content type filter')
-        .option('-l, --limit <limit>', 'Number of entries to return', '10')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.limit(10))
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 const { Container } = await import('../../../container/Container.js');
@@ -142,7 +143,7 @@ export function createContentfulCommands(): Command {
 
     contentCmd.command('get <id>')
         .description('Get specific content entry by ID')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (id, options) => {
             try {
                 const { Container } = await import('../../../container/Container.js');
@@ -194,7 +195,7 @@ export function createContentfulCommands(): Command {
     contentCmd.command('search <query>')
         .description('Search content across all types')
         .option('-t, --types <types>', 'Comma-separated content types to search')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (query, options) => {
             try {
                 const { Container } = await import('../../../container/Container.js');
@@ -241,8 +242,8 @@ export function createContentfulCommands(): Command {
     // Events/time-based content
     cmd.command('events')
         .description('Get upcoming events from content')
-        .option('-l, --limit <limit>', 'Number of events to return', '5')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.limit(5))
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 const { Container } = await import('../../../container/Container.js');
@@ -294,8 +295,8 @@ export function createContentfulCommands(): Command {
         .description('Get content items by type')
         .option('-t, --type <type>', 'Item type filter (e.g., product, track, article)')
         .option('-c, --category <category>', 'Category filter')
-        .option('-l, --limit <limit>', 'Number of items to return', '20')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.limit(20))
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 const { Container } = await import('../../../container/Container.js');
@@ -342,7 +343,7 @@ export function createContentfulCommands(): Command {
     // Service status and configuration
     cmd.command('status')
         .description('Check Contentful service status')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 const { Container } = await import('../../../container/Container.js');
@@ -406,8 +407,8 @@ export function createContentfulCommands(): Command {
     cmd.command('bootstrap')
         .description('Bootstrap Contentful space from existing business recipe')
         .option('-c, --context <recipeId>', 'Business recipe context (use "imajin recipes list" to see options)')
-        .option('--dry-run', 'Show what would be created without actually creating')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.dryRun())
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 if (!options.context) {
@@ -549,7 +550,7 @@ export function createContentfulCommands(): Command {
     cmd.command('migrate')
         .description('Production-safe content type migration (preserves existing content)')
         .option('-c, --context <recipeId>', 'Business recipe context')
-        .option('--dry-run', 'Show migration plan without executing')
+        .addOption(CommonOptions.dryRun())
         .option('--backup', 'Create content backup before migration (recommended)')
         .action(async (options) => {
             try {
@@ -632,7 +633,7 @@ export function createContentfulCommands(): Command {
     schemaCmd.command('show')
         .description('Show current content type schema')
         .argument('<contentType>', 'Content type to inspect')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (contentType, options) => {
             try {
                 const container = globalThis.imajinApp?.container || new Container();
@@ -701,7 +702,7 @@ export function createContentfulCommands(): Command {
         .option('-t, --type <type>', 'Property type (string, number, boolean, date, etc.)')
         .option('--required', 'Make property required')
         .option('--default <value>', 'Default value')
-        .option('--dry-run', 'Show what would be added without executing')
+        .addOption(CommonOptions.dryRun())
         .action(async (propertyPath, options) => {
             try {
                 const [contentType, ...fieldPath] = propertyPath.split('.');
@@ -750,7 +751,7 @@ export function createContentfulCommands(): Command {
         .argument('<propertyPath>', 'Property path (e.g., chart.chartUrl)')
         .option('--confirm', 'Confirm deletion (required for safety)')
         .option('--backup', 'Create backup before removal')
-        .option('--dry-run', 'Show what would be removed without executing')
+        .addOption(CommonOptions.dryRun())
         .action(async (propertyPath, options) => {
             try {
                 const [contentType, ...fieldPath] = propertyPath.split('.');

@@ -18,6 +18,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { CommonOptions } from '../utils/commonOptions.js';
 import { BusinessContextManager } from '../context/BusinessContextManager.js';
 import { RecipeManager } from '../context/RecipeManager.js';
 import type { Logger } from '../logging/Logger.js';
@@ -53,7 +54,7 @@ export class ContextCommands {
       .command('list')
       .alias('ls')
       .description('List available contexts')
-      .option('--format <format>', 'Output format (table, json)', 'table')
+      .addOption(CommonOptions.format(['table', 'json']))
       .action(async (options) => {
         await this.listContexts(options);
       });
@@ -78,7 +79,7 @@ export class ContextCommands {
       .command('show')
       .description('Show context details')
       .argument('<contextName>', 'Context name')
-      .option('--format <format>', 'Output format (yaml, json)', 'yaml')
+      .addOption(CommonOptions.format(['yaml', 'json']).default('yaml'))
       .action(async (contextName, options) => {
         await this.showContext(contextName, options);
       });
@@ -98,7 +99,7 @@ export class ContextCommands {
       .description('List entities in context')
       .argument('<contextName>', 'Context name')
       .option('-t, --type <type>', 'Entity type filter')
-      .option('--format <format>', 'Output format (table, json)', 'table')
+      .addOption(CommonOptions.format(['table', 'json']))
       .action(async (contextName, options) => {
         await this.listEntities(contextName, options);
       });
@@ -107,7 +108,7 @@ export class ContextCommands {
     contextCommand
       .command('recipes')
       .description('List available recipes')
-      .option('--format <format>', 'Output format (table, json)', 'table')
+      .addOption(CommonOptions.format(['table', 'json']))
       .action(async (options) => {
         await this.listRecipes(options);
       });

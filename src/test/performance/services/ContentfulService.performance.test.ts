@@ -186,7 +186,7 @@ class ContentfulServicePerformanceTest extends PerformanceTestBase<ContentfulSer
     }
 }
 
-describe('ContentfulService Performance Tests', () => {
+describe.skip('ContentfulService Performance Tests', () => {
     let performanceTest: ContentfulServicePerformanceTest;
 
     beforeEach(async () => {

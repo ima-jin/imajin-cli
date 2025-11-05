@@ -126,7 +126,7 @@ export function createBusinessEntity(entityName: string, data: Partial<any>): an
  */
 function generateBusinessEntityId(entityName: string): string {
     const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
+    const random = (()=>{const{randomBytes}=require("crypto");const b=randomBytes(5);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,6);})();
     return `${entityName}_${timestamp}_${random}`;
 }
 

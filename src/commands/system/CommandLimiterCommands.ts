@@ -15,6 +15,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { getCommandLimiter } from '../../utils/CommandLimiter.js';
 import type { Logger } from '../../logging/Logger.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export function createCommandLimiterCommands(logger: Logger): Command {
     const cmd = new Command('command-limiter')
@@ -24,7 +25,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
     // Show allowed git commands
     cmd.command('list')
         .description('List allowed git command patterns')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('Listing allowed command patterns', { json: !!options.json });
@@ -61,7 +62,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
     cmd.command('test')
         .description('Test if a git command would be allowed')
         .argument('<command>', 'Git command to test (e.g., "git status --porcelain")')
-        .option('--json', 'Output result in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (command, options) => {
             try {
                 logger?.debug('Testing command validation', { command, json: !!options.json });
@@ -98,7 +99,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
     // Check if .ai.gitallowed file exists
     cmd.command('status')
         .description('Show command limiter status and configuration')
-        .option('--json', 'Output in JSON format')
+        .addOption(CommonOptions.json())
         .action(async (options) => {
             try {
                 logger?.debug('Checking command limiter status', { json: !!options.json });
@@ -143,7 +144,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
     // Initialize .ai.gitallowed file
     cmd.command('init')
         .description('Create default .ai.gitallowed file if it doesn\'t exist')
-        .option('--force', 'Overwrite existing file')
+        .addOption(CommonOptions.force())
         .action(async (options) => {
             try {
                 logger?.debug('Initializing command limiter config', { force: !!options.force });

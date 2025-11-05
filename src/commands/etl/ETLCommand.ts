@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { CommonOptions } from '../../utils/commonOptions.js';
 import { Pipeline } from '../../etl/core.js';
 import type { Logger } from '../../logging/Logger.js';
 
@@ -27,7 +28,7 @@ export class ETLCommand {
         etlCommand
             .command('extract <source>')
             .description('Extract data from a source')
-            .option('-o, --output <output>', 'Output file path')
+            .addOption(CommonOptions.output())
             .action(async (source: string, options) => {
                 try {
                     this.logger?.debug('Starting ETL extraction', { source, output: options.output });
@@ -45,7 +46,7 @@ export class ETLCommand {
             .command('transform <transformer>')
             .description('Transform data using a transformer')
             .option('-i, --input <input>', 'Input data (JSON)')
-            .option('-o, --output <output>', 'Output file path')
+            .addOption(CommonOptions.output())
             .action(async (transformer: string, options) => {
                 try {
                     this.logger?.debug('Starting ETL transformation', { transformer, input: options.input });
@@ -125,7 +126,7 @@ export class ETLCommand {
             .command('execute <pipeline-id>')
             .description('Execute an ETL pipeline')
             .option('-i, --input <input>', 'Input data (JSON)')
-            .option('-o, --output <output>', 'Output file path')
+            .addOption(CommonOptions.output())
             .action(async (pipelineId: string, options) => {
                 try {
                     this.logger?.debug('Executing ETL pipeline', { pipelineId, input: options.input });

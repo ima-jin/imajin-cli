@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
 import type { Logger } from '../../logging/Logger.js';
+import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class GraphCommand {
     private readonly registry: DefaultBridgeRegistry;
@@ -28,7 +29,7 @@ export class GraphCommand {
             .command('translate <source> <target>')
             .description('Translate between graph models')
             .option('-i, --input <input>', 'Input data (JSON)')
-            .option('-o, --output <output>', 'Output file path')
+            .addOption(CommonOptions.output())
             .action(async (source: string, target: string, options) => {
                 try {
                     this.logger?.debug('Starting graph translation', { source, target });
@@ -68,7 +69,7 @@ export class GraphCommand {
             .command('normalize <source> <model>')
             .description('Normalize external graph to standard model')
             .option('-i, --input <input>', 'Input data (JSON)')
-            .option('-o, --output <output>', 'Output file path')
+            .addOption(CommonOptions.output())
             .action(async (source: string, model: string, options) => {
                 try {
                     this.logger?.debug('Starting graph normalization', { source, model });
