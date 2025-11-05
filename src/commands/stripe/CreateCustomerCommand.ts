@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see         docs/commands/stripe.md
  * 
@@ -62,6 +62,8 @@ export class CreateCustomerCommand {
         const _startTime = Date.now();
 
         try {
+            this.logger.debug('Create customer command starting', { options });
+
             // Validate required fields
             if (!options.email && !options.name) {
                 throw new Error('Either email or name is required');
@@ -127,7 +129,7 @@ export class CreateCustomerCommand {
                 this.displayCustomerInfo(response.customer, duration);
             }
 
-            this.logger.info('Customer created successfully', {
+            this.logger.info('Create customer command completed', {
                 customerId: response.customer.id,
                 duration,
             });
@@ -136,7 +138,7 @@ export class CreateCustomerCommand {
             const duration = Date.now() - _startTime;
             const errorMessage = error instanceof Error ? error.message : String(error);
 
-            this.logger.error('Failed to create customer', error instanceof Error ? error : new Error(errorMessage), { duration });
+            this.logger.error('Create customer command failed', error instanceof Error ? error : new Error(errorMessage), { options, duration });
 
             const errorResponse: LLMResponse = {
                 success: false,

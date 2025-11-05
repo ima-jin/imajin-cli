@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-10
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - WebhookManager for webhook testing
@@ -40,6 +40,7 @@ export class WebhookTestCommand extends BaseCommand {
      */
     public async execute(args: any[], options: any): Promise<any> {
         try {
+            this.logger?.debug('Starting webhook test', { args, json: !!options.json });
             this.validate(args, options);
 
             const source = args[0];
@@ -59,7 +60,7 @@ export class WebhookTestCommand extends BaseCommand {
             const testPayload = this.generateTestPayload(source, eventType, options);
             const testHeaders = this.generateTestHeaders(source, options);
 
-            this.info('Starting webhook test', {
+            this.logger?.debug('Webhook test configured', {
                 source,
                 eventType,
                 handlers: handlers.length
@@ -116,13 +117,12 @@ export class WebhookTestCommand extends BaseCommand {
                     this.displayTestResults(result);
                 }
 
-                this.info('Webhook test completed successfully', {
+                this.logger?.info('Webhook test completed successfully', {
                     source,
                     eventType,
-                    results: testResults.length
+                    results: testResults.length,
+                    success: result.success
                 });
-
-
 
                 return result;
 
@@ -133,7 +133,7 @@ export class WebhookTestCommand extends BaseCommand {
             }
 
         } catch (error) {
-            this.error('Webhook test failed', error as Error);
+            this.logger?.error('Webhook test failed', error as Error);
             throw error;
         }
     }

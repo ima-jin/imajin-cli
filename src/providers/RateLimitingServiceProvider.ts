@@ -18,15 +18,17 @@
 
 import type { Command } from 'commander';
 import type { Container } from '../container/Container.js';
-import { ApiManager } from '../core/api/ApiManager';
-import { CircuitBreaker } from '../core/api/CircuitBreaker';
-import { RateLimiter } from '../core/ratelimit/RateLimiter';
+import { ApiManager } from '../core/api/ApiManager.js';
+import { CircuitBreaker } from '../core/api/CircuitBreaker.js';
+import { RateLimiter } from '../core/ratelimit/RateLimiter.js';
+import type { Logger } from '../logging/Logger.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
 /**
  * Rate limiting and API management service provider
  */
 export class RateLimitingServiceProvider extends ServiceProvider {
+    private logger!: Logger;
 
     constructor(container: Container, program: Command) {
         super(container, program);
@@ -43,6 +45,9 @@ export class RateLimitingServiceProvider extends ServiceProvider {
      * Register rate limiting and API management services
      */
     public register(): void {
+        // Get logger from container
+        this.logger = this.container.resolve<Logger>('logger');
+
         // Register core components as singletons
         this.container.singleton('RateLimiter', () => new RateLimiter());
         this.container.singleton('CircuitBreaker', () => new CircuitBreaker());
@@ -68,7 +73,10 @@ export class RateLimitingServiceProvider extends ServiceProvider {
         // Add shutdown handlers
         this.setupShutdownHandlers(apiManager);
 
-        console.log('✓ Rate limiting and API management services initialized');
+        this.logger.info('Rate limiting and API management services initialized', {
+            provider: 'RateLimitingServiceProvider',
+            services: ['RateLimiter', 'CircuitBreaker', 'ApiManager']
+        });
     }
 
     /**
@@ -210,14 +218,14 @@ export class RateLimitingServiceProvider extends ServiceProvider {
      */
     private setupShutdownHandlers(apiManager: ApiManager): void {
         const gracefulShutdown = async (signal: string) => {
-            console.log(`\n${signal} received. Shutting down gracefully...`);
+            this.logger.info('Shutdown signal received', { signal, graceful: true });
 
             try {
                 await apiManager.shutdown();
-                console.log('✓ API manager shut down gracefully');
+                this.logger.info('API manager shut down gracefully', { signal });
                 process.exit(0);
             } catch (error) {
-                console.error('✗ Error during shutdown:', error);
+                this.logger.error('Error during shutdown', error as Error, { signal });
                 process.exit(1);
             }
         };

@@ -1,12 +1,12 @@
-import { ServiceProvider } from '../../providers/ServiceProvider';
-import { DefaultBridgeRegistry, BridgeComponent } from '../bridges';
-import { ETLPipeline } from '../core/ETLPipeline';
-import { GraphTranslationEngine } from '../graphs/GraphTranslationEngine';
+import { ServiceProvider } from '../../providers/ServiceProvider.js';
+import { DefaultBridgeRegistry, BridgeComponent } from '../bridges.js';
+import { ETLPipeline } from '../core/ETLPipeline.js';
+import { GraphTranslationEngine } from '../graphs/GraphTranslationEngine.js';
 import { EventEmitter } from 'events';
-import { Logger } from '../../logging/Logger';
+import { Logger } from '../../logging/Logger.js';
 import type { Command } from 'commander';
-import type { Container } from '../../container/Container';
-import type { PipelineDefinition } from '../core/interfaces';
+import type { Container } from '../../container/Container.js';
+import type { PipelineDefinition } from '../core/interfaces.js';
 
 /**
  * ETLServiceProvider - ETL Pipeline Service Registration
@@ -17,7 +17,8 @@ import type { PipelineDefinition } from '../core/interfaces';
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-07-03
+ * @since       2025-06-13
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Bridge Registry

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Extract graph data from external API endpoints
@@ -30,6 +30,7 @@ import {
 } from '../core/interfaces.js';
 import { ModelFactory } from '../graphs/models.js';
 import { BaseExtractor } from './BaseExtractor.js';
+import type { Logger } from '../../logging/Logger.js';
 
 /**
  * Graph extractor implementation
@@ -42,22 +43,24 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
         version: z.string(),
         schema: z.object({
             version: z.string(),
-            entities: z.record(z.any()),
-            relationships: z.record(z.any()),
-            constraints: z.record(z.any())
+            entities: z.record(z.string(), z.any()),
+            relationships: z.record(z.string(), z.any()),
+            constraints: z.record(z.string(), z.any())
         }),
         compatibilityMap: z.object({
             directCompatible: z.array(z.string()),
             translatableFrom: z.array(z.string()),
             translatableTo: z.array(z.string())
         }),
-        metadata: z.record(z.any())
-    }) as z.ZodType<GraphModel, z.ZodTypeDef, GraphModel>;
+        metadata: z.record(z.string(), z.any())
+    }) as z.ZodType<GraphModel>;
 
     private modelDetectionRules = new Map<string, (data: any) => boolean>();
+    private logger: Logger;
 
     constructor() {
         super();
+        this.logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
         this.initializeModelDetectionRules();
     }
 
@@ -241,11 +244,17 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
         // Add request interceptor for logging
         this.httpClient.interceptors.request.use(
             (config) => {
-                console.log(`[GraphExtractor] Request: ${config.method?.toUpperCase()} ${config.url}`);
+                this.logger.debug('HTTP request initiated', {
+                    method: config.method?.toUpperCase(),
+                    url: config.url,
+                    extractor: 'GraphExtractor'
+                });
                 return config;
             },
             (error) => {
-                console.error('[GraphExtractor] Request error:', error);
+                this.logger.error('HTTP request failed', error as Error, {
+                    extractor: 'GraphExtractor'
+                });
                 return Promise.reject(error);
             }
         );
@@ -253,11 +262,19 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
         // Add response interceptor for error handling
         this.httpClient.interceptors.response.use(
             (response) => {
-                console.log(`[GraphExtractor] Response: ${response.status} ${response.statusText}`);
+                this.logger.debug('HTTP response received', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    extractor: 'GraphExtractor'
+                });
                 return response;
             },
             (error) => {
-                console.error('[GraphExtractor] Response error:', error.response?.status, error.response?.statusText);
+                this.logger.error('HTTP response error', error as Error, {
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    extractor: 'GraphExtractor'
+                });
                 return Promise.reject(error);
             }
         );

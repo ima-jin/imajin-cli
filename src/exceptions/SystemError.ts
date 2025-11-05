@@ -15,7 +15,7 @@
  * - Process management
  */
 
-import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException';
+import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException.js';
 
 export type SystemErrorType = 'file_not_found' | 'permission_denied' | 'disk_space' | 'memory_limit' | 'process_error' | 'config_error' | 'dependency_missing' | 'provider_not_found';
 

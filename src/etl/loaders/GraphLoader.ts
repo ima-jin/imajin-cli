@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Load graph data to external API endpoints
@@ -40,17 +40,17 @@ export class GraphLoader extends BaseLoader<GraphModel> implements IGraphLoader 
         version: z.string(),
         schema: z.object({
             version: z.string(),
-            entities: z.record(z.any()),
-            relationships: z.record(z.any()),
-            constraints: z.record(z.any())
+            entities: z.record(z.string(), z.any()),
+            relationships: z.record(z.string(), z.any()),
+            constraints: z.record(z.string(), z.any())
         }),
         compatibilityMap: z.object({
             directCompatible: z.array(z.string()),
             translatableFrom: z.array(z.string()),
             translatableTo: z.array(z.string())
         }),
-        metadata: z.record(z.any())
-    }) as z.ZodType<GraphModel, z.ZodTypeDef, GraphModel>;
+        metadata: z.record(z.string(), z.any())
+    });
 
     private conflictResolutionStrategies = new Map<string, (existing: any, incoming: any) => any>();
 

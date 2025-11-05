@@ -18,6 +18,7 @@
 
 import { Command } from 'commander';
 import type { Container } from '../../container/Container.js';
+import { Logger } from '../../logging/Logger.js';
 
 export interface ICommand {
     readonly name: string;
@@ -29,10 +30,12 @@ export class CommandManager {
     private commands: Map<string, ICommand> = new Map();
     private program: Command;
     private container: Container;
+    private logger: Logger;
 
     constructor(program: Command, container: Container) {
         this.program = program;
         this.container = container;
+        this.logger = new Logger({ level: 'debug' });
     }
 
     /**
@@ -49,7 +52,7 @@ export class CommandManager {
                 try {
                     await command.execute(args.slice(0, -1), args[args.length - 1]);
                 } catch (error) {
-                    console.error(`Command failed: ${error instanceof Error ? error.message : String(error)}`);
+                    this.logger.error('Command failed', error instanceof Error ? error : new Error(String(error)), { commandName: command.name });
                     process.exit(1);
                 }
             });

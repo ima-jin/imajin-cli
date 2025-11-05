@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - RateLimitStrategy interface implementation
@@ -16,8 +16,8 @@
  * - Precise request counting with automatic cleanup
  */
 
-import { RateLimitStatus } from '../RateLimiter';
-import { BaseRateLimitStrategy, RequestInfo } from './RateLimitStrategy';
+import { RateLimitStatus } from '../RateLimiter.js';
+import { BaseRateLimitStrategy, RequestInfo } from './RateLimitStrategy.js';
 
 /**
  * Sliding window rate limiting strategy

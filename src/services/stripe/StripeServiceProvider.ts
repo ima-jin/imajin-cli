@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Service provider pattern for modular architecture
@@ -24,11 +24,11 @@ import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import type { StripeConfig } from '../../types/Stripe.js';
-import { StripeService } from './StripeService';
-import { CustomerCommands } from './commands/CustomerCommands';
-import { PaymentCommands } from './commands/PaymentCommands';
-import { SubscriptionCommands } from './commands/SubscriptionCommands';
-import { CatalogCommands } from './commands/CatalogCommands';
+import { StripeService } from './StripeService.js';
+import { CustomerCommands } from './commands/CustomerCommands.js';
+import { PaymentCommands } from './commands/PaymentCommands.js';
+import { SubscriptionCommands } from './commands/SubscriptionCommands.js';
+import { CatalogCommands } from './commands/CatalogCommands.js';
 
 export class StripeServiceProvider extends ServiceProvider {
     private stripeService?: StripeService;
@@ -214,15 +214,14 @@ export class StripeServiceProvider extends ServiceProvider {
                 .command('configure')
                 .description('Show Stripe configuration instructions')
                 .action(() => {
-                    console.error('❌ Stripe API key not configured');
-                    console.error('💡 Set STRIPE_API_KEY environment variable or provide config');
-                    console.error('');
-                    console.error('Examples:');
-                    console.error('  export STRIPE_API_KEY=sk_test_...');
-                    console.error('  # For test mode (recommended for development)');
-                    console.error('');
-                    console.error('  export STRIPE_API_KEY=sk_live_...');
-                    console.error('  # For live mode (production only)');
+                    this.logger.error('Stripe API key not configured');
+                    this.logger.info('Configuration instructions', {
+                        instructions: 'Set STRIPE_API_KEY environment variable',
+                        examples: [
+                            'export STRIPE_API_KEY=sk_test_... (test mode)',
+                            'export STRIPE_API_KEY=sk_live_... (live mode)'
+                        ]
+                    });
                     process.exit(1);
                 });
 

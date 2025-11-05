@@ -15,7 +15,7 @@
  * - Schema validation (Zod integration)
  */
 
-import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException';
+import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException.js';
 
 export interface ValidationErrorDetails {
     field: string;

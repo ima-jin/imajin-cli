@@ -21,6 +21,7 @@ import type { Container } from '../../container/Container.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import { SystemEventType } from './Event.js';
 import { EventManager, type EventManagerConfig } from './EventManager.js';
+import { Logger } from '../../logging/Logger.js';
 
 /**
  * Event service provider configuration
@@ -36,6 +37,7 @@ export interface EventServiceProviderConfig extends EventManagerConfig {
 export class EventServiceProvider extends ServiceProvider {
     private eventManager: EventManager | null = null;
     private config: EventServiceProviderConfig;
+    private logger: Logger;
 
     constructor(
         container: Container,
@@ -48,6 +50,7 @@ export class EventServiceProvider extends ServiceProvider {
             registerGlobalListeners: config.registerGlobalListeners !== false,
             ...config
         };
+        this.logger = new Logger({ level: 'debug' });
     }
 
     /**
@@ -187,7 +190,7 @@ export class EventServiceProvider extends ServiceProvider {
             name: 'ApplicationStartedLogger',
             eventType: SystemEventType.APPLICATION_STARTED,
             handle: async (event) => {
-                console.log(`Application started: ${JSON.stringify(event.payload)}`);
+                this.logger.info('Application started', event.payload);
             }
         });
 
@@ -195,7 +198,7 @@ export class EventServiceProvider extends ServiceProvider {
             name: 'ApplicationStoppedLogger',
             eventType: SystemEventType.APPLICATION_STOPPED,
             handle: async (event) => {
-                console.log(`Application stopped: ${JSON.stringify(event.payload)}`);
+                this.logger.info('Application stopped', event.payload);
             }
         });
 
@@ -205,7 +208,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.COMMAND_STARTED,
             handle: async (event) => {
                 const { commandName } = event.payload;
-                console.log(`Command started: ${commandName}`);
+                this.logger.info('Command started', { commandName });
             }
         });
 
@@ -214,7 +217,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.COMMAND_COMPLETED,
             handle: async (event) => {
                 const { commandName, duration } = event.payload;
-                console.log(`Command completed: ${commandName} (${duration}ms)`);
+                this.logger.info('Command completed', { commandName, duration });
             }
         });
 
@@ -223,7 +226,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.COMMAND_FAILED,
             handle: async (event) => {
                 const { commandName, error } = event.payload;
-                console.error(`Command failed: ${commandName}`, error);
+                this.logger.error('Command failed', error, { commandName });
             }
         });
 
@@ -233,10 +236,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.ERROR_OCCURRED,
             handle: async (event) => {
                 const { error, severity, context } = event.payload;
-                console.error(`[${severity.toUpperCase()}] Error occurred:`, error.message);
-                if (context) {
-                    console.error('Context:', context);
-                }
+                this.logger.log(severity, `Error occurred: ${error.message}`, { error, context });
             }
         });
 
@@ -246,8 +246,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.PROGRESS_UPDATED,
             handle: async (event) => {
                 const { step, percent, message } = event.payload;
-                const progress = `[${percent}%] ${step}`;
-                console.log(message ? `${progress}: ${message}` : progress);
+                this.logger.debug('Progress updated', { step, percent, message });
             }
         });
 
@@ -257,7 +256,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.SERVICE_REGISTERED,
             handle: async (event) => {
                 const { serviceName, version } = event.payload;
-                console.log(`Service registered: ${serviceName} v${version || 'unknown'}`);
+                this.logger.info('Service registered', { serviceName, version });
             }
         });
 
@@ -266,7 +265,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.SERVICE_STARTED,
             handle: async (event) => {
                 const { serviceName } = event.payload;
-                console.log(`Service started: ${serviceName}`);
+                this.logger.info('Service started', { serviceName });
             }
         });
 
@@ -275,7 +274,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.SERVICE_STOPPED,
             handle: async (event) => {
                 const { serviceName } = event.payload;
-                console.log(`Service stopped: ${serviceName}`);
+                this.logger.info('Service stopped', { serviceName });
             }
         });
 
@@ -285,7 +284,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.PLUGIN_LOADED,
             handle: async (event) => {
                 const { pluginName, version } = event.payload;
-                console.log(`Plugin loaded: ${pluginName} v${version || 'unknown'}`);
+                this.logger.info('Plugin loaded', { pluginName, version });
             }
         });
 
@@ -294,7 +293,7 @@ export class EventServiceProvider extends ServiceProvider {
             eventType: SystemEventType.PLUGIN_UNLOADED,
             handle: async (event) => {
                 const { pluginName } = event.payload;
-                console.log(`Plugin unloaded: ${pluginName}`);
+                this.logger.info('Plugin unloaded', { pluginName });
             }
         });
     }

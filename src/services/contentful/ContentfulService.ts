@@ -7,7 +7,8 @@
  * @copyright   imajin
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
- * @since       2025-07-03
+ * @since       2025-07-01
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Contentful Delivery API for reading content
@@ -18,7 +19,7 @@
  */
 
 import { createClient } from 'contentful';
-import * as contentfulManagement from 'contentful-management';
+import contentfulManagement from 'contentful-management';
 import type { Container } from '../../container/Container.js';
 import type { EventEmitter } from 'events';
 import { BaseService } from '../BaseService.js';

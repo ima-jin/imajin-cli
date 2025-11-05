@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - OpenAPI/GraphQL specification parsing
@@ -19,6 +19,7 @@
 
 import { z } from 'zod';
 import { RecipeManager, type Recipe } from './RecipeManager.js';
+import type { Logger } from '../logging/Logger.js';
 
 // =============================================================================
 // BUSINESS DOMAIN MODEL DEFINITIONS
@@ -27,7 +28,7 @@ import { RecipeManager, type Recipe } from './RecipeManager.js';
 const BusinessDomainModelSchema = z.object({
     businessType: z.string(),
     description: z.string(),
-    entities: z.record(z.any()),
+    entities: z.record(z.string(), z.any()),
     workflows: z.array(z.any()).optional().default([]),
     businessRules: z.array(z.string()).optional().default([]),
     integrations: z.array(z.string()).optional().default([]),
@@ -37,7 +38,7 @@ const BusinessDomainModelSchema = z.object({
 const TranslationMappingSchema = z.object({
     sourceModel: z.string(),
     targetModel: z.string(),
-    mappings: z.record(z.any()),
+    mappings: z.record(z.string(), z.any()),
     bidirectional: z.boolean().default(false),
     confidence: z.number().min(0).max(1).default(0.8),
 });
@@ -71,18 +72,22 @@ export class BusinessContextProcessor {
     private readonly businessPatterns: Map<string, BusinessPattern> = new Map();
     private readonly entityPatterns: Map<string, EntityPattern> = new Map();
     private readonly workflowPatterns: Map<string, WorkflowPattern> = new Map();
+    private logger: Logger;
 
-    constructor() {
+    constructor(logger?: Logger) {
         this.recipeManager = new RecipeManager();
         this.initializePatterns();
+        this.logger = logger || new (require('../logging/Logger.js').Logger)({ level: 'info' });
     }
 
     /**
      * Convert business description to domain model
      */
     async processBusinessDescription(description: string): Promise<BusinessDomainModel> {
-        console.log('🔍 Analyzing business description for domain model generation...');
-        
+        this.logger.debug('Analyzing business description for domain model generation', {
+            descriptionLength: description.length
+        });
+
         // Extract business type from description
         const businessType = await this.extractBusinessType(description);
         
@@ -99,7 +104,12 @@ export class BusinessContextProcessor {
             commands: [],
         };
 
-        console.log(`✅ Generated domain model for "${businessType}" with ${Object.keys(entities).length} entities`);
+        this.logger.info('Generated domain model', {
+            businessType,
+            entitiesCount: Object.keys(entities).length,
+            workflowsCount: domain.workflows?.length || 0,
+            rulesCount: domain.businessRules?.length || 0
+        });
         return domain;
     }
 
@@ -107,8 +117,11 @@ export class BusinessContextProcessor {
      * Generate CLI commands from business context
      */
     async generateBusinessCommands(domain: BusinessDomainModel): Promise<CommandDefinition[]> {
-        console.log('🎯 Generating business-focused CLI commands...');
-        
+        this.logger.debug('Generating business-focused CLI commands', {
+            businessType: domain.businessType,
+            entitiesCount: Object.keys(domain.entities).length
+        });
+
         const commands: CommandDefinition[] = [];
 
         // Generate porcelain commands for each entity
@@ -123,7 +136,10 @@ export class BusinessContextProcessor {
             }
         }
 
-        console.log(`✅ Generated ${commands.length} business commands`);
+        this.logger.info('Generated business commands', {
+            commandsCount: commands.length,
+            businessType: domain.businessType
+        });
         return commands;
     }
 
@@ -134,8 +150,11 @@ export class BusinessContextProcessor {
         domain: BusinessDomainModel,
         availableServices: string[]
     ): Promise<Record<string, TranslationMapping>> {
-        console.log('🔗 Generating service integration mappings...');
-        
+        this.logger.debug('Generating service integration mappings', {
+            businessType: domain.businessType,
+            servicesCount: availableServices.length
+        });
+
         const mappings: Record<string, TranslationMapping> = {};
 
         for (const serviceName of availableServices) {
@@ -145,7 +164,10 @@ export class BusinessContextProcessor {
             }
         }
 
-        console.log(`✅ Generated mappings for ${Object.keys(mappings).length} services`);
+        this.logger.info('Generated service mappings', {
+            mappingsCount: Object.keys(mappings).length,
+            services: Object.keys(mappings)
+        });
         return mappings;
     }
 
@@ -162,13 +184,16 @@ export class BusinessContextProcessor {
         // Try to match description against available recipe types
         for (const recipe of availableRecipes) {
             if (await this.matchesRecipeDescription(text, recipe)) {
-                console.log(`🎯 Matched business type: ${recipe.businessType} (${recipe.name})`);
+                this.logger.info('Matched business type from recipe', {
+                    businessType: recipe.businessType,
+                    recipeName: recipe.name
+                });
                 return recipe.businessType;
             }
         }
-        
+
         // Fall back to generic business type without assumptions
-        console.log(`🔍 No specific business type match found, using generic 'business' type`);
+        this.logger.debug('No specific business type match found, using generic type');
         return 'business';
     }
 
@@ -231,14 +256,19 @@ export class BusinessContextProcessor {
     private async getEntitiesForBusinessType(description: string, businessType: string): Promise<Record<string, any>> {
         // First, try to load entities from the recipe system
         const recipe = await this.recipeManager.getRecipe(businessType);
-        
+
         if (recipe && recipe.entities) {
-            console.log(`✅ Loaded entities from recipe: ${recipe.name}`);
+            this.logger.debug('Loaded entities from recipe', {
+                recipeName: recipe.name,
+                entitiesCount: Object.keys(recipe.entities).length
+            });
             return recipe.entities;
         }
-        
+
         // If no recipe found, extract entities from the description
-        console.log(`⚠️ No recipe found for "${businessType}", extracting entities from description`);
+        this.logger.warn('No recipe found, extracting entities from description', {
+            businessType
+        });
         return this.extractEntities(description, businessType);
     }
 

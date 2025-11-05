@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Application bootstrap error handling
@@ -17,9 +17,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { BaseException } from '../exceptions/BaseException';
-import { SystemError } from '../exceptions/SystemError';
-import { ValidationError } from '../exceptions/ValidationError';
+import { BaseException } from '../exceptions/BaseException.js';
+import { SystemError } from '../exceptions/SystemError.js';
+import { ValidationError } from '../exceptions/ValidationError.js';
+import { Logger } from '../logging/Logger.js';
 
 export interface ErrorHandlerOptions {
     enableConsoleOutput: boolean;
@@ -46,6 +47,7 @@ export class ErrorHandler extends EventEmitter {
     private options: ErrorHandlerOptions;
     private errorHistory: ErrorReport[] = [];
     private readonly maxHistorySize = 100;
+    private logger: Logger;
 
     constructor(options: Partial<ErrorHandlerOptions> = {}) {
         super();
@@ -59,6 +61,8 @@ export class ErrorHandler extends EventEmitter {
             verbose: false,
             ...options
         };
+
+        this.logger = new Logger({ level: 'debug' });
     }
 
     /**
@@ -110,6 +114,7 @@ export class ErrorHandler extends EventEmitter {
 
         } catch (handlerError) {
             // Meta-error: error in error handler
+            this.logger.error('Error in error handler', handlerError instanceof Error ? handlerError : new Error(String(handlerError)));
             console.error('Error in error handler:', handlerError);
             report.handled = false;
         }
@@ -160,6 +165,13 @@ export class ErrorHandler extends EventEmitter {
      * Display error to user
      */
     private displayError(error: BaseException): void {
+        // Log for tracking
+        this.logger.error('Displaying error to user', error, {
+            severity: error.severity,
+            code: error.code,
+            recoverable: error.recoverable
+        });
+
         if (this.options.jsonOutput) {
             console.error(JSON.stringify(error.toJSON(), null, 2));
             return;
@@ -182,13 +194,9 @@ export class ErrorHandler extends EventEmitter {
      * Log error with integrated logging system
      */
     private async logError(error: BaseException, context: any): Promise<void> {
-        // Import logger dynamically to avoid circular dependencies
-        const { Logger } = await import('../logging/Logger');
-        const logger = new Logger();
-
         const logLevel = this.severityToLogLevel(error.severity) as any;
-        
-        logger.log(logLevel, `Error handled: ${error.message}`, {
+
+        this.logger.log(logLevel, `Error handled: ${error.message}`, {
             type: 'error_handled',
             error: {
                 name: error.name,
@@ -202,7 +210,7 @@ export class ErrorHandler extends EventEmitter {
                 metadata: error.metadata,
             },
             context,
-            correlationId: error.metadata.requestId || logger.getCorrelationId(),
+            correlationId: error.metadata.requestId || this.logger.getCorrelationId(),
         });
 
         // Also emit event for backward compatibility
@@ -241,10 +249,12 @@ export class ErrorHandler extends EventEmitter {
                 return this.attemptFallback(error, context);
 
             case 'skip':
+                this.logger.info('Skipping failed operation', { errorCode: error.code });
                 console.log('⚠️  Skipping failed operation and continuing...');
                 return true;
 
             case 'manual':
+                this.logger.info('Manual recovery required', { errorCode: error.code });
                 this.displayManualRecoveryInstructions(error);
                 return false;
 
@@ -267,6 +277,7 @@ export class ErrorHandler extends EventEmitter {
         let attempt = 1;
 
         while (attempt <= maxAttempts) {
+            this.logger.info('Retrying operation', { attempt, maxAttempts, errorCode: error.code });
             console.log(`🔄 Retrying operation (attempt ${attempt}/${maxAttempts})...`);
 
             // Wait for backoff delay
@@ -275,10 +286,13 @@ export class ErrorHandler extends EventEmitter {
 
             try {
                 await originalOperation();
+                this.logger.info('Operation succeeded on retry', { attempt, errorCode: error.code });
                 console.log('✅ Operation succeeded on retry');
                 return true;
             } catch (retryError) {
+                this.logger.warn('Retry attempt failed', { attempt, maxAttempts, errorCode: error.code });
                 if (attempt === maxAttempts) {
+                    this.logger.error('All retry attempts failed', error);
                     console.log('❌ All retry attempts failed');
                     return false;
                 }
@@ -296,16 +310,20 @@ export class ErrorHandler extends EventEmitter {
         const { fallbackOperation } = context;
 
         if (!fallbackOperation || typeof fallbackOperation !== 'function') {
+            this.logger.warn('No fallback available', { errorCode: error.code });
             console.log('⚠️  No fallback available');
             return false;
         }
 
         try {
+            this.logger.info('Attempting fallback operation', { errorCode: error.code });
             console.log('🔄 Attempting fallback operation...');
             fallbackOperation();
+            this.logger.info('Fallback operation succeeded', { errorCode: error.code });
             console.log('✅ Fallback operation succeeded');
             return true;
         } catch (fallbackError) {
+            this.logger.error('Fallback operation failed', fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError)));
             console.log('❌ Fallback operation failed');
             return false;
         }
@@ -330,6 +348,7 @@ export class ErrorHandler extends EventEmitter {
      * Handle critical errors
      */
     private handleCriticalError(error: BaseException): void {
+        this.logger.error('Critical error - Application will exit', error);
         console.error('\n🚨 CRITICAL ERROR - Application will exit');
         console.error(error.getFormattedError());
 

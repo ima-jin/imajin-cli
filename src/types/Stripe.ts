@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-08
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/services/stripe.md
  * 
@@ -42,7 +42,7 @@ export const CreatePaymentIntentSchema = z.object({
     customerId: z.string().optional(),
     paymentMethodId: z.string().optional(),
     description: z.string().optional(),
-    metadata: z.record(z.string()).optional(),
+    metadata: z.record(z.string(), z.string()).optional(),
     captureMethod: z.enum(['automatic', 'manual']).default('automatic'),
     automaticPaymentMethods: z.boolean().default(true),
 });

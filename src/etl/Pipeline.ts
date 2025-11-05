@@ -30,6 +30,7 @@ import {
     PipelineStep,
     Transformer,
 } from './core/interfaces.js';
+import type { Logger } from '../logging/Logger.js';
 
 /**
  * Pipeline execution options
@@ -61,9 +62,11 @@ export interface PipelineExecutionState {
 export class Pipeline {
     private readonly events: EventEmitter;
     private executionStates: Map<string, PipelineExecutionState> = new Map();
+    private logger: Logger;
 
     constructor() {
         this.events = new EventEmitter();
+        this.logger = new (require('../logging/Logger.js').Logger)({ level: 'debug' });
         this.setupDefaultEventHandlers();
     }
 
@@ -458,12 +461,18 @@ export class Pipeline {
                 case 'transform':
                     hasTransform = true;
                     if (!hasExtract) {
-                        console.warn('Transform step without preceding extract step');
+                        this.logger.warn('Transform step without preceding extract step', {
+                            stepName: step.name,
+                            operation: 'validatePipeline'
+                        });
                     }
                     break;
                 case 'load':
                     if (!hasExtract && !hasTransform) {
-                        console.warn('Load step without preceding extract or transform steps');
+                        this.logger.warn('Load step without preceding extract or transform steps', {
+                            stepName: step.name,
+                            operation: 'validatePipeline'
+                        });
                     }
                     break;
             }
@@ -484,50 +493,89 @@ export class Pipeline {
     private setupDefaultEventHandlers(): void {
         // Progress tracking
         this.events.on('progress', (progress: ETLProgress) => {
-            console.log(`[${progress.stage.toUpperCase()}] ${progress.step}: ${progress.message || 'Processing...'}`);
-            if (progress.percentage !== undefined) {
-                console.log(`Progress: ${progress.percentage}% (${progress.processed}/${progress.total || '?'})`);
-            }
+            this.logger.info('ETL progress update', {
+                stage: progress.stage,
+                step: progress.step,
+                message: progress.message || 'Processing...',
+                percentage: progress.percentage,
+                processed: progress.processed,
+                total: progress.total,
+                operation: 'progress'
+            });
         });
 
         // Step tracking
         this.events.on('step:start', (step: string, context: ETLContext) => {
-            console.log(`Starting step: ${step} (Pipeline: ${context.pipelineId})`);
+            this.logger.info('Step started', {
+                step,
+                pipelineId: context.pipelineId,
+                operation: 'step:start'
+            });
         });
 
         this.events.on('step:complete', (step: string, result: ETLResult, _context: ETLContext) => {
-            console.log(`Completed step: ${step} - Processed: ${result.processed} items in ${result.duration}ms`);
+            this.logger.info('Step completed', {
+                step,
+                processed: result.processed,
+                duration: result.duration,
+                operation: 'step:complete'
+            });
         });
 
         this.events.on('step:error', (step: string, error: Error, _context: ETLContext) => {
-            console.error(`Error in step: ${step} - ${error.message}`);
+            this.logger.error('Step error', error, {
+                step,
+                operation: 'step:error'
+            });
         });
 
         // Pipeline tracking
         this.events.on('pipeline:start', (pipelineId: string, context: ETLContext) => {
-            console.log(`Starting pipeline: ${pipelineId} (Execution: ${context.id})`);
+            this.logger.info('Pipeline started', {
+                pipelineId,
+                executionId: context.id,
+                operation: 'pipeline:start'
+            });
         });
 
         this.events.on('pipeline:complete', (pipelineId: string, result: PipelineResult) => {
             const status = result.success ? 'SUCCESS' : 'FAILED';
-            console.log(`Pipeline ${pipelineId} completed: ${status} - ${result.totalProcessed} items processed in ${result.duration}ms`);
+            this.logger.info('Pipeline completed', {
+                pipelineId,
+                status,
+                totalProcessed: result.totalProcessed,
+                duration: result.duration,
+                operation: 'pipeline:complete'
+            });
         });
 
         this.events.on('pipeline:error', (pipelineId: string, error: Error, _context: ETLContext) => {
-            console.error(`Pipeline ${pipelineId} failed: ${error.message}`);
+            this.logger.error('Pipeline failed', error, {
+                pipelineId,
+                operation: 'pipeline:error'
+            });
         });
 
         // Data flow tracking
         this.events.on('data:extracted', (count: number, _context: ETLContext) => {
-            console.log(`Extracted ${count} items`);
+            this.logger.info('Data extracted', {
+                count,
+                operation: 'data:extracted'
+            });
         });
 
         this.events.on('data:transformed', (count: number, _context: ETLContext) => {
-            console.log(`Transformed ${count} items`);
+            this.logger.info('Data transformed', {
+                count,
+                operation: 'data:transformed'
+            });
         });
 
         this.events.on('data:loaded', (count: number, _context: ETLContext) => {
-            console.log(`Loaded ${count} items`);
+            this.logger.info('Data loaded', {
+                count,
+                operation: 'data:loaded'
+            });
         });
     }
 } 

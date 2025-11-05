@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-10
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - WebhookManager for webhook information
@@ -37,6 +37,7 @@ export class WebhookListCommand extends BaseCommand {
      */
     public async execute(args: any[], options: any): Promise<any> {
         try {
+            this.logger?.debug('Listing webhooks', { json: !!options.json });
             this.validate(args, options);
 
             const stats = this.webhookManager.getStats();
@@ -69,15 +70,16 @@ export class WebhookListCommand extends BaseCommand {
                 this.displayTable(result);
             }
 
-            this.info('Webhook list retrieved successfully', {
+            this.logger?.info('Webhook list retrieved successfully', {
                 sources: sources.length,
-                handlers: stats.handlers
+                handlers: stats.handlers,
+                json: !!options.json
             });
 
             return result;
 
         } catch (error) {
-            this.error('Failed to list webhooks', error as Error);
+            this.logger?.error('Failed to list webhooks', error as Error);
             throw error;
         }
     }

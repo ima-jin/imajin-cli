@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-01
+ * @updated      2025-07-03
  */
 
 import { Command } from 'commander';
@@ -26,6 +27,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('Listing allowed command patterns', { json: !!options.json });
                 const limiter = getCommandLimiter(logger);
                 const patterns = await limiter.getAllowedPatterns();
 
@@ -43,10 +45,13 @@ export function createCommandLimiterCommands(logger: Logger): Command {
                             console.log(`  ${index + 1}. ${chalk.green(pattern)}`);
                         });
                     }
-                    
+
                     console.log(chalk.gray('\nPatterns are loaded from .ai.gitallowed file'));
                 }
+
+                logger?.info('Listed allowed command patterns', { count: patterns.length });
             } catch (error) {
+                logger?.error('Failed to list allowed patterns', error as Error);
                 console.error(chalk.red('❌ Failed to list allowed patterns:'), error);
                 process.exit(1);
             }
@@ -59,6 +64,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
         .option('--json', 'Output result in JSON format')
         .action(async (command, options) => {
             try {
+                logger?.debug('Testing command validation', { command, json: !!options.json });
                 const limiter = getCommandLimiter(logger);
                 const validation = await limiter.validateCommand(command);
 
@@ -80,7 +86,10 @@ export function createCommandLimiterCommands(logger: Logger): Command {
                         }
                     }
                 }
+
+                logger?.info('Command validation completed', { command, allowed: validation.allowed });
             } catch (error) {
+                logger?.error('Failed to test command', error as Error, { command });
                 console.error(chalk.red('❌ Failed to test command:'), error);
                 process.exit(1);
             }
@@ -92,6 +101,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('Checking command limiter status', { json: !!options.json });
                 const limiter = getCommandLimiter(logger);
                 const hasFile = await limiter.hasAllowedFile();
                 const patterns = hasFile ? await limiter.getAllowedPatterns() : [];
@@ -121,7 +131,10 @@ export function createCommandLimiterCommands(logger: Logger): Command {
                         console.log(chalk.yellow('💡 Run "imajin limiter init" to create a default configuration'));
                     }
                 }
+
+                logger?.info('Command limiter status checked', { hasFile, patternCount: patterns.length });
             } catch (error) {
+                logger?.error('Failed to check status', error as Error);
                 console.error(chalk.red('❌ Failed to check status:'), error);
                 process.exit(1);
             }
@@ -133,6 +146,7 @@ export function createCommandLimiterCommands(logger: Logger): Command {
         .option('--force', 'Overwrite existing file')
         .action(async (options) => {
             try {
+                logger?.debug('Initializing command limiter config', { force: !!options.force });
                 const limiter = getCommandLimiter(logger);
                 const hasFile = await limiter.hasAllowedFile();
 
@@ -157,8 +171,11 @@ export function createCommandLimiterCommands(logger: Logger): Command {
                 patterns.forEach((pattern, index) => {
                     console.log(`  ${index + 1}. ${chalk.green(pattern)}`);
                 });
-                
+
+                logger?.info('Command limiter config initialized', { patternCount: patterns.length });
+
             } catch (error) {
+                logger?.error('Failed to initialize configuration', error as Error);
                 console.error(chalk.red('❌ Failed to initialize configuration:'), error);
                 process.exit(1);
             }

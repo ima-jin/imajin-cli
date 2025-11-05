@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  */
 
 import { z } from 'zod';
@@ -22,7 +22,7 @@ const BaseEntitySchema = {
     name: z.string(),
     description: z.string().optional(),
     tags: z.array(z.string()).default([]),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date(),
     updated: z.date().optional()
 };
@@ -31,7 +31,7 @@ const BaseRelationshipSchema = {
     sourceId: z.string(),
     targetId: z.string(),
     type: z.string(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 };
 
@@ -92,7 +92,7 @@ const interactionModelSchema: GraphSchema = {
             ...BaseEntitySchema,
             email: z.string().email(),
             status: z.enum(['active', 'inactive', 'suspended']),
-            preferences: z.record(z.any()).optional(),
+            preferences: z.record(z.string(), z.any()).optional(),
             lastActive: z.date().optional()
         }),
         interaction: z.object({
@@ -265,7 +265,7 @@ const socialCommerceSchema: GraphSchema = {
             }),
             availability: z.object({
                 isAvailable: z.boolean().default(true),
-                schedule: z.record(z.any()).optional()
+                schedule: z.record(z.string(), z.any()).optional()
             })
         }),
         // Extends interaction model for transactions

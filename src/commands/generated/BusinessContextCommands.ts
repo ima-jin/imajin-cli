@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Business context initialization and management
@@ -24,6 +24,7 @@ import { BusinessServiceDiscovery } from '../../discovery/BusinessServiceDiscove
 import { BusinessModelFactory } from '../../etl/graphs/BusinessModelFactory.js';
 import { BusinessTypeRegistry, initializeBusinessTypeSystem } from '../../types/Core.js';
 import { RecipeManager } from '../../context/RecipeManager.js';
+import type { Logger } from '../../logging/Logger.js';
 import chalk from 'chalk';
 
 // =============================================================================
@@ -34,6 +35,17 @@ export function createBusinessContextCommands(): Command {
     const cmd = new Command('context');
     cmd.description('Manage business context and domain models');
 
+    // Get logger from container
+    let logger: Logger | null = null;
+    try {
+        const container = (globalThis as any).imajinApp?.container;
+        if (container) {
+            logger = container.resolve('logger') as Logger;
+        }
+    } catch (error) {
+        // Logger not available yet
+    }
+
     // Initialize business context
     cmd.command('init')
         .description('Initialize business context from description')
@@ -43,8 +55,9 @@ export function createBusinessContextCommands(): Command {
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('context init command starting', { name: options.name, hasDescription: !!options.description, interactive: options.interactive, json: options.json });
                 console.log(chalk.blue('🚀 Initializing business context...'));
-                
+
                 let description = options.description;
                 let businessName = options.name;
                 
@@ -104,7 +117,14 @@ Important business rules:
                 // Generate business commands
                 const processor = new BusinessContextProcessor();
                 const commands = await processor.generateBusinessCommands(domainModel);
-                
+
+                logger?.info('context init command completed', {
+                    businessType: config.business.type,
+                    entities: Object.keys(config.entities),
+                    services: serviceMappings.map(m => m.serviceName),
+                    commandsGenerated: commands.length
+                });
+
                 // Output results
                 if (options.json) {
                     console.log(JSON.stringify({
@@ -130,6 +150,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context init command failed', error as Error, { name: options.name, interactive: options.interactive });
                 console.error(chalk.red('❌ Failed to initialize business context:'), error);
                 process.exit(1);
             }
@@ -144,8 +165,9 @@ Important business rules:
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('context recipe command starting', { type: options.type, name: options.name, preview: options.preview, json: options.json });
                 const recipeManager = new RecipeManager();
-                
+
                 if (!options.type) {
                     // Show available recipes if no type specified
                     const recipes = await recipeManager.listRecipes();
@@ -212,7 +234,13 @@ Important business rules:
                 config.entities = domainModel.entities;
                 config.workflows = domainModel.workflows?.map(w => ({ ...w, enabled: true }));
                 await manager.saveConfiguration(config);
-                
+
+                logger?.info('context recipe command completed', {
+                    recipe: options.type,
+                    businessType: domainModel.businessType,
+                    entities: Object.keys(domainModel.entities)
+                });
+
                 if (options.json) {
                     console.log(JSON.stringify({
                         success: true,
@@ -234,6 +262,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context recipe command failed', error as Error, { type: options.type, name: options.name });
                 console.error(chalk.red('❌ Failed to setup from recipe:'), error);
                 process.exit(1);
             }
@@ -246,9 +275,16 @@ Important business rules:
         .option('--yaml', 'Output in YAML format')
         .action(async (options) => {
             try {
+                logger?.debug('context show command starting', { json: options.json, yaml: options.yaml });
                 const manager = new BusinessContextManager();
                 const config = await manager.getCurrentConfiguration();
-                
+
+                logger?.info('context show command completed', {
+                    businessType: config.business.type,
+                    entities: Object.keys(config.entities).length,
+                    workflows: config.workflows?.length || 0
+                });
+
                 if (options.json) {
                     console.log(JSON.stringify(config, null, 2));
                 } else if (options.yaml) {
@@ -283,6 +319,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context show command failed', error as Error, { json: options.json, yaml: options.yaml });
                 console.error(chalk.red('❌ Failed to load configuration:'), error);
                 process.exit(1);
             }
@@ -293,16 +330,17 @@ Important business rules:
         .description('Edit business context configuration')
         .action(async () => {
             try {
+                logger?.debug('context edit command starting', { editor: process.env.EDITOR || 'nano' });
                 const manager = new BusinessContextManager();
                 const configPath = manager.getConfigurationPath();
-                
+
                 // Open in default editor using secure command executor
                 const { executeInteractive } = await import('../../utils/CommandExecutor.js');
                 const editor = process.env.EDITOR || 'nano';
-                
+
                 console.log(chalk.blue(`📝 Opening configuration in ${editor}...`));
                 console.log(chalk.yellow(`File: ${configPath}`));
-                
+
                 const result = await executeInteractive(editor, [configPath]);
                 
                 if (result.success) {
@@ -310,7 +348,13 @@ Important business rules:
                         // Reload and validate configuration
                         await manager.loadConfiguration();
                         const validation = await manager.validateConfiguration(await manager.getCurrentConfiguration());
-                        
+
+                        logger?.info('context edit command completed', {
+                            valid: validation.valid,
+                            warnings: validation.warnings.length,
+                            suggestions: validation.suggestions.length
+                        });
+
                         if (validation.valid) {
                             console.log(chalk.green('✅ Configuration updated successfully!'));
                             
@@ -343,6 +387,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context edit command failed', error as Error, {});
                 console.error(chalk.red('❌ Failed to edit configuration:'), error);
                 process.exit(1);
             }
@@ -354,10 +399,18 @@ Important business rules:
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('context validate command starting', { json: options.json });
                 const manager = new BusinessContextManager();
                 const config = await manager.getCurrentConfiguration();
                 const validation = await manager.validateConfiguration(config);
-                
+
+                logger?.info('context validate command completed', {
+                    valid: validation.valid,
+                    errors: validation.errors.length,
+                    warnings: validation.warnings.length,
+                    suggestions: validation.suggestions.length
+                });
+
                 if (options.json) {
                     console.log(JSON.stringify(validation, null, 2));
                 } else {
@@ -395,6 +448,7 @@ Important business rules:
                 process.exit(validation.valid ? 0 : 1);
                 
             } catch (error) {
+                logger?.error('context validate command failed', error as Error, { json: options.json });
                 console.error(chalk.red('❌ Failed to validate configuration:'), error);
                 process.exit(1);
             }
@@ -407,15 +461,24 @@ Important business rules:
         .option('--json', 'Output in JSON format')
         .action(async (serviceName, options) => {
             try {
+                logger?.debug('context inspect command starting', { serviceName, json: options.json });
                 const manager = new BusinessContextManager();
                 const config = await manager.getCurrentConfiguration();
-                
+
                 const serviceConfig = config.translations?.services?.[serviceName];
                 if (!serviceConfig) {
+                    logger?.error('context inspect command failed - service not found', new Error(`Service "${serviceName}" not found`), { serviceName });
                     console.error(chalk.red(`❌ Service "${serviceName}" not found in configuration`));
                     process.exit(1);
                 }
-                
+
+                logger?.info('context inspect command completed', {
+                    serviceName,
+                    enabled: serviceConfig.enabled,
+                    mapping: serviceConfig.mapping,
+                    fieldCount: Object.keys(serviceConfig.fields).length
+                });
+
                 if (options.json) {
                     console.log(JSON.stringify(serviceConfig, null, 2));
                 } else {
@@ -437,6 +500,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context inspect command failed', error as Error, { serviceName, json: options.json });
                 console.error(chalk.red('❌ Failed to inspect service mapping:'), error);
                 process.exit(1);
             }
@@ -450,9 +514,10 @@ Important business rules:
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('context commands command starting', { category: options.category, entity: options.entity, json: options.json });
                 const manager = new BusinessContextManager();
                 const domainModel = await manager.toDomainModel();
-                
+
                 const processor = new BusinessContextProcessor();
                 let commands = await processor.generateBusinessCommands(domainModel);
                 
@@ -464,7 +529,13 @@ Important business rules:
                 if (options.entity) {
                     commands = commands.filter(cmd => cmd.entityType === options.entity);
                 }
-                
+
+                logger?.info('context commands command completed', {
+                    totalCommands: commands.length,
+                    category: options.category,
+                    entity: options.entity
+                });
+
                 if (options.json) {
                     console.log(JSON.stringify(commands, null, 2));
                 } else {
@@ -494,6 +565,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context commands command failed', error as Error, { category: options.category, entity: options.entity });
                 console.error(chalk.red('❌ Failed to list commands:'), error);
                 process.exit(1);
             }
@@ -505,13 +577,18 @@ Important business rules:
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('context workflows command starting', { json: options.json });
                 const manager = new BusinessContextManager();
                 const domainModel = await manager.toDomainModel();
-                
+
                 const discovery = new BusinessServiceDiscovery();
                 const availableServices: any[] = []; // Would be populated from actual discovery
                 const suggestions = await discovery.suggestWorkflows(domainModel, availableServices);
-                
+
+                logger?.info('context workflows command completed', {
+                    suggestions: suggestions.length
+                });
+
                 if (options.json) {
                     console.log(JSON.stringify(suggestions, null, 2));
                 } else {
@@ -542,6 +619,7 @@ Important business rules:
                 }
                 
             } catch (error) {
+                logger?.error('context workflows command failed', error as Error, { json: options.json });
                 console.error(chalk.red('❌ Failed to get workflow suggestions:'), error);
                 process.exit(1);
             }
@@ -558,18 +636,33 @@ Important business rules:
  * Ensure business context is initialized before running commands
  */
 export async function ensureBusinessContext(): Promise<void> {
+    // Get logger from container
+    let logger: Logger | null = null;
     try {
+        const container = (globalThis as any).imajinApp?.container;
+        if (container) {
+            logger = container.resolve('logger') as Logger;
+        }
+    } catch (error) {
+        // Logger not available yet
+    }
+
+    try {
+        logger?.debug('ensureBusinessContext checking for configuration');
         const manager = new BusinessContextManager();
         if (!(await manager.configurationExists())) {
+            logger?.error('Business context not initialized', new Error('Configuration does not exist'), {});
             console.error(chalk.red('❌ Business context not initialized.'));
             console.log(chalk.yellow('Run "imajin context init" to get started.'));
             process.exit(1);
         }
-        
+
         // Initialize type system
         await initializeBusinessTypeSystem();
-        
+        logger?.info('Business context loaded successfully');
+
     } catch (error) {
+        logger?.error('Failed to load business context', error as Error, {});
         console.error(chalk.red('❌ Failed to load business context:'), error);
         process.exit(1);
     }

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Manages user business context configuration files
@@ -18,16 +18,19 @@
  */
 
 import { z } from 'zod';
-import { readFile, writeFile, mkdir, access } from 'fs/promises';
+import { readFile, writeFile, mkdir, access, readdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
 import yaml from 'js-yaml';
-import type { 
-    BusinessDomainModel, 
-    BusinessDomainModelSchema 
+import type {
+    BusinessDomainModel,
+    BusinessDomainModelSchema
 } from './BusinessContextProcessor.js';
 import type { ServiceMapping } from '../discovery/BusinessServiceDiscovery.js';
 import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
+import type { TaskEntity } from '../commands/TaskMigrationCommand.js';
+import type { Recipe } from './RecipeManager.js';
+import type { Logger } from '../logging/Logger.js';
 
 // =============================================================================
 // CONFIGURATION SCHEMAS
@@ -43,7 +46,7 @@ export const BusinessConfigurationSchema = z.object({
         industry: z.string().optional(),
         size: z.enum(['startup', 'small', 'medium', 'large', 'enterprise']).optional(),
     }),
-    entities: z.record(z.object({
+    entities: z.record(z.string(), z.object({
         fields: z.array(z.object({
             name: z.string(),
             type: z.enum(['string', 'number', 'boolean', 'date', 'array', 'object', 'enum', 'text', 'json', 'datetime', 'reference']),
@@ -90,15 +93,15 @@ export const BusinessConfigurationSchema = z.object({
         enabled: z.boolean().default(true),
     })).optional(),
     translations: z.object({
-        services: z.record(z.object({
+        services: z.record(z.string(), z.object({
             enabled: z.boolean().default(true),
             mapping: z.string(),
-            fields: z.record(z.string()),
+            fields: z.record(z.string(), z.string()),
             transformations: z.array(z.string()).optional(),
-            overrides: z.record(z.any()).optional(),
+            overrides: z.record(z.string(), z.any()).optional(),
         })).optional(),
     }).optional(),
-    porcelainCommands: z.record(z.array(z.object({
+    porcelainCommands: z.record(z.string(), z.array(z.object({
         name: z.string(),
         description: z.string(),
         enabled: z.boolean().default(true),
@@ -148,20 +151,27 @@ export class BusinessContextManager {
     private readonly configDir: string;
     private readonly configFile: string;
     private readonly backupDir: string;
+    private readonly contextsDir: string;
     private currentConfig: BusinessConfiguration | null = null;
+    private logger: Logger;
 
-    constructor(configDirectory?: string) {
+    constructor(configDirectory?: string, logger?: Logger) {
         this.configDir = configDirectory || join(homedir(), '.imajin');
         this.configFile = join(this.configDir, 'business-context.yaml');
         this.backupDir = join(this.configDir, 'backups');
+        this.contextsDir = join(this.configDir, 'contexts');
+        this.logger = logger || new (require('../logging/Logger.js').Logger)({ level: 'info' });
     }
 
     /**
      * Initialize business context configuration
      */
     async initialize(businessDescription: string, businessName?: string): Promise<BusinessConfiguration> {
-        console.log('🚀 Initializing business context configuration...');
-        
+        this.logger.info('Initializing business context configuration', {
+            operation: 'initialize',
+            hasBusinessName: !!businessName
+        });
+
         // Create config directory if it doesn't exist
         await this.ensureConfigDirectory();
         
@@ -210,8 +220,11 @@ export class BusinessContextManager {
         // Save the configuration
         await this.saveConfiguration(config);
         this.currentConfig = config;
-        
-        console.log(`✅ Business context initialized for "${domainModel.businessType}" business`);
+
+        this.logger.info('Business context initialized successfully', {
+            businessType: domainModel.businessType,
+            entitiesCount: Object.keys(config.entities).length
+        });
         return config;
     }
 
@@ -219,8 +232,10 @@ export class BusinessContextManager {
      * Load existing business context configuration
      */
     async loadConfiguration(): Promise<BusinessConfiguration> {
-        console.log('📖 Loading business context configuration...');
-        
+        this.logger.debug('Loading business context configuration', {
+            configFile: this.configFile
+        });
+
         try {
             const configExists = await this.configurationExists();
             if (!configExists) {
@@ -237,11 +252,16 @@ export class BusinessContextManager {
             }
             
             this.currentConfig = validation.data;
-            console.log(`✅ Loaded business context for "${this.currentConfig.business.type}" business`);
+            this.logger.info('Business context loaded successfully', {
+                businessType: this.currentConfig.business.type,
+                version: this.currentConfig.version
+            });
             return this.currentConfig;
-            
+
         } catch (error) {
-            console.error('❌ Failed to load business context configuration:', error);
+            this.logger.error('Failed to load business context configuration', error as Error, {
+                configFile: this.configFile
+            });
             throw error;
         }
     }
@@ -250,8 +270,11 @@ export class BusinessContextManager {
      * Save business context configuration
      */
     async saveConfiguration(config: BusinessConfiguration): Promise<void> {
-        console.log('💾 Saving business context configuration...');
-        
+        this.logger.debug('Saving business context configuration', {
+            businessType: config.business.type,
+            entitiesCount: Object.keys(config.entities).length
+        });
+
         // Backup existing configuration if enabled
         if (config.preferences?.backupConfig && await this.configurationExists()) {
             await this.createBackup();
@@ -270,16 +293,21 @@ export class BusinessContextManager {
         
         await writeFile(this.configFile, yamlContent, 'utf-8');
         this.currentConfig = config;
-        
-        console.log('✅ Business context configuration saved');
+
+        this.logger.info('Business context configuration saved', {
+            configFile: this.configFile,
+            lastUpdated: config.lastUpdated
+        });
     }
 
     /**
      * Update business context configuration
      */
     async updateConfiguration(updates: Partial<BusinessConfiguration>): Promise<BusinessConfiguration> {
-        console.log('🔄 Updating business context configuration...');
-        
+        this.logger.debug('Updating business context configuration', {
+            updateKeys: Object.keys(updates)
+        });
+
         if (!this.currentConfig) {
             await this.loadConfiguration();
         }
@@ -295,8 +323,10 @@ export class BusinessContextManager {
         
         // Save updated configuration
         await this.saveConfiguration(updatedConfig);
-        
-        console.log('✅ Business context configuration updated');
+
+        this.logger.info('Business context configuration updated', {
+            businessType: updatedConfig.business.type
+        });
         return updatedConfig;
     }
 
@@ -304,8 +334,10 @@ export class BusinessContextManager {
      * Validate business context configuration
      */
     async validateConfiguration(config: BusinessConfiguration): Promise<ConfigValidationResult> {
-        console.log('🔍 Validating business context configuration...');
-        
+        this.logger.debug('Validating business context configuration', {
+            businessType: config.business.type
+        });
+
         const result: ConfigValidationResult = {
             valid: true,
             errors: [],
@@ -318,7 +350,7 @@ export class BusinessContextManager {
             const schemaValidation = BusinessConfigurationSchema.safeParse(config);
             if (!schemaValidation.success) {
                 result.valid = false;
-                for (const error of schemaValidation.error.errors) {
+                for (const error of schemaValidation.error.issues) {
                     result.errors.push({
                         path: error.path.join('.'),
                         message: error.message,
@@ -341,8 +373,13 @@ export class BusinessContextManager {
                 severity: 'error',
             });
         }
-        
-        console.log(`${result.valid ? '✅' : '❌'} Configuration validation completed`);
+
+        this.logger.info('Configuration validation completed', {
+            valid: result.valid,
+            errorsCount: result.errors.length,
+            warningsCount: result.warnings.length,
+            suggestionsCount: result.suggestions.length
+        });
         return result;
     }
 
@@ -377,8 +414,11 @@ export class BusinessContextManager {
      * Add service translation mapping
      */
     async addServiceMapping(serviceName: string, mapping: ServiceMapping): Promise<void> {
-        console.log(`🔗 Adding service mapping for ${serviceName}...`);
-        
+        this.logger.debug('Adding service mapping', {
+            serviceName,
+            businessDomain: mapping.businessDomain
+        });
+
         const config = await this.getCurrentConfiguration();
         
         if (!config.translations) {
@@ -398,25 +438,34 @@ export class BusinessContextManager {
         };
         
         config.translations.services[serviceName] = serviceConfig;
-        
+
         await this.saveConfiguration(config);
-        console.log(`✅ Service mapping for ${serviceName} added`);
+        this.logger.info('Service mapping added', {
+            serviceName,
+            fieldsCount: Object.keys(serviceConfig.fields).length
+        });
     }
 
     /**
      * Remove service translation mapping
      */
     async removeServiceMapping(serviceName: string): Promise<void> {
-        console.log(`🗑️ Removing service mapping for ${serviceName}...`);
-        
+        this.logger.debug('Removing service mapping', {
+            serviceName
+        });
+
         const config = await this.getCurrentConfiguration();
-        
+
         if (config.translations?.services?.[serviceName]) {
             delete config.translations.services[serviceName];
             await this.saveConfiguration(config);
-            console.log(`✅ Service mapping for ${serviceName} removed`);
+            this.logger.info('Service mapping removed', {
+                serviceName
+            });
         } else {
-            console.log(`⚠️ Service mapping for ${serviceName} not found`);
+            this.logger.warn('Service mapping not found', {
+                serviceName
+            });
         }
     }
 
@@ -479,8 +528,10 @@ export class BusinessContextManager {
      * Restore from backup
      */
     async restoreFromBackup(backupName: string): Promise<void> {
-        console.log(`🔄 Restoring configuration from backup: ${backupName}...`);
-        
+        this.logger.info('Restoring configuration from backup', {
+            backupName
+        });
+
         const backupPath = join(this.backupDir, backupName);
         const backupContent = await readFile(backupPath, 'utf-8');
         const backupConfig = yaml.load(backupContent) as BusinessConfiguration;
@@ -490,9 +541,12 @@ export class BusinessContextManager {
         if (!validation.valid) {
             throw new Error('Backup configuration is invalid');
         }
-        
+
         await this.saveConfiguration(backupConfig);
-        console.log('✅ Configuration restored from backup');
+        this.logger.info('Configuration restored from backup', {
+            backupName,
+            businessType: backupConfig.business.type
+        });
     }
 
     // =============================================================================
@@ -504,7 +558,9 @@ export class BusinessContextManager {
             await mkdir(this.configDir, { recursive: true });
             await mkdir(this.backupDir, { recursive: true });
         } catch (error) {
-            console.error('Failed to create configuration directory:', error);
+            this.logger.error('Failed to create configuration directory', error as Error, {
+                configDir: this.configDir
+            });
             throw error;
         }
     }
@@ -518,8 +574,11 @@ export class BusinessContextManager {
         
         const yamlContent = yaml.dump(this.currentConfig, { indent: 2 });
         await writeFile(backupPath, yamlContent, 'utf-8');
-        
-        console.log(`📁 Configuration backed up as: ${backupName}`);
+
+        this.logger.debug('Configuration backed up', {
+            backupName,
+            backupPath
+        });
     }
 
     private transformEntitiesToConfig(entities: Record<string, any>): Record<string, any> {
@@ -743,6 +802,168 @@ export class BusinessContextManager {
         }
         
         return typescript;
+    }
+
+    /**
+     * Initialize context from recipe
+     */
+    async initializeFromRecipe(recipe: Recipe, contextName: string): Promise<void> {
+        this.logger.info('Initializing context from recipe', {
+            contextName,
+            recipeName: recipe.name,
+            businessType: recipe.businessType
+        });
+
+        // Create context directory structure
+        await this.ensureContextDirectory(contextName);
+        
+        // Generate initial entities from recipe
+        if (recipe.entities) {
+            await this.createEntitiesFromRecipe(contextName, recipe.entities);
+        }
+        
+        // Save context metadata
+        await this.saveContextMetadata(contextName, recipe);
+
+        this.logger.info('Context initialized successfully', {
+            contextName,
+            entitiesCount: recipe.entities ? Object.keys(recipe.entities).length : 0
+        });
+    }
+
+    /**
+     * Load context entities
+     */
+    async loadContextEntities<T = any>(contextName: string, entityType: string): Promise<T[]> {
+        const entitiesDir = join(this.contextsDir, contextName, 'entities', entityType);
+        
+        try {
+            const files = await readdir(entitiesDir);
+            const entities: T[] = [];
+            
+            for (const file of files) {
+                if (file.endsWith('.yaml') || file.endsWith('.yml')) {
+                    const filePath = join(entitiesDir, file);
+                    const content = await readFile(filePath, 'utf-8');
+                    const entity = yaml.load(content) as T;
+                    entities.push(entity);
+                }
+            }
+            
+            return entities;
+        } catch (error) {
+            // Context or entity type doesn't exist yet
+            return [];
+        }
+    }
+
+    /**
+     * Save context entity
+     */
+    async saveContextEntity<T = any>(contextName: string, entityType: string, entity: T & { id: string }): Promise<void> {
+        const entitiesDir = join(this.contextsDir, contextName, 'entities', entityType);
+        await mkdir(entitiesDir, { recursive: true });
+        
+        const entityPath = join(entitiesDir, `${entity.id}.yaml`);
+        const yamlContent = yaml.dump(entity, {
+            indent: 2,
+            lineWidth: 120,
+            quotingType: '"',
+            forceQuotes: false
+        });
+        
+        await writeFile(entityPath, yamlContent, 'utf-8');
+    }
+
+    /**
+     * List available contexts
+     */
+    async listContexts(): Promise<string[]> {
+        try {
+            const entries = await readdir(this.contextsDir, { withFileTypes: true });
+            return entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Get context metadata
+     */
+    async getContextMetadata(contextName: string): Promise<Recipe | null> {
+        try {
+            const metadataPath = join(this.contextsDir, contextName, 'context.yaml');
+            const content = await readFile(metadataPath, 'utf-8');
+            return yaml.load(content) as Recipe;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Switch to context (for future context switching feature)
+     */
+    async switchToContext(contextName: string): Promise<void> {
+        const contextExists = await this.contextExists(contextName);
+        if (!contextExists) {
+            throw new Error(`Context "${contextName}" does not exist`);
+        }
+
+        // Future: Implement context isolation and storage switching
+        this.logger.info('Switched to context', {
+            contextName
+        });
+    }
+
+    /**
+     * Check if context exists
+     */
+    async contextExists(contextName: string): Promise<boolean> {
+        try {
+            const contextPath = join(this.contextsDir, contextName);
+            await access(contextPath);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    private async ensureContextDirectory(contextName: string): Promise<void> {
+        const contextPath = join(this.contextsDir, contextName);
+        const entitiesPath = join(contextPath, 'entities');
+        
+        await mkdir(entitiesPath, { recursive: true });
+    }
+
+    private async createEntitiesFromRecipe(contextName: string, entities: Record<string, any>): Promise<void> {
+        for (const [entityName, entityDef] of Object.entries(entities)) {
+            const entityDir = join(this.contextsDir, contextName, 'entities', entityName.toLowerCase());
+            await mkdir(entityDir, { recursive: true });
+            
+            // Create entity schema file
+            const schemaPath = join(entityDir, '_schema.yaml');
+            const schemaContent = yaml.dump(entityDef, { indent: 2 });
+            await writeFile(schemaPath, schemaContent, 'utf-8');
+        }
+    }
+
+    private async saveContextMetadata(contextName: string, recipe: Recipe): Promise<void> {
+        const metadataPath = join(this.contextsDir, contextName, 'context.yaml');
+        const metadata = {
+            name: recipe.name,
+            description: recipe.description,
+            businessType: recipe.businessType,
+            display: recipe.display,
+            context: recipe.context,
+            entities: Object.keys(recipe.entities),
+            workflows: recipe.workflows?.map(w => w.name) || [],
+            businessRules: recipe.businessRules || [],
+            createdAt: new Date().toISOString(),
+            version: '1.0.0'
+        };
+        
+        const yamlContent = yaml.dump(metadata, { indent: 2 });
+        await writeFile(metadataPath, yamlContent, 'utf-8');
     }
 
     private mapToTypeScriptType(fieldType: string): string {

@@ -1,0 +1,220 @@
+{
+  "name": "Project Management",
+  "description": "Task and project management for software development with automated validation and lifecycle tracking",
+  "businessType": "project-management",
+  
+  "display": {
+    "subCode": "PROJ",
+    "emoji": "📋",
+    "color": "blue",
+    "promptFormat": "[{subCode}] {name}$ "
+  },
+  
+  "context": {
+    "primaryEntities": ["task", "milestone", "dependency"],
+    "keyMetrics": ["tasks_completed", "tasks_in_progress", "blocked_tasks", "upcoming_milestones"],
+    "quickActions": ["show tasks", "create task", "validate tasks", "show milestones"]
+  },
+  
+  "entities": {
+    "task": {
+      "fields": [
+        { "name": "id", "type": "string", "required": true, "description": "Unique task identifier (e.g., task-006, task-011)" },
+        { "name": "title", "type": "string", "required": true, "description": "Task title or name" },
+        { "name": "status", "type": "enum", "values": ["planned", "in_progress", "completed", "deferred", "blocked"], "required": true, "default": "planned" },
+        { "name": "priority", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": true, "default": "medium" },
+        { "name": "type", "type": "enum", "values": ["feature", "bug", "refactor", "architecture", "documentation", "testing"], "required": false },
+        { "name": "description", "type": "text", "required": true, "description": "Detailed task description and requirements" },
+        { "name": "dependencies", "type": "array", "items": "string", "required": false, "description": "List of task IDs this task depends on" },
+        { "name": "blockedBy", "type": "array", "items": "string", "required": false, "description": "List of task IDs blocking this task" },
+        { "name": "architectureImpact", "type": "text", "required": false, "description": "Description of architectural changes or impacts" },
+        { "name": "estimatedEffort", "type": "string", "required": false, "description": "Estimated time to complete (e.g., '2 hours', '1 day')" },
+        { "name": "actualEffort", "type": "string", "required": false, "description": "Actual time spent on task" },
+        { "name": "assignee", "type": "string", "required": false, "description": "Person assigned to the task" },
+        { "name": "tags", "type": "array", "items": "string", "required": false, "description": "Tags for categorization" },
+        { "name": "createdAt", "type": "datetime", "required": true },
+        { "name": "updatedAt", "type": "datetime", "required": true },
+        { "name": "completedAt", "type": "datetime", "required": false },
+        { "name": "validationStatus", "type": "enum", "values": ["valid", "outdated", "invalid", "not_validated"], "default": "not_validated" },
+        { "name": "lastValidated", "type": "datetime", "required": false },
+        { "name": "enhancementSuggestions", "type": "array", "items": "string", "required": false }
+      ],
+      "businessRules": [
+        "Tasks cannot be completed if dependencies are not completed",
+        "Critical priority tasks must have estimated effort",
+        "In-progress tasks must have assignee",
+        "Blocked tasks must have blockedBy field populated",
+        "Completed tasks must have completedAt timestamp"
+      ],
+      "relationships": [
+        { "type": "hasMany", "entity": "dependency", "foreignKey": "taskId", "description": "Task dependencies" },
+        { "type": "belongsTo", "entity": "milestone", "foreignKey": "milestoneId", "description": "Associated milestone" }
+      ]
+    },
+    
+    "milestone": {
+      "fields": [
+        { "name": "id", "type": "string", "required": true, "description": "Unique milestone identifier" },
+        { "name": "name", "type": "string", "required": true, "description": "Milestone name" },
+        { "name": "description", "type": "text", "required": false, "description": "Milestone description and goals" },
+        { "name": "targetDate", "type": "date", "required": false, "description": "Target completion date" },
+        { "name": "status", "type": "enum", "values": ["planned", "active", "completed", "deferred"], "required": true, "default": "planned" },
+        { "name": "tasks", "type": "array", "items": "string", "required": false, "description": "List of task IDs in this milestone" },
+        { "name": "completionPercentage", "type": "number", "required": false, "description": "Percentage of tasks completed" },
+        { "name": "createdAt", "type": "datetime", "required": true },
+        { "name": "updatedAt", "type": "datetime", "required": true }
+      ],
+      "businessRules": [
+        "Active milestones must have target date",
+        "Milestone completion percentage calculated from associated tasks",
+        "Cannot delete milestone with active tasks"
+      ],
+      "relationships": [
+        { "type": "hasMany", "entity": "task", "foreignKey": "milestoneId", "description": "Tasks in milestone" }
+      ]
+    },
+    
+    "dependency": {
+      "fields": [
+        { "name": "id", "type": "string", "required": true },
+        { "name": "fromTask", "type": "string", "required": true, "description": "Task that depends on another" },
+        { "name": "toTask", "type": "string", "required": true, "description": "Task that must be completed first" },
+        { "name": "type", "type": "enum", "values": ["blocks", "prerequisite", "related"], "default": "prerequisite" },
+        { "name": "description", "type": "text", "required": false, "description": "Why this dependency exists" },
+        { "name": "createdAt", "type": "datetime", "required": true }
+      ],
+      "businessRules": [
+        "Cannot create circular dependencies",
+        "Both fromTask and toTask must exist",
+        "Dependency type must be appropriate for relationship"
+      ]
+    }
+  },
+  
+  "workflows": [
+    {
+      "name": "task-lifecycle",
+      "description": "Manage task from creation to completion with validation",
+      "steps": [
+        { 
+          "name": "validate_task", 
+          "action": "validate_against_codebase",
+          "description": "Check task assumptions against current codebase architecture"
+        },
+        { 
+          "name": "check_dependencies", 
+          "action": "verify_prerequisites",
+          "description": "Ensure all prerequisite tasks are completed"
+        },
+        { 
+          "name": "update_status", 
+          "action": "track_progress",
+          "description": "Update task status and progress metrics"
+        },
+        { 
+          "name": "validate_completion", 
+          "action": "ensure_deliverables",
+          "description": "Verify task deliverables and acceptance criteria are met"
+        }
+      ],
+      "triggers": ["task_created", "task_updated", "dependency_changed"],
+      "enabled": true
+    },
+    
+    {
+      "name": "task-enhancement",
+      "description": "Keep tasks synchronized with codebase evolution",
+      "steps": [
+        { 
+          "name": "analyze_codebase", 
+          "action": "compare_assumptions",
+          "description": "Compare task assumptions to current architecture"
+        },
+        { 
+          "name": "identify_drift", 
+          "action": "find_mismatches",
+          "description": "Find outdated requirements or missing dependencies"
+        },
+        { 
+          "name": "generate_enhancements", 
+          "action": "suggest_updates",
+          "description": "AI-generated suggestions for task improvements"
+        },
+        { 
+          "name": "apply_updates", 
+          "action": "update_documentation",
+          "description": "Update task documentation with enhancements"
+        }
+      ],
+      "triggers": ["codebase_changed", "weekly_validation"],
+      "enabled": true
+    },
+    
+    {
+      "name": "milestone-tracking",
+      "description": "Track milestone progress and completion",
+      "steps": [
+        { 
+          "name": "calculate_progress", 
+          "action": "update_completion_percentage",
+          "description": "Calculate milestone completion based on task status"
+        },
+        { 
+          "name": "check_timeline", 
+          "action": "validate_target_dates",
+          "description": "Check if milestone is on track for target date"
+        },
+        { 
+          "name": "notify_stakeholders", 
+          "action": "send_progress_updates",
+          "description": "Notify team of milestone progress"
+        }
+      ],
+      "triggers": ["task_completed", "milestone_updated"],
+      "enabled": true
+    }
+  ],
+  
+  "businessRules": [
+    "Tasks must be validated against current codebase before implementation",
+    "Dependencies must be resolved before task can be marked complete",
+    "Critical priority tasks require architecture impact assessment",
+    "All tasks must have clear acceptance criteria in description",
+    "Task status changes must be logged with timestamps"
+  ],
+  
+  "contextViews": {
+    "developer": {
+      "role": "developer",
+      "permissions": ["read", "create", "update"],
+      "entityAccess": {
+        "task": {
+          "fields": ["id", "title", "status", "priority", "description", "dependencies", "assignee"],
+          "operations": ["create", "read", "update", "validate"]
+        },
+        "milestone": {
+          "fields": ["id", "name", "description", "targetDate", "status"],
+          "operations": ["read"]
+        }
+      }
+    },
+    "project_manager": {
+      "role": "project_manager", 
+      "permissions": ["read", "create", "update", "delete", "manage"],
+      "entityAccess": {
+        "task": {
+          "fields": "*",
+          "operations": ["create", "read", "update", "delete", "assign", "validate"]
+        },
+        "milestone": {
+          "fields": "*",
+          "operations": ["create", "read", "update", "delete", "track"]
+        },
+        "dependency": {
+          "fields": "*", 
+          "operations": ["create", "read", "update", "delete"]
+        }
+      }
+    }
+  }
+}

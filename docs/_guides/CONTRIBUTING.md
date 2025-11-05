@@ -8,10 +8,10 @@ imajin-cli is built by the community, for the community. We operate under the [.
 
 ## 🎯 Our Values
 
-### 🆓 **Democratic Development**
-- **No corporate gatekeepers** - Decisions made by contributor community
-- **Open foundation** - Core framework completely free with attribution
-- **Community ownership** - Tools belong to users, not shareholders
+### 🆓 **Open Development**
+- **Community-driven** - Decisions made by contributor community
+- **Open foundation** - Core framework open source with attribution
+- **User ownership** - Generated tools belong to users
 - **Transparent process** - All development tracked publicly
 
 ### ⚖️ **Fair Attribution**
@@ -450,7 +450,7 @@ npm run build
 **Economic Participation:**
 - Fair share in any future commercial opportunities
 - Community-driven decision making on project direction
-- Transparent governance without corporate control
+- Transparent governance model
 - Sustainable development model benefits
 
 ## 🎯 Contribution Opportunities
@@ -566,10 +566,10 @@ npm run build
 5. **Follow Prompt Guidelines**: Implement according to detailed specifications
 6. **Get Recognition**: Your contributions will be properly attributed
 
-**Join the democratic revolution in API integration!**  
-**Build professional tools that belong to the community, not corporations.**
+**Join the open-source API integration project!**
+**Build professional tools with community-driven development.**
 
 ---
 
-*Built with ❤️ by the community, for the community.*  
+*Built by the open-source community.*
 *Licensed under [.fair](docs/.fair-license.md) - Fair attribution for all contributors.* 

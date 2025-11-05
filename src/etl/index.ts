@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Complete ETL system for data processing workflows
@@ -28,21 +28,21 @@ export { BaseTransformer, BaseTransformerConfig, TransformRule } from './transfo
 export { Pipeline, PipelineExecutionOptions, PipelineExecutionState } from './Pipeline.js';
 
 // Core ETL Components
-export { ETLPipeline } from './core/ETLPipeline';
-export { ETLContext } from './core/ETLContext';
-export { ETLConfig } from './core/ETLConfig';
-export { ETLResult } from './core/ETLResult';
-export { ETLProgress } from './core/ETLProgress';
-export { ETLEvents } from './core/ETLEvents';
-export { Extractor } from './core/Extractor';
-export { Loader } from './core/Loader';
-export { Transformer } from './core/Transformer';
+export { ETLPipeline } from './core/ETLPipeline.js';
+export { ETLContext } from './core/ETLContext.js';
+export { ETLConfig } from './core/ETLConfig.js';
+export { ETLResult } from './core/ETLResult.js';
+export { ETLProgress } from './core/ETLProgress.js';
+export { ETLEvents } from './core/ETLEvents.js';
+export { Extractor } from './core/Extractor.js';
+export { Loader } from './core/Loader.js';
+export { Transformer } from './core/Transformer.js';
 
 // Graph Components
-export { GraphExtractor } from './extractors/GraphExtractor';
-export { GraphLoader } from './loaders/GraphLoader';
-export { GraphTransformer } from './transformers/GraphTransformer';
-export { GraphTranslationEngine as GraphTranslator } from './graphs/GraphTranslationEngine';
+export { GraphExtractor } from './extractors/GraphExtractor.js';
+export { GraphLoader } from './loaders/GraphLoader.js';
+export { GraphTransformer } from './transformers/GraphTransformer.js';
+export { GraphTranslationEngine as GraphTranslator } from './graphs/GraphTranslationEngine.js';
 
 // Graph models and types
 export * from './graphs/models.js';
@@ -60,5 +60,5 @@ export type {
     GraphTransformationConfig,
     GraphExtractionConfig,
     GraphLoadingConfig
-} from './core/interfaces';
+} from './core/interfaces.js';
 

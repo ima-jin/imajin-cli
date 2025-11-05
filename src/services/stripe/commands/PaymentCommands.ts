@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Commander.js command registration
@@ -20,8 +20,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import type { StripeService } from '../StripeService';
-import type { Logger } from '../../../logging/Logger';
+import type { StripeService } from '../StripeService.js';
+import type { Logger } from '../../../logging/Logger.js';
 
 export class PaymentCommands {
     constructor(
@@ -53,6 +53,13 @@ export class PaymentCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (options) => {
                 try {
+                    this.logger.debug('Creating payment intent', {
+                        amount: options.amount,
+                        currency: options.currency,
+                        customerId: options.customer,
+                        captureMethod: options.captureMethod
+                    });
+
                     const amount = parseInt(options.amount);
                     if (isNaN(amount) || amount <= 0) {
                         throw new Error('Amount must be a positive number');
@@ -109,6 +116,11 @@ export class PaymentCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (paymentIntentId, options) => {
                 try {
+                    this.logger.debug('Confirming payment intent', {
+                        paymentIntentId,
+                        paymentMethodId: options.paymentMethod
+                    });
+
                     const progressCallback = options.watch ? (event: any) => {
                         if (!options.json) {
                             console.log(chalk.blue(`[${event.type}] ${event.message}`));
@@ -158,6 +170,11 @@ export class PaymentCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (options) => {
                 try {
+                    this.logger.debug('Listing payment intents', {
+                        limit: options.limit,
+                        customerId: options.customer
+                    });
+
                     const createdFilter: any = {};
                     if (options.createdAfter) {
                         createdFilter.gte = Math.floor(new Date(options.createdAfter).getTime() / 1000);

@@ -12,19 +12,26 @@
 
 // Base exception and types
 export {
-    BaseException, ErrorCategory,
-    ErrorContext, ErrorMetadata, ErrorSeverity, RecoveryStrategy
-} from './BaseException';
+    BaseException
+} from './BaseException.js';
+export type {
+    ErrorCategory, ErrorContext, ErrorMetadata, ErrorSeverity, RecoveryStrategy
+} from './BaseException.js';
 
 // Specific exception classes
-export { ApiError, ApiErrorDetails } from './ApiError';
-export { AuthenticationError, AuthErrorDetails, AuthErrorType } from './AuthenticationError';
-export { SystemError, SystemErrorDetails, SystemErrorType } from './SystemError';
-export { ValidationError, ValidationErrorDetails } from './ValidationError';
+export { ApiError } from './ApiError.js';
+export type { ApiErrorDetails } from './ApiError.js';
+export { AuthenticationError } from './AuthenticationError.js';
+export type { AuthErrorDetails, AuthErrorType } from './AuthenticationError.js';
+export { SystemError } from './SystemError.js';
+export type { SystemErrorDetails, SystemErrorType } from './SystemError.js';
+export { ValidationError } from './ValidationError.js';
+export type { ValidationErrorDetails } from './ValidationError.js';
 
 // Import for utility class
-import { BaseException, ErrorCategory, ErrorContext, ErrorSeverity } from './BaseException';
-import { SystemError } from './SystemError';
+import { BaseException } from './BaseException.js';
+import type { ErrorCategory, ErrorContext, ErrorSeverity } from './BaseException.js';
+import { SystemError } from './SystemError.js';
 
 // Exception utilities and helpers
 export class ExceptionUtils {

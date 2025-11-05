@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Markdown to PDF conversion using md-to-pdf
@@ -22,6 +23,7 @@ import * as path from 'path';
 import { glob } from 'glob';
 import { mdToPdf } from 'md-to-pdf';
 import type { LLMResponse } from '../types/LLM.js';
+import type { Logger } from '../logging/Logger.js';
 
 export interface MarkdownToPdfOptions {
     output?: string;
@@ -34,7 +36,19 @@ export interface MarkdownToPdfOptions {
 }
 
 export class MarkdownCommand {
-    
+    private logger: Logger | null = null;
+
+    constructor() {
+        try {
+            const container = (globalThis as any).imajinApp?.container;
+            if (container) {
+                this.logger = container.resolve('logger') as Logger;
+            }
+        } catch (error) {
+            // Logger not available
+        }
+    }
+
     public register(program: Command): void {
         const markdownCmd = program
             .command('markdown')
@@ -70,8 +84,9 @@ export class MarkdownCommand {
 
     public async convertToPdf(input: string, options: MarkdownToPdfOptions): Promise<void> {
         const startTime = Date.now();
-        
+
         try {
+            this.logger?.debug('Starting markdown to PDF conversion', { input, options });
             // Resolve input pattern
             const files = await this.resolveInputFiles(input, options.recursive);
             
@@ -139,6 +154,13 @@ export class MarkdownCommand {
                 console.log(chalk.gray(`Completed in ${executionTime}ms`));
             }
 
+            this.logger?.info('Markdown to PDF conversion completed', {
+                total: files.length,
+                successful: successCount,
+                failed: errorCount,
+                executionTime
+            });
+
             if (errorCount > 0) {
                 process.exit(1);
             }
@@ -161,13 +183,15 @@ export class MarkdownCommand {
                 console.error(chalk.red('❌ Conversion failed:'), errorMessage);
             }
 
+            this.logger?.error('Markdown to PDF conversion failed', error as Error, { input });
             process.exit(1);
         }
     }
 
     public async watchAndConvert(input: string, options: MarkdownToPdfOptions): Promise<void> {
+        this.logger?.debug('Starting markdown watch mode', { input });
         console.log(chalk.blue(`👀 Watching ${input} for changes... (Press Ctrl+C to stop)`));
-        
+
         const chokidar = await import('chokidar');
         const watcher = chokidar.watch(input, {
             ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -176,12 +200,15 @@ export class MarkdownCommand {
 
         watcher.on('change', async (filePath) => {
             if (path.extname(filePath).toLowerCase() === '.md') {
+                this.logger?.debug('File changed in watch mode', { filePath });
                 console.log(chalk.yellow(`📝 File changed: ${filePath}`));
                 try {
                     const result = await this.convertSingleFile(filePath, options);
+                    this.logger?.info('Watch mode conversion successful', { filePath, outputPath: result.outputPath });
                     console.log(chalk.green(`✅ Converted: ${result.outputPath}`));
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : String(error);
+                    this.logger?.error('Watch mode conversion failed', error as Error, { filePath });
                     console.log(chalk.red(`❌ Failed to convert ${filePath}: ${errorMessage}`));
                 }
             }

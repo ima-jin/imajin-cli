@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Graph-to-graph translation for user communication
@@ -52,7 +52,7 @@ export const ConnectionSchema = z.object({
     connectedUserId: z.string(),
     type: z.enum(['friend', 'follower', 'professional', 'collaborator']),
     status: z.enum(['active', 'pending', 'blocked']),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -68,7 +68,7 @@ export const EventSchema = z.object({
     price: z.number().optional(),
     currency: z.string().default('USD'),
     tags: z.array(z.string()).default([]),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -84,7 +84,7 @@ export const ProductSchema = z.object({
     images: z.array(z.string().url()).default([]),
     inventory: z.number().default(0),
     isActive: z.boolean().default(true),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -99,7 +99,7 @@ export const ServiceSchema = z.object({
     tags: z.array(z.string()).default([]),
     duration: z.number().optional(), // in minutes
     isAvailable: z.boolean().default(true),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -113,7 +113,7 @@ export const TransactionSchema = z.object({
     status: z.enum(['pending', 'completed', 'failed', 'cancelled']),
     productId: z.string().optional(),
     serviceId: z.string().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -124,7 +124,7 @@ export const PaymentMethodSchema = z.object({
     provider: z.string(),
     last4: z.string().optional(),
     isDefault: z.boolean().default(false),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -142,7 +142,7 @@ export const ArtworkSchema = z.object({
     images: z.array(z.string().url()).default([]),
     tags: z.array(z.string()).default([]),
     exhibitions: z.array(z.string()).default([]),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -154,7 +154,7 @@ export const CollectionSchema = z.object({
     artworkIds: z.array(z.string()).default([]),
     isPublic: z.boolean().default(true),
     coverImage: z.string().url().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -168,7 +168,7 @@ export const ExhibitionSchema = z.object({
     artworkIds: z.array(z.string()).default([]),
     isGroup: z.boolean().default(false),
     website: z.string().url().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -181,8 +181,8 @@ export const CommissionSchema = z.object({
     currency: z.string().default('USD'),
     deadline: z.date(),
     status: z.enum(['inquiry', 'accepted', 'in_progress', 'completed', 'cancelled']),
-    specifications: z.record(z.any()).optional(),
-    metadata: z.record(z.any()).optional(),
+    specifications: z.record(z.string(), z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -197,7 +197,7 @@ export const PositionSchema = z.object({
     description: z.string().optional(),
     location: z.string().optional(),
     skills: z.array(z.string()).default([]),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -209,7 +209,7 @@ export const SkillSchema = z.object({
     endorsements: z.number().default(0),
     yearsExperience: z.number().optional(),
     certifications: z.array(z.string()).default([]),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -222,7 +222,7 @@ export const CertificationSchema = z.object({
     credentialId: z.string().optional(),
     verificationUrl: z.string().url().optional(),
     skills: z.array(z.string()).default([]),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -234,7 +234,7 @@ export const RecommendationSchema = z.object({
     relationship: z.string(),
     skills: z.array(z.string()).default([]),
     isPublic: z.boolean().default(true),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -249,7 +249,7 @@ export const GroupSchema = z.object({
     rules: z.array(z.string()).default([]),
     tags: z.array(z.string()).default([]),
     coverImage: z.string().url().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -264,7 +264,7 @@ export const DiscussionSchema = z.object({
     replies: z.number().default(0),
     likes: z.number().default(0),
     isPinned: z.boolean().default(false),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 
@@ -279,7 +279,7 @@ export const ResourceSchema = z.object({
     downloads: z.number().default(0),
     rating: z.number().min(0).max(5).optional(),
     isPublic: z.boolean().default(true),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
 });
 

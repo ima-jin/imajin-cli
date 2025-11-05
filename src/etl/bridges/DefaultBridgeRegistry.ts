@@ -11,10 +11,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { BridgeComponent } from './BridgeComponent.js';
+import type { Bridge, BridgeRegistry } from './index.js';
 
-export class DefaultBridgeRegistry extends EventEmitter {
-    private bridges = new Map<string, BridgeComponent>();
+export class DefaultBridgeRegistry extends EventEmitter implements BridgeRegistry {
+    private bridges = new Map<string, Bridge>();
 
     constructor() {
         super();
@@ -24,16 +24,54 @@ export class DefaultBridgeRegistry extends EventEmitter {
         // Initialize registry
     }
 
-    public register(bridge: BridgeComponent): void {
+    public register(bridge: Bridge): void {
         this.bridges.set(bridge.id, bridge);
         this.emit('etl.bridge.registered', bridge);
     }
 
-    public get(id: string): BridgeComponent | undefined {
+    public getBridge(source: string, target: string): Bridge | undefined {
+        const key = `${source}:${target}`;
+        return Array.from(this.bridges.values()).find(bridge => 
+            `${bridge.source}:${bridge.target}` === key
+        );
+    }
+
+    public getBridges(): Bridge[] {
+        return Array.from(this.bridges.values());
+    }
+
+    public validate(bridge: Bridge): boolean {
+        // Basic validation
+        if (!bridge.id || !bridge.version || !bridge.source || !bridge.target) {
+            return false;
+        }
+
+        // Validate mappings
+        if (!bridge.mappings || typeof bridge.mappings !== 'object') {
+            return false;
+        }
+
+        // Validate transformations
+        if (!bridge.transformations || typeof bridge.transformations !== 'object') {
+            return false;
+        }
+
+        // Validate metadata
+        if (!bridge.metadata || 
+            typeof bridge.metadata.efficiency !== 'number' ||
+            typeof bridge.metadata.confidence !== 'number' ||
+            !(bridge.metadata.lastUpdated instanceof Date)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public get(id: string): Bridge | undefined {
         return this.bridges.get(id);
     }
 
-    public getAll(): BridgeComponent[] {
+    public getAll(): Bridge[] {
         return Array.from(this.bridges.values());
     }
 } 

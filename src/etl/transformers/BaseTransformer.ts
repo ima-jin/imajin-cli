@@ -17,6 +17,7 @@
 
 import { z } from 'zod';
 import { ETLConfig, ETLContext, ETLProgress, ETLResult, Transformer } from '../core/interfaces.js';
+import type { Logger } from '../../logging/Logger.js';
 
 /**
  * Base configuration for transformers
@@ -48,8 +49,11 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
     public abstract readonly description?: string;
     public abstract readonly inputSchema?: z.ZodSchema<TInput>;
     public abstract readonly outputSchema?: z.ZodSchema<TOutput>;
+    protected logger: Logger;
 
-    constructor(protected config: BaseTransformerConfig = {}) { }
+    constructor(protected config: BaseTransformerConfig = {}) {
+        this.logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
+    }
 
     /**
      * Transform input data to output format
@@ -200,7 +204,10 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
             } catch (error) {
                 if (config.skipInvalidItems) {
                     // Log error but continue processing
-                    console.warn(`Skipping invalid item: ${error}`);
+                    this.logger.warn('Skipping invalid item', {
+                        error: error instanceof Error ? error.message : String(error),
+                        operation: 'transformBatch'
+                    });
                     continue;
                 } else {
                     throw error;

@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-02
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Cloudinary service testing
@@ -256,6 +257,54 @@ export class CloudinaryTestData {
             rate_limit_remaining: 4999,
             rate_limit_reset_at: new Date(Date.now() + 3600000).toISOString()
         };
+    }
+
+    // Instance methods for performance testing
+    createMockUploadResult(overrides?: any): any {
+        return CloudinaryTestData.createUploadResponse(overrides);
+    }
+
+    createMockDeleteResult(publicId?: string): any {
+        return { result: 'ok', public_id: publicId };
+    }
+
+    createMockTransformationResult(publicId?: string, options?: any): any {
+        return CloudinaryTestData.createTransformationResponse({ 
+            public_id: publicId,
+            ...options 
+        });
+    }
+
+    createMockResource(publicId?: string, options?: any): any {
+        return CloudinaryTestData.createResource({ 
+            public_id: publicId || 'test/sample',
+            ...options 
+        });
+    }
+
+    createMockResourceList(options?: any): any {
+        return CloudinaryTestData.createSearchResponse([
+            CloudinaryTestData.createResource(),
+            CloudinaryTestData.createResource({ public_id: 'test/image2' }),
+            CloudinaryTestData.createResource({ public_id: 'test/image3' })
+        ]);
+    }
+
+    createMockBulkDeleteResult(options?: any): any {
+        return {
+            batch_id: 'batch-123',
+            status: 'completed',
+            deleted: ['test/image1', 'test/image2', 'test/image3']
+        };
+    }
+
+    createMockUrl(publicId?: string, options?: any): string {
+        return `https://res.cloudinary.com/test-cloud/image/upload/${publicId || 'test/sample.jpg'}`;
+    }
+
+    createMockImageTag(publicId?: string, options?: any): string {
+        const url = this.createMockUrl(publicId, options);
+        return `<img src="${url}" alt="test image" />`;
     }
 }
 

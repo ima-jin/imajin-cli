@@ -15,7 +15,7 @@
  * - Rate limiting and retry logic
  */
 
-import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException';
+import { BaseException, ErrorContext, RecoveryStrategy } from './BaseException.js';
 
 export interface ApiErrorDetails {
     statusCode?: number;

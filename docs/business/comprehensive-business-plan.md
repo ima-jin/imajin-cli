@@ -218,7 +218,7 @@ const businessMapping = {
 
 ## Investment Thesis
 
-**Market Timing**: API economy maturity + subscription fatigue = opportunity for democratic alternatives
+**Market Timing**: API economy maturity + subscription-based service costs = opportunity for alternative integration approaches
 
 **Technical Innovation**: Universal Elements architecture enables previously impossible multi-service workflows
 
@@ -228,15 +228,15 @@ const businessMapping = {
 
 ## Strategic Outcome
 
-**5-Year Vision**: Foundational infrastructure for post-platform software development where professional tools are community-owned rather than corporate-extracted.
+**5-Year Vision**: Foundational infrastructure for open-source software development where professional tools are user-owned with minimal platform dependencies.
 
-**Exit Strategy**: Strategic acquisition at $500M-1B+ valuation or IPO with community-owned governance structure.
+**Exit Strategy**: Strategic acquisition at $500M-1B+ valuation or IPO with community-focused governance structure.
 
 ---
 
-**Investment Recommendation**: Professional software tooling will transition from corporate extraction to community ownership. imajin-cli is positioned to lead this transition while creating substantial returns through fair attribution and network effects.
+**Investment Recommendation**: Professional software tooling is evolving toward open-source and user-owned models. imajin-cli is positioned in this space while creating returns through fair attribution and network effects.
 
-**Call to Action**: Join the revolution toward democratic software infrastructure where businesses own their integration tools rather than rent them forever.
+**Call to Action**: Join the development of open-source software infrastructure where businesses own their integration tools with minimal ongoing dependencies.
 
 ---
 

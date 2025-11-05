@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/commands/media.md
  * 
@@ -23,12 +23,19 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import type { Container } from '../../container/Container.js';
+import type { Logger } from '../../logging/Logger.js';
 
 export class MediaCommand {
     private container: Container;
+    private logger: Logger | null = null;
 
     constructor(container: Container) {
         this.container = container;
+        try {
+            this.logger = container.resolve('logger') as Logger;
+        } catch (error) {
+            // Logger not available
+        }
     }
 
     /**
@@ -83,6 +90,7 @@ Examples:
      */
     private async handleUpload(filePath: string, options: any): Promise<void> {
         try {
+            this.logger?.debug('Media upload command starting', { filePath, options });
             console.log('🎨 Starting media upload...\n');
 
             // Validate file exists
@@ -118,7 +126,10 @@ Examples:
             console.log(`   Dimensions: ${metadata.dimensions || 'N/A'}`);
             console.log(`   Duration: ${metadata.duration || 'N/A'}`);
 
+            this.logger?.info('Media upload completed', { filePath, fileName, metadata });
+
         } catch (error) {
+            this.logger?.error('Media upload failed', error as Error, { filePath, options });
             console.error(`\n❌ Upload failed: ${error}`);
             process.exit(1);
         }
@@ -129,6 +140,7 @@ Examples:
      */
     private async handleInfo(filePath: string): Promise<void> {
         try {
+            this.logger?.debug('Media info command starting', { filePath });
             console.log('📋 Analyzing media file...\n');
 
             await this.validateFile(filePath);
@@ -152,7 +164,10 @@ Examples:
                 console.log(`⏱️  Duration: ${metadata.duration}`);
             }
 
+            this.logger?.info('Media info completed', { filePath, fileName, metadata });
+
         } catch (error) {
+            this.logger?.error('Media info failed', error as Error, { filePath });
             console.error(`\n❌ Analysis failed: ${error}`);
             process.exit(1);
         }
@@ -163,6 +178,7 @@ Examples:
      */
     private async handleList(options: any): Promise<void> {
         try {
+            this.logger?.debug('Media list command starting', { options });
             console.log('📋 Listing media assets...\n');
 
             console.log(`🏷️  Provider: ${options.provider}`);
@@ -184,7 +200,10 @@ Examples:
 
             console.log(`\n📊 Total: ${assets.length} assets`);
 
+            this.logger?.info('Media list completed', { assetCount: assets.length, options });
+
         } catch (error) {
+            this.logger?.error('Media list failed', error as Error, { options });
             console.error(`\n❌ List failed: ${error}`);
             process.exit(1);
         }

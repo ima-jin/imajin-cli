@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-08
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/commands/stripe.md
  * 
@@ -21,15 +21,25 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
+import type { Logger } from '../../logging/Logger.js';
 import { StripeService } from '../../services/stripe/StripeService.js';
 import type { LLMProgressCallback, LLMResponse } from '../../types/LLM.js';
 import { CreatePaymentIntentParams, CreatePaymentIntentSchema } from '../../types/Stripe.js';
 
 export class CreatePaymentCommand {
     private stripeService: StripeService;
+    private logger: Logger | null = null;
 
     constructor(stripeService: StripeService) {
         this.stripeService = stripeService;
+        try {
+            const container = (globalThis as any).imajinApp?.container;
+            if (container) {
+                this.logger = container.resolve('logger') as Logger;
+            }
+        } catch (error) {
+            // Logger not available
+        }
     }
 
     /**
@@ -58,6 +68,8 @@ export class CreatePaymentCommand {
      */
     private async execute(options: any): Promise<void> {
         try {
+            this.logger?.debug('Create payment command starting', { options });
+
             // Validate input parameters
             const validatedParams = CreatePaymentIntentSchema.parse({
                 amount: options.amount,
@@ -79,7 +91,7 @@ export class CreatePaymentCommand {
                 ...(validatedParams.customerId && { customerId: validatedParams.customerId }),
                 ...(validatedParams.paymentMethodId && { paymentMethodId: validatedParams.paymentMethodId }),
                 ...(validatedParams.description && { description: validatedParams.description }),
-                ...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata }),
+...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata as Record<string, string> }),
             };
 
             const _startTime = Date.now();
@@ -101,6 +113,12 @@ export class CreatePaymentCommand {
             const result = await this.stripeService.createPaymentIntent(params, progressCallback);
 
             const executionTime = Date.now() - _startTime;
+
+            this.logger?.info('Create payment command completed', {
+                paymentIntentId: result.paymentIntent.id,
+                amount: result.paymentIntent.amount,
+                executionTime
+            });
 
             if (options.json) {
                 const response: LLMResponse = {
@@ -133,6 +151,8 @@ export class CreatePaymentCommand {
 
         } catch (error) {
             const executionTime = Date.now() - Date.now();
+
+            this.logger?.error('Create payment command failed', error as Error, { options, executionTime });
 
             if (options.json) {
                 const response: LLMResponse = {

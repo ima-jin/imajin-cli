@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Service provider pattern for modular architecture
@@ -151,7 +152,7 @@ export class CloudinaryServiceProvider extends ServiceProvider {
                 .option('--overwrite', 'Overwrite existing files')
                 .action(async (file: string, options: any) => {
                     // Implementation would be handled by media commands
-                    console.log(`Uploading ${file} to Cloudinary...`);
+                    this.logger.info('Upload command invoked', { file, options });
                 });
 
             cloudinaryCmd
@@ -159,7 +160,7 @@ export class CloudinaryServiceProvider extends ServiceProvider {
                 .description('Check Cloudinary service health')
                 .action(async () => {
                     const health = await this.cloudinaryService!.getHealth();
-                    console.log('Cloudinary Service Health:', JSON.stringify(health, null, 2));
+                    this.logger.info('Cloudinary service health', health);
                 });
 
             this.logger.info('Cloudinary commands registered successfully');
@@ -173,13 +174,15 @@ export class CloudinaryServiceProvider extends ServiceProvider {
                 .command('configure')
                 .description('Show Cloudinary configuration instructions')
                 .action(() => {
-                    console.error('❌ Cloudinary credentials not configured');
-                    console.error('💡 Set environment variables or provide config');
-                    console.error('');
-                    console.error('Examples:');
-                    console.error('  export CLOUDINARY_CLOUD_NAME=your-cloud-name');
-                    console.error('  export CLOUDINARY_API_KEY=your-api-key');
-                    console.error('  export CLOUDINARY_API_SECRET=your-api-secret');
+                    this.logger.error('Cloudinary credentials not configured');
+                    this.logger.info('Configuration instructions', {
+                        instructions: 'Set environment variables or provide config',
+                        examples: [
+                            'export CLOUDINARY_CLOUD_NAME=your-cloud-name',
+                            'export CLOUDINARY_API_KEY=your-api-key',
+                            'export CLOUDINARY_API_SECRET=your-api-secret'
+                        ]
+                    });
                     process.exit(1);
                 });
 

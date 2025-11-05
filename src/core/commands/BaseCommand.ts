@@ -151,8 +151,6 @@ export abstract class BaseCommand implements ICommand {
     protected info(message: string, context?: any): void {
         if (this.logger) {
             this.logger.info(message, context);
-        } else {
-            console.log(message);
         }
     }
 
@@ -162,8 +160,6 @@ export abstract class BaseCommand implements ICommand {
     protected error(message: string, error?: Error, context?: any): void {
         if (this.logger) {
             this.logger.error(message, error, context);
-        } else {
-            console.error(message, error);
         }
     }
 
@@ -173,8 +169,6 @@ export abstract class BaseCommand implements ICommand {
     protected warn(message: string, context?: any): void {
         if (this.logger) {
             this.logger.warn(message, context);
-        } else {
-            console.warn(message);
         }
     }
 

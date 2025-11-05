@@ -16,7 +16,7 @@
  * - Performance monitoring
  */
 
-import { ApiLogger, LoggerConfig } from '../index';
+import { ApiLogger, LoggerConfig } from '../index.js';
 
 export class ApiLoggingExample {
     private logger: ApiLogger;

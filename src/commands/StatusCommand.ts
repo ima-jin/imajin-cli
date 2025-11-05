@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - System health monitoring via diagnostics
@@ -23,6 +23,7 @@ import Table from 'cli-table3';
 import { Command } from 'commander';
 import { SystemMonitor } from '../diagnostics/index.js';
 import type { LLMResponse } from '../types/LLM.js';
+import type { Logger } from '../logging/Logger.js';
 
 export interface StatusOptions {
     json?: boolean;
@@ -33,9 +34,20 @@ export interface StatusOptions {
 
 export class StatusCommand {
     private systemMonitor: SystemMonitor;
+    private logger: Logger | null = null;
 
     constructor() {
         this.systemMonitor = new SystemMonitor();
+
+        // Get logger from container
+        try {
+            const container = (globalThis as any).imajinApp?.container;
+            if (container) {
+                this.logger = container.resolve('logger') as Logger;
+            }
+        } catch (error) {
+            // Logger not available yet
+        }
     }
 
     public register(program: Command): void {
@@ -53,6 +65,7 @@ export class StatusCommand {
 
     public async execute(options: StatusOptions): Promise<void> {
         try {
+            this.logger?.debug('Executing status command', { watch: options.watch, json: options.json, detailed: options.detailed });
             if (options.watch) {
                 await this.watchStatus(options);
             } else {
@@ -60,6 +73,7 @@ export class StatusCommand {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger?.error('Failed to get system status', error instanceof Error ? error : undefined, { options });
 
             if (options.json) {
                 const errorResponse: LLMResponse = {
@@ -80,7 +94,9 @@ export class StatusCommand {
     }
 
     private async showStatus(options: StatusOptions): Promise<void> {
+        this.logger?.debug('Fetching system status', { json: options.json, detailed: options.detailed });
         const status = await this.systemMonitor.getSystemStatus();
+        this.logger?.info('System status retrieved', { overall: status.overall, uptime: status.uptime });
 
         if (options.json) {
             const response: LLMResponse = {
@@ -99,6 +115,7 @@ export class StatusCommand {
 
     private async watchStatus(options: StatusOptions): Promise<void> {
         const interval = parseInt(String(options.interval ?? '5')) * 1000;
+        this.logger?.info('Starting status watch mode', { interval: interval / 1000, json: options.json });
 
         console.log(chalk.blue('👀 Watching system status... (Press Ctrl+C to stop)\n'));
 
@@ -106,6 +123,7 @@ export class StatusCommand {
             // Clear screen
             process.stdout.write('\x1B[2J\x1B[0f');
 
+            this.logger?.debug('Updating watch status');
             const status = await this.systemMonitor.getSystemStatus();
 
             if (options.json) {
@@ -133,12 +151,14 @@ export class StatusCommand {
         // Handle graceful shutdown
         process.on('SIGINT', () => {
             clearInterval(intervalId);
+            this.logger?.info('Status monitoring stopped by user');
             console.log(chalk.yellow('\n👋 Status monitoring stopped'));
             process.exit(0);
         });
     }
 
     private displayStatus(status: any, detailed: boolean): void {
+        this.logger?.debug('Displaying status', { overall: status.overall, detailed });
         // Overall status
         const statusIcon = this.getStatusIcon(status.overall);
         const statusColor = this.getStatusColor(status.overall);

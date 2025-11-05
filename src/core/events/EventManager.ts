@@ -19,6 +19,7 @@
 import type { EventMetadata, IEvent, IEventListener, IEventSubscriber } from './Event.js';
 import { SystemEventType } from './Event.js';
 import { ImajinEventEmitter, type EventMiddleware, type ListenerOptions } from './EventEmitter.js';
+import { Logger } from '../../logging/Logger.js';
 
 /**
  * Event manager configuration
@@ -52,6 +53,7 @@ export class EventManager {
     private config: Required<EventManagerConfig>;
     private isInitialized: boolean = false;
     private shutdownPromise: Promise<void> | null = null;
+    private logger: Logger;
 
     constructor(config: EventManagerConfig = {}) {
         this.config = {
@@ -63,6 +65,7 @@ export class EventManager {
             retryDelay: config.retryDelay || 1000
         };
 
+        this.logger = new Logger({ level: 'debug' });
         this.emitter = new ImajinEventEmitter();
         this.setupDefaultMiddleware();
     }
@@ -325,7 +328,7 @@ export class EventManager {
      * Handle system errors
      */
     private handleSystemError(errorData: any): void {
-        console.error('EventManager system error:', errorData);
+        this.logger.error('EventManager system error', errorData.error || new Error(String(errorData)), { errorData });
 
         // Emit error event if it's not already an error event (prevent loops)
         if (errorData.event?.type !== SystemEventType.ERROR_OCCURRED) {
@@ -334,7 +337,7 @@ export class EventManager {
                 context: errorData,
                 severity: 'medium'
             }).catch(err => {
-                console.error('Failed to emit error event:', err);
+                this.logger.error('Failed to emit error event', err);
             });
         }
     }

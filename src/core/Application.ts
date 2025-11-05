@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-06
- * @updated      2025-07-01
+ * @updated      2025-07-03
  *
  * @see         docs/architecture.md
  * 
@@ -33,6 +33,7 @@ import type { LLMResponse, ServiceIntrospection } from '../types/LLM.js';
 import { ErrorHandler } from './ErrorHandler.js';
 import { ErrorRecovery } from './ErrorRecovery.js';
 import { BusinessContextValidator } from '../middleware/BusinessContextValidator.js';
+import { RecipeManager } from '../context/RecipeManager.js';
 
 export class Application {
   public static readonly VERSION = '0.1.0';
@@ -44,6 +45,7 @@ export class Application {
   private config: ImajinConfig;
   private providers: ServiceProvider[] = [];
   private isBooted: boolean = false;
+  private commandsRegistered: boolean = false;
   private errorHandler: ErrorHandler;
   private errorRecovery: ErrorRecovery;
   private businessValidator: BusinessContextValidator;
@@ -95,6 +97,7 @@ export class Application {
         promise
       });
 
+      this.logger.error('Unhandled promise rejection', error, { promise });
       await this.errorHandler.handleError(error);
     });
 
@@ -104,6 +107,7 @@ export class Application {
         source: 'uncaughtException'
       });
 
+      this.logger.error('Uncaught exception', normalizedError);
       await this.errorHandler.handleError(normalizedError);
     });
 
@@ -247,12 +251,22 @@ export class Application {
    * Register commands from service providers
    */
   private registerProviderCommands(): void {
+    if (this.commandsRegistered) {
+      return;
+    }
+    
     for (const provider of this.providers) {
       if ('registerCommands' in provider && typeof provider.registerCommands === 'function') {
-        provider.registerCommands(this.program);
-        this.logger.debug(`Registered commands for provider: ${provider.getName()}`);
+        try {
+          provider.registerCommands(this.program);
+          this.logger.debug(`Registered commands for provider: ${provider.getName()}`);
+        } catch (error) {
+          this.logger.warn(`Failed to register commands for provider ${provider.getName()}:`, { error: String(error) });
+        }
       }
     }
+    
+    this.commandsRegistered = true;
   }
   
   /**
@@ -419,18 +433,19 @@ export class Application {
         // Validate business context before command execution
         const commandString = process.argv.slice(2).join(' ');
         const isValidContext = await this.businessValidator.validateBusinessContext(commandString);
-        
+
         if (!isValidContext) {
           process.exit(1);
         }
-        
+
         await this.program.parseAsync(process.argv);
-        
+
         // Force exit after command completion for non-interactive commands
         // This ensures the process doesn't hang on open handles from services
         process.exit(0);
       }
     } catch (error) {
+      this.logger.error('Application run failed', error instanceof Error ? error : new Error(String(error)));
       console.error(chalk.red('Error:'), error);
       process.exit(1);
     }
@@ -455,6 +470,8 @@ export class Application {
             choices: [
               { name: '🔍 List available services', value: 'list-services' },
               { name: '📋 Describe a service', value: 'describe' },
+              { name: '📚 Browse available recipes', value: 'browse-recipes' },
+              { name: '📄 Browse recipe details', value: 'browse-recipe-details' },
               { name: '🩺 Run system diagnostics', value: 'diagnose' },
               { name: '❓ Show help', value: 'help' },
               { name: '🚪 Exit', value: 'exit' }
@@ -464,7 +481,7 @@ export class Application {
 
         if (action === 'exit') {
           console.log(chalk.green('👋 Goodbye!'));
-          break;
+          process.exit(0);
         }
 
         if (action === 'help') {
@@ -473,17 +490,13 @@ export class Application {
         }
 
         if (action === 'describe') {
-          const { serviceName } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'serviceName',
-              message: 'Enter service name to describe:',
-              validate: (input: string) => input.trim().length > 0 || 'Service name is required'
-            }
-          ]);
-          this.handleDescribeService(serviceName.trim(), {});
+          await this.handleDescribeServiceInteractive();
         } else if (action === 'list-services') {
           this.handleListServices({});
+        } else if (action === 'browse-recipes') {
+          await this.handleBrowseRecipes();
+        } else if (action === 'browse-recipe-details') {
+          await this.handleBrowseRecipeDetails();
         } else if (action === 'diagnose') {
           console.log(chalk.green('✅ Application initialized successfully'));
           console.log(chalk.blue('📦 Container ready'));
@@ -500,8 +513,151 @@ export class Application {
           console.log(chalk.green('\n👋 Goodbye!'));
           break;
         }
+        this.logger.error('Interactive mode error', error instanceof Error ? error : new Error(String(error)));
         console.error(chalk.red('Error:'), error);
       }
+    }
+  }
+
+  /**
+   * Handle interactive service description
+   */
+  private async handleDescribeServiceInteractive(): Promise<void> {
+    try {
+      const services = this.providers.map(provider => ({
+        name: provider.getName(),
+        version: provider.getVersion(),
+        capabilities: provider.getServices(),
+      }));
+
+      if (services.length === 0) {
+        console.log(chalk.yellow('⚠️  No services available'));
+        return;
+      }
+
+      const choices = services.map(service => ({
+        name: `${service.name} (v${service.version}) - ${service.capabilities.length} capabilities`,
+        value: service.name
+      }));
+
+      const { selectedService } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'selectedService',
+          message: '📋 Select a service to describe:',
+          choices,
+          pageSize: 10
+        }
+      ]);
+
+      this.handleDescribeService(selectedService, {});
+
+    } catch (error) {
+      this.logger.error('Failed to show services', error instanceof Error ? error : new Error(String(error)));
+      console.error(chalk.red('❌ Failed to show services:'), error);
+    }
+  }
+
+  /**
+   * Handle interactive recipe browsing
+   */
+  private async handleBrowseRecipes(): Promise<void> {
+    try {
+      const recipeManager = new RecipeManager();
+      const recipes = await recipeManager.listRecipes();
+      
+      if (recipes.length === 0) {
+        console.log(chalk.yellow('⚠️  No recipes available'));
+        return;
+      }
+
+      console.log(chalk.blue('📚 Available Business Recipe Templates:\n'));
+      
+      for (const recipe of recipes) {
+        console.log(chalk.cyan(`  • ${chalk.bold(recipe.businessType)}`));
+        console.log(chalk.gray(`    ${recipe.name} - ${recipe.description}`));
+        console.log(chalk.gray(`    Entities: ${Object.keys(recipe.entities).join(', ')}\n`));
+      }
+      
+      console.log(chalk.yellow('💡 Usage:'));
+      console.log(chalk.gray('   imajin context recipe --type <businessType>'));
+      console.log(chalk.gray('   imajin context recipe --type community-platform'));
+
+    } catch (error) {
+      this.logger.error('Failed to list recipes', error instanceof Error ? error : new Error(String(error)));
+      console.error(chalk.red('❌ Failed to list recipes:'), error);
+    }
+  }
+
+  /**
+   * Handle interactive recipe details browsing
+   */
+  private async handleBrowseRecipeDetails(): Promise<void> {
+    try {
+      const recipeManager = new RecipeManager();
+      const recipes = await recipeManager.listRecipes();
+      
+      if (recipes.length === 0) {
+        console.log(chalk.yellow('⚠️  No recipes available'));
+        return;
+      }
+
+      const choices = recipes.map(recipe => ({
+        name: `${recipe.businessType} - ${recipe.name} (${Object.keys(recipe.entities).length} entities)`,
+        value: recipe.businessType
+      }));
+
+      const { selectedRecipe } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'selectedRecipe',
+          message: '📄 Select a recipe to view details:',
+          choices,
+          pageSize: 10
+        }
+      ]);
+
+      const recipe = await recipeManager.getRecipe(selectedRecipe);
+      if (!recipe) {
+        console.log(chalk.red(`❌ Recipe not found: ${selectedRecipe}`));
+        return;
+      }
+
+      // Display recipe details in a readable format
+      console.log(chalk.blue(`\n📄 Recipe: ${recipe.name}\n`));
+      console.log(chalk.cyan(`Business Type: ${recipe.businessType}`));
+      console.log(chalk.cyan(`Description: ${recipe.description}\n`));
+      
+      console.log(chalk.yellow('📋 Entities:'));
+      for (const [entityName, entityDef] of Object.entries(recipe.entities)) {
+        console.log(chalk.gray(`  • ${entityName}: ${(entityDef as any).fields?.length || 0} fields`));
+      }
+      
+      if (recipe.workflows && recipe.workflows.length > 0) {
+        console.log(chalk.yellow('\n🔄 Workflows:'));
+        for (const workflow of recipe.workflows) {
+          console.log(chalk.gray(`  • ${workflow.name}: ${workflow.description || 'No description'}`));
+        }
+      }
+
+      // Ask if user wants to see full JSON
+      const { showJson } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'showJson',
+          message: 'Would you like to see the full JSON definition?',
+          default: false
+        }
+      ]);
+
+      if (showJson) {
+        console.log(chalk.blue('\n📄 Full JSON:'));
+        console.log(chalk.gray(JSON.stringify(recipe, null, 2)));
+      }
+
+    } catch (error) {
+      this.logger.error('Failed to show recipe', error instanceof Error ? error : new Error(String(error)));
+      console.error(chalk.red('❌ Failed to show recipe:'), error);
     }
   }
 } 

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - CredentialManager for secure storage
@@ -102,6 +102,7 @@ export class AuthCommands {
      */
     private async handleSetup(service: string, options: any): Promise<void> {
         try {
+            this.logger?.debug('Starting auth setup', { service, hasProvider: !!options.provider });
             // Switch provider if requested
             if (options.provider) {
                 await this.credentialManager.switchProvider(options.provider);
@@ -116,6 +117,12 @@ export class AuthCommands {
             }
 
             await this.credentialManager.store(service, credentials);
+
+            this.logger?.info('Credentials stored successfully', {
+                service,
+                credentialType: this.getCredentialType(credentials),
+                provider: this.credentialManager.getProviderInfo().name
+            });
 
             console.log(chalk.green(`✅ Credentials stored for ${service}`));
 
@@ -132,6 +139,7 @@ export class AuthCommands {
             }
 
         } catch (error) {
+            this.logger?.error('Auth setup failed', error as Error, { service, options });
             console.error(chalk.red(`❌ Failed to setup credentials: ${error}`));
             process.exit(1);
         }
@@ -142,6 +150,7 @@ export class AuthCommands {
      */
     private async handleList(options: any): Promise<void> {
         try {
+            this.logger?.debug('Listing credentials', { json: !!options.json, providerInfo: !!options.providerInfo });
             const services = await this.credentialManager.list();
             const providerInfo = this.credentialManager.getProviderInfo();
 
@@ -176,7 +185,10 @@ export class AuthCommands {
                 console.log(chalk.gray(`Native: ${providerInfo.isNative ? 'Yes' : 'No'}`));
             }
 
+            this.logger?.info('Credentials listed successfully', { count: services.length, provider: providerInfo.name });
+
         } catch (error) {
+            this.logger?.error('Failed to list credentials', error as Error);
             console.error(chalk.red(`❌ Failed to list credentials: ${error}`));
             process.exit(1);
         }
@@ -187,6 +199,7 @@ export class AuthCommands {
      */
     private async handleTest(service: string, options: any): Promise<void> {
         try {
+            this.logger?.debug('Testing credentials', { service, json: !!options.json });
             const isValid = await this.credentialManager.test(service);
             const credentials = await this.credentialManager.retrieve(service);
 
@@ -213,7 +226,10 @@ export class AuthCommands {
                 console.log(chalk.red(`❌ Credentials for ${service} are invalid or expired`));
             }
 
+            this.logger?.info('Credential test completed', { service, valid: isValid });
+
         } catch (error) {
+            this.logger?.error('Failed to test credentials', error as Error, { service });
             console.error(chalk.red(`❌ Failed to test credentials: ${error}`));
             process.exit(1);
         }
@@ -224,6 +240,7 @@ export class AuthCommands {
      */
     private async handleRemove(service: string, options: any): Promise<void> {
         try {
+            this.logger?.debug('Removing credentials', { service, force: !!options.force });
             const credentials = await this.credentialManager.retrieve(service);
 
             if (!credentials) {
@@ -248,9 +265,12 @@ export class AuthCommands {
             }
 
             await this.credentialManager.delete(service);
+
+            this.logger?.info('Credentials removed successfully', { service });
             console.log(chalk.green(`✅ Removed credentials for ${service}`));
 
         } catch (error) {
+            this.logger?.error('Failed to remove credentials', error as Error, { service });
             console.error(chalk.red(`❌ Failed to remove credentials: ${error}`));
             process.exit(1);
         }
@@ -261,6 +281,7 @@ export class AuthCommands {
      */
     private async handleClear(options: any): Promise<void> {
         try {
+            this.logger?.debug('Clearing all credentials', { force: !!options.force });
             const services = await this.credentialManager.list();
 
             if (services.length === 0) {
@@ -285,9 +306,12 @@ export class AuthCommands {
             }
 
             await this.credentialManager.clear();
+
+            this.logger?.info('All credentials cleared', { count: services.length });
             console.log(chalk.green(`✅ Cleared all credentials (${services.length} removed)`));
 
         } catch (error) {
+            this.logger?.error('Failed to clear credentials', error as Error);
             console.error(chalk.red(`❌ Failed to clear credentials: ${error}`));
             process.exit(1);
         }
@@ -298,6 +322,11 @@ export class AuthCommands {
      */
     private async handleProvider(options: any): Promise<void> {
         try {
+            this.logger?.debug('Managing providers', {
+                list: !!options.list,
+                switch: options.switch,
+                info: !!options.info
+            });
             if (options.list) {
                 const providers = this.credentialManager.getAvailableProviders();
 
@@ -324,6 +353,7 @@ export class AuthCommands {
 
             if (options.switch) {
                 await this.credentialManager.switchProvider(options.switch);
+                this.logger?.info('Provider switched', { provider: options.switch });
                 console.log(chalk.green(`✅ Switched to ${options.switch} provider`));
                 return;
             }
@@ -351,6 +381,7 @@ export class AuthCommands {
             console.log(chalk.blue(`Current provider: ${providerInfo.name}`));
 
         } catch (error) {
+            this.logger?.error('Provider operation failed', error as Error, { options });
             console.error(chalk.red(`❌ Provider operation failed: ${error}`));
             process.exit(1);
         }

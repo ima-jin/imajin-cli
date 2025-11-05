@@ -20,10 +20,22 @@ import { Command } from 'commander';
 import { RecipeManager } from '../../context/RecipeManager.js';
 import { BusinessContextManager } from '../../context/BusinessContextManager.js';
 import chalk from 'chalk';
+import type { Logger } from '../../logging/Logger.js';
 
 export function createRecipeCommands(): Command {
     const cmd = new Command('recipes');
     cmd.description('Manage business recipe templates');
+
+    // Get logger instance
+    let logger: Logger | null = null;
+    try {
+        const container = (globalThis as any).imajinApp?.container;
+        if (container) {
+            logger = container.resolve('logger') as Logger;
+        }
+    } catch (error) {
+        // Logger not available
+    }
 
     // List available recipes
     cmd.command('list')
@@ -31,6 +43,7 @@ export function createRecipeCommands(): Command {
         .option('--json', 'Output in JSON format')
         .action(async (options) => {
             try {
+                logger?.debug('Listing recipe templates', { json: !!options.json });
                 const recipeManager = new RecipeManager();
                 const recipes = await recipeManager.listRecipes();
                 
@@ -49,8 +62,11 @@ export function createRecipeCommands(): Command {
                     console.log(chalk.gray('   imajin init recipe --type <businessType>'));
                     console.log(chalk.gray('   imajin init recipe --type coffee-shop'));
                 }
-                
+
+                logger?.info('Recipe templates listed', { count: recipes.length });
+
             } catch (error) {
+                logger?.error('Failed to list recipes', error as Error);
                 console.error(chalk.red('❌ Failed to list recipes:'), error);
                 process.exit(1);
             }

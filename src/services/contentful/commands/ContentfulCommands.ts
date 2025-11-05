@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - ContentfulService for content operations
@@ -21,6 +22,7 @@ import chalk from 'chalk';
 import type { Recipe } from '../../../context/RecipeManager.js';
 import { RecipeManager } from '../../../context/RecipeManager.js';
 import { Container } from '../../../container/Container.js';
+import type { Logger } from '../../../logging/Logger.js';
 
 // Global application instance (set during boot)
 declare global {
@@ -69,6 +71,15 @@ export function createContentfulCommands(): Command {
     const cmd = new Command('contentful');
     cmd.description('Universal content management operations using Contentful CMS (works with any business recipe)');
 
+    // Get logger from container
+    let logger: Logger | null = null;
+    try {
+        const container = globalThis.imajinApp?.container || new Container();
+        logger = container.resolve('logger') as Logger;
+    } catch (error) {
+        // Logger not available yet, commands will handle gracefully
+    }
+
     // Content listing and browsing
     const contentCmd = cmd.command('content')
         .description('Content entry operations');
@@ -83,29 +94,33 @@ export function createContentfulCommands(): Command {
                 const { Container } = await import('../../../container/Container.js');
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
+                logger?.info('Listing Contentful content', { type: options.type, limit: options.limit });
+
                 const content = await contentfulService.getContent(
                     options.type,
                     parseInt(options.limit)
                 );
 
+                logger?.info('Content retrieved', { count: content.length, type: options.type });
+
                 if (options.json) {
                     console.log(JSON.stringify(content, null, 2));
                 } else {
                     console.log(chalk.blue('📚 Content Entries:\n'));
-                    
+
                     if (content.length === 0) {
                         console.log(chalk.yellow('No content entries found.'));
                         return;
                     }
-                    
+
                     for (const item of content) {
                         console.log(chalk.cyan(`• ${chalk.bold(item.title)}`));
                         console.log(chalk.gray(`  ID: ${item.id}`));
                         console.log(chalk.gray(`  Type: ${item.contentType}`));
                         if (item.description) {
-                            const truncatedDesc = item.description.length > 100 
-                                ? item.description.substring(0, 100) + '...' 
+                            const truncatedDesc = item.description.length > 100
+                                ? item.description.substring(0, 100) + '...'
                                 : item.description;
                             console.log(chalk.gray(`  Description: ${truncatedDesc}`));
                         }
@@ -119,6 +134,7 @@ export function createContentfulCommands(): Command {
                     }
                 }
             } catch (error) {
+                logger?.error('Failed to list Contentful content', error instanceof Error ? error : undefined, { type: options.type, limit: options.limit });
                 console.error(chalk.red('❌ Failed to list content:'), error);
                 process.exit(1);
             }
@@ -132,13 +148,18 @@ export function createContentfulCommands(): Command {
                 const { Container } = await import('../../../container/Container.js');
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
+                logger?.debug('Getting Contentful entry', { entryId: id });
+
                 const entry = await contentfulService.getEntry(id);
 
                 if (!entry) {
+                    logger?.warn('Contentful entry not found', { entryId: id });
                     console.log(chalk.yellow(`⚠️  Entry not found: ${id}`));
                     return;
                 }
+
+                logger?.info('Contentful entry retrieved', { entryId: entry.id, contentType: entry.contentType });
 
                 if (options.json) {
                     console.log(JSON.stringify(entry, null, 2));
@@ -164,6 +185,7 @@ export function createContentfulCommands(): Command {
                     }
                 }
             } catch (error) {
+                logger?.error('Failed to get Contentful entry', error instanceof Error ? error : undefined, { entryId: id });
                 console.error(chalk.red('❌ Failed to get entry:'), error);
                 process.exit(1);
             }
@@ -178,15 +200,19 @@ export function createContentfulCommands(): Command {
                 const { Container } = await import('../../../container/Container.js');
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
                 const contentTypes = options.types ? options.types.split(',') : undefined;
+                logger?.debug('Searching Contentful content', { query, contentTypes });
+
                 const content = await contentfulService.searchContent(query, contentTypes);
+
+                logger?.info('Contentful search completed', { query, resultCount: content.length, contentTypes });
 
                 if (options.json) {
                     console.log(JSON.stringify(content, null, 2));
                 } else {
                     console.log(chalk.blue(`🔍 Search Results for "${query}":\n`));
-                    
+
                     if (content.length === 0) {
                         console.log(chalk.yellow('No results found.'));
                         return;
@@ -197,8 +223,8 @@ export function createContentfulCommands(): Command {
                         console.log(chalk.gray(`  ID: ${item.id}`));
                         console.log(chalk.gray(`  Type: ${item.contentType}`));
                         if (item.description) {
-                            const truncatedDesc = item.description.length > 100 
-                                ? item.description.substring(0, 100) + '...' 
+                            const truncatedDesc = item.description.length > 100
+                                ? item.description.substring(0, 100) + '...'
                                 : item.description;
                             console.log(chalk.gray(`  Description: ${truncatedDesc}`));
                         }
@@ -206,6 +232,7 @@ export function createContentfulCommands(): Command {
                     }
                 }
             } catch (error) {
+                logger?.error('Failed to search Contentful content', error instanceof Error ? error : undefined, { query, contentTypes: options.types });
                 console.error(chalk.red('❌ Failed to search content:'), error);
                 process.exit(1);
             }
@@ -221,14 +248,18 @@ export function createContentfulCommands(): Command {
                 const { Container } = await import('../../../container/Container.js');
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
+                logger?.debug('Getting upcoming events', { limit: options.limit });
+
                 const events = await contentfulService.getUpcomingEvents(parseInt(options.limit));
+
+                logger?.info('Upcoming events retrieved', { count: events.length, limit: options.limit });
 
                 if (options.json) {
                     console.log(JSON.stringify(events, null, 2));
                 } else {
                     console.log(chalk.blue('📅 Upcoming Events:\n'));
-                    
+
                     if (events.length === 0) {
                         console.log(chalk.yellow('No upcoming events found.'));
                         return;
@@ -243,8 +274,8 @@ export function createContentfulCommands(): Command {
                             console.log(chalk.gray(`  Date: ${new Date(event.metadata.eventDate).toLocaleDateString()}`));
                         }
                         if (event.description) {
-                            const truncatedDesc = event.description.length > 100 
-                                ? event.description.substring(0, 100) + '...' 
+                            const truncatedDesc = event.description.length > 100
+                                ? event.description.substring(0, 100) + '...'
                                 : event.description;
                             console.log(chalk.gray(`  Description: ${truncatedDesc}`));
                         }
@@ -252,6 +283,7 @@ export function createContentfulCommands(): Command {
                     }
                 }
             } catch (error) {
+                logger?.error('Failed to get upcoming events', error instanceof Error ? error : undefined, { limit: options.limit });
                 console.error(chalk.red('❌ Failed to get events:'), error);
                 process.exit(1);
             }
@@ -269,16 +301,20 @@ export function createContentfulCommands(): Command {
                 const { Container } = await import('../../../container/Container.js');
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
+                logger?.debug('Getting content items', { type: options.type, category: options.category, limit: options.limit });
+
                 // Use getTracks method but with generic naming
                 const items = await contentfulService.getTracks(options.category, parseInt(options.limit));
+
+                logger?.info('Content items retrieved', { count: items.length, type: options.type, category: options.category });
 
                 if (options.json) {
                     console.log(JSON.stringify(items, null, 2));
                 } else {
                     const itemType = options.type || 'item';
                     console.log(chalk.blue(`📦 ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}s:\n`));
-                    
+
                     if (items.length === 0) {
                         console.log(chalk.yellow(`No ${itemType}s found.`));
                         return;
@@ -297,6 +333,7 @@ export function createContentfulCommands(): Command {
                     }
                 }
             } catch (error) {
+                logger?.error('Failed to get content items', error instanceof Error ? error : undefined, { type: options.type, category: options.category, limit: options.limit });
                 console.error(chalk.red('❌ Failed to get items:'), error);
                 process.exit(1);
             }
@@ -311,8 +348,12 @@ export function createContentfulCommands(): Command {
                 const { Container } = await import('../../../container/Container.js');
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
+                logger?.debug('Checking Contentful service status');
+
                 const health = await contentfulService.getHealth();
+
+                logger?.info('Service status retrieved', { status: health.status, uptime: health.uptime, operationsCount: health.metrics.operationsCount });
 
                 if (options.json) {
                     console.log(JSON.stringify(health, null, 2));
@@ -321,7 +362,7 @@ export function createContentfulCommands(): Command {
                     console.log(chalk.cyan(`Status: ${health.status}`));
                     console.log(chalk.cyan(`Service: ${health.name} v${health.version}`));
                     console.log(chalk.cyan(`Uptime: ${Math.round(health.uptime / 1000)}s`));
-                    
+
                     if (health.checks.length > 0) {
                         console.log(chalk.cyan('\nHealth Checks:'));
                         for (const check of health.checks) {
@@ -337,6 +378,7 @@ export function createContentfulCommands(): Command {
                     console.log(chalk.gray(`  Last Activity: ${health.metrics.lastActivity.toLocaleString()}`));
                 }
             } catch (error) {
+                logger?.error('Failed to get service status', error instanceof Error ? error : undefined);
                 console.error(chalk.red('❌ Failed to get service status:'), error);
                 process.exit(1);
             }
@@ -377,17 +419,20 @@ export function createContentfulCommands(): Command {
                     return;
                 }
 
+                logger?.debug('Starting Contentful bootstrap', { context: options.context, dryRun: options.dryRun || options['dry-run'] });
+
                 // Get services from global app
                 const recipeManager = new RecipeManager();
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
                 // Load existing recipe
                 const recipe = await recipeManager.getRecipe(options.context);
                 if (!recipe) {
+                    logger?.warn('Recipe not found', { context: options.context });
                     console.log(chalk.red(`❌ Recipe not found: ${options.context}`));
                     console.log(chalk.yellow('\n💡 Available recipes:'));
-                    
+
                     const recipes = await recipeManager.listRecipes();
                     for (const r of recipes) {
                         console.log(chalk.gray(`   ${r.businessType} - ${r.description}`));
@@ -395,17 +440,20 @@ export function createContentfulCommands(): Command {
                     return;
                 }
 
+                logger?.info('Recipe loaded', { recipeName: recipe.name, businessType: recipe.businessType });
+
                 // Convert recipe entities to Contentful content types
                 const contentTypes = await convertRecipeToContentfulTypes(recipe);
 
                 if (options.dryRun || options['dry-run']) {
+                    logger?.debug('Bootstrap dry run completed', { contentTypeCount: contentTypes.length });
                     if (options.json) {
                         console.log(JSON.stringify({ recipe, contentTypes }, null, 2));
                     } else {
                         console.log(chalk.blue(`🏗️  Bootstrap Plan for "${recipe.name}":\n`));
                         console.log(chalk.cyan(`Business Type: ${recipe.businessType}`));
                         console.log(chalk.cyan(`Description: ${recipe.description}\n`));
-                        
+
                         console.log(chalk.blue('Content Types to Create:'));
                         contentTypes.forEach(ct => {
                             console.log(chalk.cyan(`  • ${ct.name} (${ct.id})`));
@@ -421,30 +469,35 @@ export function createContentfulCommands(): Command {
 
                 // Actually bootstrap Contentful
                 console.log(chalk.blue(`🚀 Bootstrapping Contentful with "${recipe.name}" recipe...\n`));
-                
+
                 const results = [];
                 for (const contentType of contentTypes) {
                     console.log(chalk.cyan(`Creating content type: ${contentType.name}...`));
                     try {
                         const result = await contentfulService.createContentType(contentType);
                         results.push({ contentType: contentType.name, success: true, id: result.sys.id });
+                        logger?.info('Content type created', { contentType: contentType.name, id: result.sys.id });
                         console.log(chalk.green(`✅ Created ${contentType.name}`));
                     } catch (error) {
                         const errorMessage = error instanceof Error ? error.message : String(error);
                         results.push({ contentType: contentType.name, success: false, error: errorMessage });
+                        logger?.error('Content type creation failed', error instanceof Error ? error : undefined, { contentType: contentType.name });
                         console.log(chalk.red(`❌ Failed to create ${contentType.name}: ${errorMessage}`));
                     }
                 }
 
+                const successful = results.filter(r => r.success).length;
+                const failed = results.filter(r => !r.success).length;
+                logger?.info('Bootstrap completed', { successful, failed, total: results.length });
+
                 if (options.json) {
-                    console.log(JSON.stringify({ 
-                        recipe: recipe.businessType, 
-                        results 
+                    console.log(JSON.stringify({
+                        recipe: recipe.businessType,
+                        results
                     }, null, 2));
                 } else {
-                    const successful = results.filter(r => r.success).length;
                     const total = results.length;
-                    
+
                     console.log(chalk.green(`\n🎉 Bootstrap complete! ${successful}/${total} content types created`));
                     console.log(chalk.gray('Your Contentful space is now ready for business operations.'));
                     console.log(chalk.blue('\n📋 Next steps:'));
@@ -453,6 +506,7 @@ export function createContentfulCommands(): Command {
                 }
 
             } catch (error) {
+                logger?.error('Bootstrap failed', error instanceof Error ? error : undefined, { context: options.context });
                 console.error(chalk.red('❌ Failed to bootstrap Contentful:'), error);
                 process.exit(1);
             }
@@ -472,15 +526,20 @@ export function createContentfulCommands(): Command {
                     return;
                 }
 
+                logger?.warn('Deleting content type', { contentType });
+
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
 
                 console.log(chalk.yellow(`⚠️  Deleting content type: ${contentType}...`));
-                
+
                 await contentfulService.deleteContentType(contentType);
+
+                logger?.info('Content type deleted', { contentType });
                 console.log(chalk.green(`✅ Content type '${contentType}' deleted successfully`));
-                
+
             } catch (error) {
+                logger?.error('Content type deletion failed', error instanceof Error ? error : undefined, { contentType });
                 console.error(chalk.red('❌ Failed to delete content type:'), error);
                 process.exit(1);
             }
@@ -495,7 +554,7 @@ export function createContentfulCommands(): Command {
         .action(async (options) => {
             try {
                 console.log(chalk.blue('🔄 Production-Safe Content Type Migration\n'));
-                
+
                 if (!options.context) {
                     console.log(chalk.red('❌ --context is required for migration'));
                     console.log(chalk.yellow('\n💡 Migration Strategy:'));
@@ -507,40 +566,47 @@ export function createContentfulCommands(): Command {
                     return;
                 }
 
+                logger?.debug('Starting content migration', { context: options.context, dryRun: options.dryRun || options['dry-run'], backup: options.backup });
+
                 // Get services
                 const recipeManager = new RecipeManager();
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
-                
+
                 // Load recipe
                 const recipe = await recipeManager.getRecipe(options.context);
                 if (!recipe) {
+                    logger?.warn('Migration recipe not found', { context: options.context });
                     console.log(chalk.red(`❌ Recipe not found: ${options.context}`));
                     return;
                 }
+
+                logger?.info('Migration recipe loaded', { recipeName: recipe.name, businessType: recipe.businessType });
 
                 console.log(chalk.cyan(`Recipe: ${recipe.name}`));
                 console.log(chalk.cyan(`Business Type: ${recipe.businessType}\n`));
 
                 if (options.dryRun || options['dry-run']) {
+                    logger?.debug('Migration dry run completed');
                     console.log(chalk.yellow('🔍 Migration Analysis (Dry Run):\n'));
-                    
+
                     console.log(chalk.blue('Migration Strategy:'));
                     console.log(chalk.gray('  1. 📊 Analyze existing content types'));
                     console.log(chalk.gray('  2. 🔄 Identify field changes needed'));
                     console.log(chalk.gray('  3. ➕ Add new fields (preserving existing data)'));
                     console.log(chalk.gray('  4. 📦 Migrate data to new field structures'));
                     console.log(chalk.gray('  5. 🧹 Clean up old fields after verification'));
-                    
+
                     console.log(chalk.blue('\n⚠️  Production Safety Features:'));
                     console.log(chalk.gray('  • Zero data loss - existing content preserved'));
                     console.log(chalk.gray('  • Rollback capability at each step'));
                     console.log(chalk.gray('  • Backup creation before changes'));
                     console.log(chalk.gray('  • Step-by-step validation'));
-                    
+
                     console.log(chalk.yellow('\n🚀 To execute migration:'));
                     console.log(chalk.gray(`   imajin contentful migrate --context ${options.context} --backup`));
                 } else {
+                    logger?.warn('Migration execution not implemented', { context: options.context });
                     console.log(chalk.red('❌ Production migration not yet implemented'));
                     console.log(chalk.yellow('⚠️  This requires careful implementation with:'));
                     console.log(chalk.gray('   • Content backup/restore functionality'));
@@ -552,6 +618,7 @@ export function createContentfulCommands(): Command {
                 }
 
             } catch (error) {
+                logger?.error('Migration failed', error instanceof Error ? error : undefined, { context: options.context });
                 console.error(chalk.red('❌ Migration failed:'), error);
                 process.exit(1);
             }
@@ -571,18 +638,22 @@ export function createContentfulCommands(): Command {
                 const container = globalThis.imajinApp?.container || new Container();
                 const contentfulService = container.resolve('contentfulService');
 
+                logger?.debug('Showing schema', { contentType });
+
                 console.log(chalk.blue(`📋 Schema for content type: ${contentType}\n`));
-                
+
                 // This would need to be implemented in ContentfulService
                 // For now, show what it would look like
+                logger?.warn('Schema introspection not implemented', { contentType });
                 console.log(chalk.yellow('⚠️  Schema introspection not yet implemented'));
                 console.log(chalk.gray('Would show:'));
                 console.log(chalk.gray('  • Field definitions'));
                 console.log(chalk.gray('  • Field types and validations'));
                 console.log(chalk.gray('  • Required vs optional fields'));
                 console.log(chalk.gray('  • Relationship mappings'));
-                
+
             } catch (error) {
+                logger?.error('Failed to show schema', error instanceof Error ? error : undefined, { contentType });
                 console.error(chalk.red('❌ Failed to show schema:'), error);
                 process.exit(1);
             }
@@ -596,12 +667,15 @@ export function createContentfulCommands(): Command {
         .action(async (options) => {
             try {
                 console.log(chalk.blue('🔍 Schema Difference Analysis\n'));
-                
+
                 if (!options.context) {
                     console.log(chalk.red('❌ --context is required'));
                     console.log(chalk.gray('   imajin contentful schema diff --context imajin-lighting'));
                     return;
                 }
+
+                logger?.debug('Schema diff requested', { context: options.context, contentType: options['content-type'] });
+                logger?.warn('Schema diff not implemented', { context: options.context });
 
                 console.log(chalk.yellow('⚠️  Schema diff not yet implemented'));
                 console.log(chalk.gray('Would show:'));
@@ -612,8 +686,9 @@ export function createContentfulCommands(): Command {
                 console.log(chalk.blue('\n💡 Migration suggestions:'));
                 console.log(chalk.gray('   imajin contentful add-property <contentType>.<field> --type <type>'));
                 console.log(chalk.gray('   imajin contentful remove-property <contentType>.<field>'));
-                
+
             } catch (error) {
+                logger?.error('Schema diff failed', error instanceof Error ? error : undefined, { context: options.context });
                 console.error(chalk.red('❌ Schema diff failed:'), error);
                 process.exit(1);
             }
@@ -631,8 +706,11 @@ export function createContentfulCommands(): Command {
             try {
                 const [contentType, ...fieldPath] = propertyPath.split('.');
                 console.log(chalk.blue(`➕ Adding property: ${propertyPath}\n`));
-                
+
+                logger?.debug('Add property requested', { propertyPath, type: options.type, required: options.required, dryRun: options.dryRun || options['dry-run'] });
+
                 if (options.dryRun || options['dry-run']) {
+                    logger?.debug('Add property dry run', { contentType, fieldPath: fieldPath.join('.'), type: options.type });
                     console.log(chalk.yellow('🔍 Add Property Plan (Dry Run):\n'));
                     console.log(chalk.cyan(`Content Type: ${contentType}`));
                     console.log(chalk.cyan(`Field Path: ${fieldPath.join('.')}`));
@@ -641,30 +719,32 @@ export function createContentfulCommands(): Command {
                     if (options.default) {
                         console.log(chalk.cyan(`Default: ${options.default}`));
                     }
-                    
+
                     console.log(chalk.blue('\n🔄 Migration Steps:'));
                     console.log(chalk.gray('  1. Backup current content type'));
                     console.log(chalk.gray('  2. Add new field definition'));
                     console.log(chalk.gray('  3. Publish content type'));
                     console.log(chalk.gray('  4. Verify field creation'));
-                    
+
                     console.log(chalk.yellow('\n🚀 To execute:'));
                     console.log(chalk.gray(`   imajin contentful add-property ${propertyPath} --type ${options.type}`));
                 } else {
+                    logger?.warn('Property addition not implemented', { propertyPath, type: options.type });
                     console.log(chalk.red('❌ Property addition not yet implemented'));
                     console.log(chalk.yellow('⚠️  This requires:'));
                     console.log(chalk.gray('   • Content type field modification API'));
                     console.log(chalk.gray('   • Schema validation'));
                     console.log(chalk.gray('   • Rollback capabilities'));
                 }
-                
+
             } catch (error) {
+                logger?.error('Failed to add property', error instanceof Error ? error : undefined, { propertyPath, type: options.type });
                 console.error(chalk.red('❌ Failed to add property:'), error);
                 process.exit(1);
             }
         });
 
-    // Remove property from content type  
+    // Remove property from content type
     cmd.command('remove-property')
         .description('Remove a property from an existing content type')
         .argument('<propertyPath>', 'Property path (e.g., chart.chartUrl)')
@@ -675,41 +755,46 @@ export function createContentfulCommands(): Command {
             try {
                 const [contentType, ...fieldPath] = propertyPath.split('.');
                 console.log(chalk.yellow(`⚠️  Removing property: ${propertyPath}\n`));
-                
+
                 if (!options.confirm && !(options.dryRun || options['dry-run'])) {
                     console.log(chalk.red('❌ --confirm is required for safety'));
                     console.log(chalk.yellow('⚠️  This will permanently remove the property and ALL its data!'));
                     console.log(chalk.gray(`   imajin contentful remove-property ${propertyPath} --confirm --backup`));
                     return;
                 }
-                
+
+                logger?.warn('Remove property requested', { propertyPath, backup: options.backup, dryRun: options.dryRun || options['dry-run'] });
+
                 if (options.dryRun || options['dry-run']) {
+                    logger?.debug('Remove property dry run', { contentType, fieldPath: fieldPath.join('.') });
                     console.log(chalk.yellow('🔍 Remove Property Plan (Dry Run):\n'));
                     console.log(chalk.cyan(`Content Type: ${contentType}`));
                     console.log(chalk.cyan(`Field Path: ${fieldPath.join('.')}`));
-                    
+
                     console.log(chalk.red('\n⚠️  Data Loss Warning:'));
                     console.log(chalk.gray('  • All data in this field will be permanently deleted'));
                     console.log(chalk.gray('  • This operation cannot be undone'));
                     console.log(chalk.gray('  • Backup recommended before proceeding'));
-                    
+
                     console.log(chalk.blue('\n🔄 Migration Steps:'));
                     console.log(chalk.gray('  1. Create full content backup'));
                     console.log(chalk.gray('  2. Unpublish content type'));
                     console.log(chalk.gray('  3. Remove field definition'));
                     console.log(chalk.gray('  4. Publish updated content type'));
-                    
+
                     console.log(chalk.yellow('\n🚀 To execute:'));
                     console.log(chalk.gray(`   imajin contentful remove-property ${propertyPath} --confirm --backup`));
                 } else {
+                    logger?.warn('Property removal not implemented', { propertyPath });
                     console.log(chalk.red('❌ Property removal not yet implemented'));
                     console.log(chalk.yellow('⚠️  This requires:'));
                     console.log(chalk.gray('   • Safe field removal API'));
                     console.log(chalk.gray('   • Data backup/restore'));
                     console.log(chalk.gray('   • Dependency validation'));
                 }
-                
+
             } catch (error) {
+                logger?.error('Failed to remove property', error instanceof Error ? error : undefined, { propertyPath });
                 console.error(chalk.red('❌ Failed to remove property:'), error);
                 process.exit(1);
             }

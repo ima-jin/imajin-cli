@@ -7,9 +7,9 @@ updated: "2025-06-13T21:31:07Z"
 
 # 🎯 IMAJIN-CLI IMPLEMENTATION PROMPTS
 
-**Purpose:** Ready-to-use implementation prompts for systematic development  
-**Last Updated:** June 9, 2025
-**Total Tasks:** 25 prompts across 3 phases  
+**Purpose:** Ready-to-use implementation prompts for systematic development
+**Last Updated:** November 4, 2025
+**Total Tasks:** 29 prompts across 3 phases
 **Usage:** Copy prompt → Execute → Update progress tracker
 
 ---
@@ -83,9 +83,14 @@ docs/prompts/
 | 17.1 | `phase2/17_1_external_schema_system.md`         | ✅ Complete    | External schema definition system     |
 | 17.3 | `phase2/17_3_business_context_schema_system.md` | ✅ Complete    | Business-context-driven schema system |
 | 17.4 | `phase2/17_4_business_context_cleanup.md`       | ✅ Complete    | Business context cleanup and optimization |
-| 17.5 | `phase2/17_5_business_context_recipe_system.md` | 🔄 **CURRENT** | Business context recipe system implementation |
-| 18   | `phase2/18_service_hardening_multi_api.md`      | ⏳ Pending     | Connect 5-6 APIs for practical testing |
-| 19   | `phase2/19_local_model_samples.md`              | ⏳ Pending     | Build sample local model integrations |
+| 17.5 | `phase2/17_5_business_context_recipe_system.md` | ✅ Complete    | Business context recipe system implementation |
+| **18**   | **`phase2/18_phase2_cleanup.md`**                   | 🔄 **CURRENT** | **Phase 2 cleanup & production readiness** |
+| 18.1 | `phase2/18_1_console_log_migration.md`          | ⏳ Pending     | Console.log to logger migration (1,095 violations) |
+| 18.2 | `phase2/18_2_eslint_configuration.md`           | ⏳ Pending     | ESLint v9 flat config setup |
+| 18.3 | `phase2/18_3_test_suite_fixes.md`               | ⏳ Pending     | Fix 7 failing test suites |
+| 18.4 | `phase2/18_4_code_quality_improvements.md`      | ⏳ Pending     | DRY refactoring & type safety |
+| 19   | `phase2/19_service_hardening_multi_api.md`      | ⏳ Pending     | Connect 5-6 APIs for practical testing |
+| 20   | `phase2/20_local_model_samples.md`              | ⏳ Pending     | Build sample local model integrations |
 
 ---
 

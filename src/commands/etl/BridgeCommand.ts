@@ -1,10 +1,10 @@
-import { BaseCommand } from '../../core/commands/BaseCommand';
-import { Bridge, DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges';
+import { BaseCommand } from '../../core/commands/BaseCommand.js';
+import { Bridge, DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import type { Logger } from '../../logging/Logger';
-import type { EventManager } from '../../core/events/EventManager';
+import type { Logger } from '../../logging/Logger.js';
+import type { EventManager } from '../../core/events/EventManager.js';
 
 /**
  * BridgeCommand - Bridge Management Operations
@@ -16,7 +16,7 @@ import type { EventManager } from '../../core/events/EventManager';
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Bridge Registry
@@ -167,7 +167,7 @@ export class BridgeCommand extends BaseCommand {
     }
 
     private handleShow(bridgeId: string): any {
-        const bridge = this.registry.getBridges().find(b => b.id === bridgeId);
+        const bridge = this.registry.getBridges().find((b: Bridge) => b.id === bridgeId);
         if (!bridge) {
             throw new Error(`Bridge '${bridgeId}' not found`);
         }
@@ -200,7 +200,7 @@ export class BridgeCommand extends BaseCommand {
     }
 
     private handleValidate(bridgeId: string): any {
-        const bridge = this.registry.getBridges().find(b => b.id === bridgeId);
+        const bridge = this.registry.getBridges().find((b: Bridge) => b.id === bridgeId);
         if (!bridge) {
             throw new Error(`Bridge '${bridgeId}' not found`);
         }
@@ -210,7 +210,7 @@ export class BridgeCommand extends BaseCommand {
     }
 
     private async handleTest(bridgeId: string, data: string): Promise<any> {
-        const bridge = this.registry.getBridges().find(b => b.id === bridgeId);
+        const bridge = this.registry.getBridges().find((b: Bridge) => b.id === bridgeId);
         if (!bridge) {
             throw new Error(`Bridge '${bridgeId}' not found`);
         }

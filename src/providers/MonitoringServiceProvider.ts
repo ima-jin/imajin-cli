@@ -18,10 +18,12 @@
 
 import { Command } from 'commander';
 import { Container } from '../container/Container.js';
+import type { Logger } from '../logging/Logger.js';
 import { ServiceProvider } from './ServiceProvider.js';
 import { SystemMonitor, HealthCheckManager, MetricsCollector, CoreHealthChecks } from '../diagnostics/index.js';
 
 export class MonitoringServiceProvider extends ServiceProvider {
+    private logger!: Logger;
     constructor(container: Container, program: Command) {
         super(container, program);
     }
@@ -31,6 +33,9 @@ export class MonitoringServiceProvider extends ServiceProvider {
     }
 
     public async register(): Promise<void> {
+        // Get logger from container
+        this.logger = this.container.resolve<Logger>('logger');
+
         // Register monitoring components
         this.container.singleton('SystemMonitor', () => new SystemMonitor());
         this.container.singleton('HealthCheckManager', () => new HealthCheckManager());
@@ -48,7 +53,11 @@ export class MonitoringServiceProvider extends ServiceProvider {
         // Start monitoring
         systemMonitor.startMonitoring(60000); // Check every minute
 
-        console.log('✓ Monitoring and diagnostics services initialized');
+        this.logger.info('Monitoring and diagnostics services initialized', {
+            provider: 'MonitoringServiceProvider',
+            interval: '60000ms',
+            checksRegistered: coreChecks.length
+        });
     }
 
     public getServices(): string[] {

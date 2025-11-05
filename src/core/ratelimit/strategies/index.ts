@@ -10,7 +10,7 @@
  * @since       2025-06-09
  */
 
-export { FixedWindowStrategy } from './FixedWindowStrategy';
-export { BaseRateLimitConfig, BaseRateLimitStrategy, RateLimitStrategy, RequestInfo } from './RateLimitStrategy';
-export { SlidingWindowStrategy } from './SlidingWindowStrategy';
-export { TokenBucketStrategy } from './TokenBucketStrategy';
+export { FixedWindowStrategy } from './FixedWindowStrategy.js';
+export { BaseRateLimitConfig, BaseRateLimitStrategy, RateLimitStrategy, RequestInfo } from './RateLimitStrategy.js';
+export { SlidingWindowStrategy } from './SlidingWindowStrategy.js';
+export { TokenBucketStrategy } from './TokenBucketStrategy.js';

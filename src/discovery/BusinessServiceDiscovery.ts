@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Discovers available services and APIs
@@ -22,6 +22,7 @@ import type { TranslationMapping } from '../etl/graphs/models.js';
 import type { ServiceSchemaType } from '../etl/graphs/BusinessModelFactory.js';
 import { BusinessModelFactory, type WorkflowSuggestion } from '../etl/graphs/BusinessModelFactory.js';
 import { z } from 'zod';
+import type { Logger } from '../logging/Logger.js';
 
 // =============================================================================
 // SERVICE DISCOVERY SCHEMAS
@@ -30,7 +31,7 @@ import { z } from 'zod';
 export const ServiceMappingSchema = z.object({
     serviceName: z.string(),
     businessDomain: z.string(),
-    mappings: z.record(z.any()),
+    mappings: z.record(z.string(), z.any()),
     workflows: z.array(z.string()),
     integrationComplexity: z.enum(['simple', 'moderate', 'complex']),
     estimatedSetupTime: z.string(),
@@ -49,7 +50,7 @@ export const ServiceCapabilitySchema = z.object({
         requests: z.number(),
         period: z.string(),
     }),
-    entities: z.record(z.any()),
+    entities: z.record(z.string(), z.any()),
     capabilities: z.array(z.string()),
 });
 
@@ -68,8 +69,10 @@ export class BusinessServiceDiscovery {
     private readonly discoveredServices: Map<string, ServiceCapability> = new Map();
     private readonly businessMappings: Map<string, ServiceMapping[]> = new Map();
     private readonly knownServices: Map<string, ServiceTemplate> = new Map();
+    private logger: Logger;
 
     constructor() {
+        this.logger = new (require('../logging/Logger.js').Logger)({ level: 'debug' });
         this.initializeKnownServices();
     }
 
@@ -79,24 +82,31 @@ export class BusinessServiceDiscovery {
     async discoverAndMapServices(
         businessContext: BusinessDomainModel
     ): Promise<ServiceMapping[]> {
-        console.log(`🔍 Discovering services for ${businessContext.businessType} business...`);
-        
+        this.logger.info('Starting service discovery', {
+            businessType: businessContext.businessType,
+            operation: 'discoverAndMapServices'
+        });
+
         // Simulate service discovery (in real implementation, this would scan environment)
         const availableServices = await this.discoverAvailableServices();
-        
+
         const mappings: ServiceMapping[] = [];
-        
+
         for (const service of availableServices) {
             const mapping = await this.mapServiceToBusinessContext(service, businessContext);
             if (mapping) {
                 mappings.push(mapping);
             }
         }
-        
+
         // Cache mappings for this business domain
         this.businessMappings.set(businessContext.businessType, mappings);
-        
-        console.log(`✅ Discovered ${mappings.length} relevant services for ${businessContext.businessType}`);
+
+        this.logger.info('Service discovery completed', {
+            businessType: businessContext.businessType,
+            mappingsCount: mappings.length,
+            operation: 'discoverAndMapServices'
+        });
         return mappings;
     }
 
@@ -107,19 +117,23 @@ export class BusinessServiceDiscovery {
         businessContext: BusinessDomainModel,
         availableServices: ServiceSchemaType[]
     ): Promise<WorkflowSuggestion[]> {
-        console.log(`💡 Generating workflow suggestions for ${businessContext.businessType}...`);
-        
+        this.logger.info('Generating workflow suggestions', {
+            businessType: businessContext.businessType,
+            servicesCount: availableServices.length,
+            operation: 'suggestWorkflows'
+        });
+
         // Use BusinessModelFactory for workflow generation
         const suggestions = BusinessModelFactory.suggestWorkflows(businessContext, availableServices);
-        
+
         // Add discovery-specific workflow suggestions
         const discoveryWorkflows = await this.generateDiscoverySpecificWorkflows(
             businessContext,
             availableServices
         );
-        
+
         const allSuggestions = [...suggestions, ...discoveryWorkflows];
-        
+
         // Sort by priority and business value
         allSuggestions.sort((a, b) => {
             const priorityOrder = { high: 3, medium: 2, low: 1 };
@@ -127,8 +141,12 @@ export class BusinessServiceDiscovery {
             const bPriority = priorityOrder[b.priority || 'medium'];
             return bPriority - aPriority;
         });
-        
-        console.log(`✅ Generated ${allSuggestions.length} workflow suggestions`);
+
+        this.logger.info('Workflow suggestions generated', {
+            businessType: businessContext.businessType,
+            suggestionsCount: allSuggestions.length,
+            operation: 'suggestWorkflows'
+        });
         return allSuggestions;
     }
 

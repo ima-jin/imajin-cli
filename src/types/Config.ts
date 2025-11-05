@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-08
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/configuration.md
  * 
@@ -33,17 +33,25 @@ export const ImajinConfigSchema = z.object({
         timeout: z.number().default(30000),
         retries: z.number().default(3),
         userAgent: z.string().default('@imajin/cli/0.1.0'),
-    }).default({}),
+    }).default({
+        timeout: 30000,
+        retries: 3,
+        userAgent: '@imajin/cli/0.1.0'
+    }),
 
     // WebSocket configuration for real-time features
     websocket: z.object({
         enabled: z.boolean().default(true),
         reconnectAttempts: z.number().default(5),
         reconnectInterval: z.number().default(1000),
-    }).default({}),
+    }).default({
+        enabled: true,
+        reconnectAttempts: 5,
+        reconnectInterval: 1000
+    }),
 
     // Service configurations
-    services: z.record(z.any()).default({}),
+    services: z.record(z.string(), z.any()).default({}),
 });
 
 export type ImajinConfig = z.infer<typeof ImajinConfigSchema>;

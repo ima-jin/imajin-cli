@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Plugin Generator Engine registration with proper dependencies
@@ -62,8 +62,8 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
      * Bootstrap services after all providers have been registered
      */
     public async boot(): Promise<void> {
-        // Register commands
-        this.registerCommands();
+        // Services are already registered, no additional boot actions needed
+        // Commands will be registered by Application.registerProviderCommands()
     }
 
     /**
@@ -72,57 +72,68 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
     public registerCommands(): void {
         const logger = this.container.resolve<Logger>('logger');
 
-        // Generate plugin command with dependency injection
-        this.program
-            .command('generate:plugin')
-            .description('Generate a plugin from an OpenAPI specification')
-            .argument('<spec>', 'Path to OpenAPI specification file')
-            .option('--dry-run', 'Show what would be generated without creating files')
-            .option('--output <dir>', 'Output directory for generated plugin')
-            .action(async (spec: string, options: any) => {
-                const generator = this.container.resolve('pluginGenerator') as DefaultPluginGenerator;
-                const credentialManager = this.container.resolve('credentialManager') as any;
-                const command = new GeneratePluginCommand(generator, credentialManager, logger);
-                const result = await command.execute([spec], options);
+        // Check if command already exists to prevent duplicates
+        const existingCommand = this.program.commands.find(cmd => cmd.name() === 'generate:plugin');
+        if (!existingCommand) {
+            // Generate plugin command with dependency injection
+            this.program
+                .command('generate:plugin')
+                .description('Generate a plugin from an OpenAPI specification')
+                .argument('<spec>', 'Path to OpenAPI specification file')
+                .option('--dry-run', 'Show what would be generated without creating files')
+                .option('--output <dir>', 'Output directory for generated plugin')
+                .action(async (spec: string, options: any) => {
+                    const generator = this.container.resolve('pluginGenerator') as DefaultPluginGenerator;
+                    const credentialManager = this.container.resolve('credentialManager') as any;
+                    const command = new GeneratePluginCommand(generator, credentialManager, logger);
+                    const result = await command.execute([spec], options);
 
-                if (!result.success) {
-                    process.exit(1);
-                }
-            });
+                    if (!result.success) {
+                        process.exit(1);
+                    }
+                });
+        }
 
         // List plugins command
-        this.program
-            .command('plugin:list')
-            .description('List all loaded plugins')
-            .option('--json', 'Output in JSON format')
-            .action(async (options: any) => {
-                const pluginManager = this.container.resolve<PluginManager>('pluginManager');
-                const plugins = pluginManager.getLoadedPlugins();
+        if (!this.program.commands.find(cmd => cmd.name() === 'plugin:list')) {
+            this.program
+                .command('plugin:list')
+                .description('List all loaded plugins')
+                .option('--json', 'Output in JSON format')
+                .action(async (options: any) => {
+                    const pluginManager = this.container.resolve<PluginManager>('pluginManager');
+                    const plugins = pluginManager.getLoadedPlugins();
 
-                if (options.json) {
-                    console.log(JSON.stringify(plugins, null, 2));
-                } else {
-                    console.log('Loaded plugins:');
-                    if (plugins.length === 0) {
-                        console.log('  No plugins loaded');
+                    if (options.json) {
+                        // User-facing output: use console for JSON
+                        console.log(JSON.stringify(plugins, null, 2));
                     } else {
-                        plugins.forEach(plugin => {
-                            console.log(`  - ${plugin.name} v${plugin.version}: ${plugin.description}`);
-                            console.log(`    Commands: ${plugin.commands.length}`);
-                        });
+                        // User-facing output: use console for formatted display
+                        console.log('Loaded plugins:');
+                        if (plugins.length === 0) {
+                            console.log('  No plugins loaded');
+                        } else {
+                            plugins.forEach(plugin => {
+                                console.log(`  - ${plugin.name} v${plugin.version}: ${plugin.description}`);
+                                console.log(`    Commands: ${plugin.commands.length}`);
+                            });
+                        }
                     }
-                }
-            });
+                });
+        }
 
         // Load plugins command
-        this.program
-            .command('plugin:load')
-            .description('Load all plugins from the plugins directory')
-            .action(async () => {
-                const pluginManager = this.container.resolve<PluginManager>('pluginManager');
-                await pluginManager.loadAllPlugins();
-                console.log('Plugins loaded successfully');
-            });
+        if (!this.program.commands.find(cmd => cmd.name() === 'plugin:load')) {
+            this.program
+                .command('plugin:load')
+                .description('Load all plugins from the plugins directory')
+                .action(async () => {
+                    const pluginManager = this.container.resolve<PluginManager>('pluginManager');
+                    await pluginManager.loadAllPlugins();
+                    // User-facing output: use console for success message
+                    console.log('Plugins loaded successfully');
+                });
+        }
 
         logger.info('Registered plugin generator commands');
     }

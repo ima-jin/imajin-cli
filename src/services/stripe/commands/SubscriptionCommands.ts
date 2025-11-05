@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Commander.js command registration
@@ -20,8 +20,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import type { StripeService } from '../StripeService';
-import type { Logger } from '../../../logging/Logger';
+import type { StripeService } from '../StripeService.js';
+import type { Logger } from '../../../logging/Logger.js';
 
 export class SubscriptionCommands {
     constructor(
@@ -49,6 +49,12 @@ export class SubscriptionCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (options) => {
                 try {
+                    this.logger.debug('Creating subscription', {
+                        customerId: options.customer,
+                        priceId: options.price,
+                        paymentBehavior: options.paymentBehavior
+                    });
+
                     const metadata = options.metadata ? JSON.parse(options.metadata) : undefined;
                     
                     const progressCallback = options.watch ? (event: any) => {
@@ -95,6 +101,12 @@ export class SubscriptionCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (subscriptionId, options) => {
                 try {
+                    this.logger.debug('Canceling subscription', {
+                        subscriptionId,
+                        immediately: options.immediately,
+                        reason: options.reason
+                    });
+
                     const progressCallback = options.watch ? (event: any) => {
                         if (!options.json) {
                             console.log(chalk.blue(`[${event.type}] ${event.message}`));
@@ -145,6 +157,12 @@ export class SubscriptionCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (options) => {
                 try {
+                    this.logger.debug('Listing subscriptions', {
+                        limit: options.limit,
+                        customerId: options.customer,
+                        status: options.status
+                    });
+
                     const progressCallback = options.watch ? (event: any) => {
                         if (!options.json) {
                             console.log(chalk.blue(`[${event.type}] ${event.message}`));

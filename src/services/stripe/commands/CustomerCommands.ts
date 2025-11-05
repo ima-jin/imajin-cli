@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Commander.js command registration
@@ -20,8 +20,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import type { StripeService } from '../StripeService';
-import type { Logger } from '../../../logging/Logger';
+import type { StripeService } from '../StripeService.js';
+import type { Logger } from '../../../logging/Logger.js';
 
 export class CustomerCommands {
     constructor(
@@ -50,8 +50,14 @@ export class CustomerCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (options) => {
                 try {
+                    this.logger.debug('Creating Stripe customer', {
+                        email: options.email,
+                        name: options.name,
+                        hasMetadata: !!options.metadata
+                    });
+
                     const metadata = options.metadata ? JSON.parse(options.metadata) : undefined;
-                    
+
                     const progressCallback = options.watch ? (event: any) => {
                         if (!options.json) {
                             console.log(chalk.blue(`[${event.type}] ${event.message}`));
@@ -99,6 +105,13 @@ export class CustomerCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (options) => {
                 try {
+                    this.logger.debug('Listing Stripe customers', {
+                        limit: options.limit,
+                        email: options.email,
+                        createdAfter: options.createdAfter,
+                        createdBefore: options.createdBefore
+                    });
+
                     const createdFilter: any = {};
                     if (options.createdAfter) {
                         createdFilter.gte = Math.floor(new Date(options.createdAfter).getTime() / 1000);
@@ -157,6 +170,11 @@ export class CustomerCommands {
             .option('--watch', 'Enable real-time progress updates')
             .action(async (customerId, options) => {
                 try {
+                    this.logger.debug('Getting Stripe customer', {
+                        customerId,
+                        includeSubscriptions: options.includeSubscriptions
+                    });
+
                     const progressCallback = options.watch ? (event: any) => {
                         if (!options.json) {
                             console.log(chalk.blue(`[${event.type}] ${event.message}`));

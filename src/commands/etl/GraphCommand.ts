@@ -1,11 +1,21 @@
 import { Command } from 'commander';
-import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges';
+import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
+import type { Logger } from '../../logging/Logger.js';
 
 export class GraphCommand {
     private readonly registry: DefaultBridgeRegistry;
+    private logger: Logger | null = null;
 
     constructor() {
         this.registry = new DefaultBridgeRegistry();
+        try {
+            const container = (globalThis as any).imajinApp?.container;
+            if (container) {
+                this.logger = container.resolve('logger') as Logger;
+            }
+        } catch (error) {
+            // Logger not available
+        }
     }
 
     public register(program: Command): void {
@@ -21,8 +31,10 @@ export class GraphCommand {
             .option('-o, --output <output>', 'Output file path')
             .action(async (source: string, target: string, options) => {
                 try {
+                    this.logger?.debug('Starting graph translation', { source, target });
                     const bridge = this.registry.getBridge(source, target);
                     if (!bridge) {
+                        this.logger?.error('No bridge found', new Error('Bridge not found'), { source, target });
                         console.error(`No bridge found from '${source}' to '${target}'`);
                         return;
                     }
@@ -43,7 +55,10 @@ export class GraphCommand {
                         console.log('\nTranslation Result:');
                         console.log(JSON.stringify(result.data, null, 2));
                     }
+
+                    this.logger?.info('Graph translation completed', { source, target, output: options.output });
                 } catch (error) {
+                    this.logger?.error('Graph translation failed', error as Error, { source, target });
                     console.error('Error during translation:', error);
                 }
             });
@@ -56,8 +71,10 @@ export class GraphCommand {
             .option('-o, --output <output>', 'Output file path')
             .action(async (source: string, model: string, options) => {
                 try {
+                    this.logger?.debug('Starting graph normalization', { source, model });
                     const bridge = this.registry.getBridge(source, model);
                     if (!bridge) {
+                        this.logger?.error('No normalization bridge found', new Error('Bridge not found'), { source, model });
                         console.error(`No bridge found from '${source}' to standard model '${model}'`);
                         return;
                     }
@@ -78,7 +95,10 @@ export class GraphCommand {
                         console.log('\nNormalized Result:');
                         console.log(JSON.stringify(result.data, null, 2));
                     }
+
+                    this.logger?.info('Graph normalization completed', { source, model, output: options.output });
                 } catch (error) {
+                    this.logger?.error('Graph normalization failed', error as Error, { source, model });
                     console.error('Error during normalization:', error);
                 }
             });
@@ -89,10 +109,11 @@ export class GraphCommand {
             .description('Find compatible graph models')
             .option('-m, --model <model>', 'Source model to check compatibility')
             .action((options) => {
+                this.logger?.debug('Discovering compatible graph models', { model: options.model });
                 const bridges = this.registry.getBridges();
                 const compatibleModels = new Set<string>();
 
-                bridges.forEach(bridge => {
+                bridges.forEach((bridge: any) => {
                     if (options.model) {
                         if (bridge.source === options.model) {
                             compatibleModels.add(bridge.target);
@@ -113,6 +134,11 @@ export class GraphCommand {
                 console.log('\nCompatible Models:');
                 Array.from(compatibleModels).forEach(model => {
                     console.log(`- ${model}`);
+                });
+
+                this.logger?.info('Graph model discovery completed', {
+                    sourceModel: options.model,
+                    compatibleCount: compatibleModels.size
                 });
             });
     }

@@ -19,6 +19,7 @@
 import { EventEmitter as NodeEventEmitter } from 'events';
 import type { EventMetadata, IEvent, IEventListener } from './Event.js';
 import { EventPriority } from './Event.js';
+import { Logger } from '../../logging/Logger.js';
 
 /**
  * Event middleware function type
@@ -55,10 +56,12 @@ export class ImajinEventEmitter extends NodeEventEmitter {
     private metrics: EventMetrics = new EventMetrics();
     private maxListeners: number = 100;
     private defaultTimeout: number = 30000; // 30 seconds
+    private logger: Logger;
 
     constructor() {
         super();
         this.setMaxListeners(this.maxListeners);
+        this.logger = new Logger({ level: 'debug' });
     }
 
     /**
@@ -249,7 +252,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
      * Handle listener execution errors
      */
     private handleListenerError(error: Error, event: IEvent, listener: IEventListener): void {
-        console.error(`Error in event listener ${listener.name}:`, error);
+        this.logger.error('Error in event listener', error, { listenerName: listener.name, eventType: event.type });
 
         // Add to dead letter queue if retries exhausted
         const retryCount = event.metadata.retryCount || 0;
@@ -271,7 +274,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
      * Handle event emission errors
      */
     private handleEmissionError(error: Error, event: IEvent): void {
-        console.error(`Error emitting event ${event.type}:`, error);
+        this.logger.error('Error emitting event', error, { eventType: event.type });
         this.deadLetterQueue.push(event);
 
         // Emit error event

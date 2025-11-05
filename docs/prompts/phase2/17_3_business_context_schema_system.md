@@ -15,7 +15,7 @@ created: "2025-06-13T21:31:07Z"
 
 ## CONTEXT
 
-Replace the hardcoded "Universal" schema approach from 17.2 with a business-context-driven system that dynamically generates domain models from user business descriptions. Leverage the existing ETL graph translation architecture to create a truly democratic CLI generation system.
+Replace the hardcoded "Universal" schema approach from 17.2 with a business-context-driven system that dynamically generates domain models from user business descriptions. Leverage the existing ETL graph translation architecture to create a user-centric CLI generation system.
 
 ## PROBLEM WITH CURRENT APPROACH (17.2)
 
@@ -36,14 +36,14 @@ notion.person → UniversalCustomer    // ❌ Doesn't match business reality
 
 **❌ Problems:**
 - Hardcoded business entities that don't match user reality
-- Vendor-imposed structure contradicts democratic vision
+- Platform-imposed structure contradicts user-centric vision
 - Complex compatibility layers that fight against user intent
 - Universal types spread throughout codebase
 - Migration complexity for schema changes we define
 
 ## ARCHITECTURAL VISION: BUSINESS-CONTEXT-DRIVEN
 
-**✅ Democratic Business-First Approach:**
+**✅ User-Centric Business-First Approach:**
 
 ```bash
 # User describes their business reality
@@ -462,7 +462,7 @@ imajin workflow:complete-order --table 12
 - [ ] Complete removal of UniversalCustomer, UniversalPayment, etc.
 - [ ] Dynamic business models generated from user context
 - [ ] Service adapters work with user-defined domains
-- [ ] No vendor-imposed business structure
+- [ ] No platform-imposed business structure
 
 ## TESTING REQUIREMENTS
 
@@ -533,7 +533,7 @@ describe('ETL Business Integration', () => {
 ---
 
 ## NEXT STEP
-After completion, this establishes the true democratic foundation for imajin-cli where business context drives tool generation rather than vendor-imposed universal schemas.
+After completion, this establishes the user-centric foundation for imajin-cli where business context drives tool generation rather than platform-imposed universal schemas.
 
 ---
 

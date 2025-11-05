@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-10
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Health check system
@@ -17,8 +17,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { HealthCheckManager, SystemHealthReport } from './HealthCheck';
-import { MetricsCollector, PerformanceMetrics } from './MetricsCollector';
+import { HealthCheckManager, SystemHealthReport } from './HealthCheck.js';
+import { MetricsCollector, PerformanceMetrics } from './MetricsCollector.js';
 
 export interface SystemStatus {
     health: SystemHealthReport;

@@ -1,10 +1,10 @@
-import { ETLServiceProvider } from '../../../etl/providers/ETLServiceProvider';
-import { Container } from '../../../container/Container';
+import { ETLServiceProvider } from '../../../etl/providers/ETLServiceProvider.js';
+import { Container } from '../../../container/Container.js';
 import { Command } from 'commander';
-import { EventManager } from '../../../core/events/EventManager';
-import { Logger } from '../../../logging/Logger';
-import { DefaultBridgeRegistry } from '../../../etl/bridges/DefaultBridgeRegistry';
-import { ETLPipeline } from '../../../etl/core/ETLPipeline';
+import { EventManager } from '../../../core/events/EventManager.js';
+import { Logger } from '../../../logging/Logger.js';
+import { DefaultBridgeRegistry } from '../../../etl/bridges/DefaultBridgeRegistry.js';
+import { ETLPipeline } from '../../../etl/core/ETLPipeline.js';
 
 describe('ETLServiceProvider', () => {
     let provider: ETLServiceProvider;

@@ -8,6 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-07-01
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Service provider pattern for modular architecture
@@ -141,7 +142,7 @@ export class LocalFileServiceProvider extends ServiceProvider {
                 .option('--overwrite', 'Overwrite existing files')
                 .action(async (file: string, options: any) => {
                     // Implementation would be handled by media commands
-                    console.log(`Uploading ${file} to local storage...`);
+                    this.logger.info('Upload command invoked', { file, options });
                 });
 
             localFileCmd
@@ -154,7 +155,7 @@ export class LocalFileServiceProvider extends ServiceProvider {
                         folder: options.folder,
                         limit: options.limit || 10
                     });
-                    console.log('Local Media Assets:', JSON.stringify(assets, null, 2));
+                    this.logger.info('Local media assets', assets);
                 });
 
             localFileCmd
@@ -162,7 +163,7 @@ export class LocalFileServiceProvider extends ServiceProvider {
                 .description('Check local file service health')
                 .action(async () => {
                     const health = await this.localFileService!.getHealth();
-                    console.log('LocalFile Service Health:', JSON.stringify(health, null, 2));
+                    this.logger.info('LocalFile service health', health);
                 });
 
             this.logger.info('LocalFile commands registered successfully');

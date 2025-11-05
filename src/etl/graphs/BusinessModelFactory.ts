@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-07-03
+ * @updated      2025-07-04
  *
  * Integration Points:
  * - Extends existing ModelFactory for business domain registration
@@ -18,13 +18,14 @@
  */
 
 import { ModelFactory, type ModelDefinition, type TranslationMapping } from './models.js';
-import type { 
-    GraphModel, 
+import type {
+    GraphModel,
     CompatibilityMatrix as ModelCompatibility
 } from '../core/interfaces.js';
 import type { BusinessDomainModel } from '../../context/BusinessContextProcessor.js';
 import { BusinessTypeRegistry } from '../../types/Core.js';
 import { z } from 'zod';
+import type { Logger } from '../../logging/Logger.js';
 
 // Define ServiceSchema interface for type safety
 export interface ServiceSchemaType {
@@ -40,12 +41,16 @@ export interface ServiceSchemaType {
 export class BusinessModelFactory extends ModelFactory {
     private static businessDomains: Map<string, BusinessDomainModel> = new Map();
     private static registeredBusinessModels: Map<string, GraphModel> = new Map();
+    private static logger: Logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
 
     /**
      * Register business domain model from context
      */
     static registerBusinessDomain(context: BusinessDomainModel): void {
-        console.log(`🏗️ Registering business domain: ${context.businessType}`);
+        this.logger.info('Registering business domain', {
+            businessType: context.businessType,
+            operation: 'registerBusinessDomain'
+        });
         
         // Store the business context
         this.businessDomains.set(context.businessType, context);
@@ -67,8 +72,12 @@ export class BusinessModelFactory extends ModelFactory {
         
         // Store for business-specific operations
         this.registeredBusinessModels.set(context.businessType, graphModel);
-        
-        console.log(`✅ Business domain "${context.businessType}" registered with ${Object.keys(context.entities).length} entities`);
+
+        this.logger.info('Business domain registered', {
+            businessType: context.businessType,
+            entitiesCount: Object.keys(context.entities).length,
+            operation: 'registerBusinessDomain'
+        });
     }
 
     /**
@@ -78,7 +87,11 @@ export class BusinessModelFactory extends ModelFactory {
         context: BusinessDomainModel,
         serviceSchema: ServiceSchemaType
     ): TranslationMapping {
-        console.log(`🔗 Generating service mappings: ${serviceSchema.name} → ${context.businessType}`);
+        this.logger.info('Generating service mappings', {
+            serviceName: serviceSchema.name,
+            businessType: context.businessType,
+            operation: 'generateServiceMappings'
+        });
         
         const mappings: Record<string, any> = {};
         
@@ -108,8 +121,14 @@ export class BusinessModelFactory extends ModelFactory {
                 serviceVersion: serviceSchema.version,
             },
         };
-        
-        console.log(`✅ Generated ${Object.keys(mappings).length} service mappings with ${(translationMapping.confidence * 100).toFixed(1)}% confidence`);
+
+        this.logger.info('Service mappings generated', {
+            mappingsCount: Object.keys(mappings).length,
+            confidence: `${(translationMapping.confidence * 100).toFixed(1)}%`,
+            serviceName: serviceSchema.name,
+            businessType: context.businessType,
+            operation: 'generateServiceMappings'
+        });
         return translationMapping;
     }
 
@@ -154,7 +173,11 @@ export class BusinessModelFactory extends ModelFactory {
         businessContext: BusinessDomainModel,
         availableServices: ServiceSchemaType[]
     ): WorkflowSuggestion[] {
-        console.log(`💡 Suggesting workflows for ${businessContext.businessType} with ${availableServices.length} services`);
+        this.logger.info('Suggesting workflows', {
+            businessType: businessContext.businessType,
+            servicesCount: availableServices.length,
+            operation: 'suggestWorkflows'
+        });
         
         const suggestions: WorkflowSuggestion[] = [];
         
@@ -168,8 +191,12 @@ export class BusinessModelFactory extends ModelFactory {
         
         // Generate universal service integration workflows
         suggestions.push(...this.generateServiceIntegrationWorkflows(businessContext, availableServices));
-        
-        console.log(`✅ Generated ${suggestions.length} workflow suggestions`);
+
+        this.logger.info('Workflows suggested', {
+            suggestionsCount: suggestions.length,
+            businessType: businessContext.businessType,
+            operation: 'suggestWorkflows'
+        });
         return suggestions;
     }
 
@@ -595,8 +622,12 @@ export class BusinessModelFactory extends ModelFactory {
         for (const [entityKey, businessType] of Object.entries(mappings)) {
             this.registerMapping(entityKey, businessType, domain);
         }
-        
-        console.log(`✅ Registered ETL mappings for ${Object.keys(mappings).length} business entities`);
+
+        this.logger.info('ETL mappings registered', {
+            entitiesCount: Object.keys(mappings).length,
+            businessType: domain.businessType,
+            operation: 'registerBusinessDomainWithETL'
+        });
     }
 
     /**
@@ -605,7 +636,12 @@ export class BusinessModelFactory extends ModelFactory {
     private static registerMapping(entityKey: string, businessType: string, domain: BusinessDomainModel): void {
         // Implementation would register the mapping with the ETL system
         // This is a placeholder for the actual ETL registration logic
-        console.log(`📋 Registered ETL mapping: ${entityKey} → ${businessType}`);
+        this.logger.debug('ETL mapping registered', {
+            entityKey,
+            businessType,
+            domainBusinessType: domain.businessType,
+            operation: 'registerMapping'
+        });
     }
 
     private static mapToBusinessEntity(entityName: string, businessType: string): string {

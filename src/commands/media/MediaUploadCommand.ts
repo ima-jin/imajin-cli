@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/commands/media.md
  * 
@@ -24,6 +24,7 @@ import { glob } from 'glob';
 import * as path from 'path';
 
 import type { Container } from '../../container/Container.js';
+import type { Logger } from '../../logging/Logger.js';
 import type { MediaProcessor } from '../../media/MediaProcessor.js';
 import type { MediaProcessingEvent, MediaProcessingOptions } from '../../types/Media.js';
 
@@ -47,10 +48,16 @@ export interface MediaUploadOptions {
 export class MediaUploadCommand {
     private container: Container;
     private mediaProcessor: MediaProcessor;
+    private logger: Logger | null = null;
 
     constructor(container: Container) {
         this.container = container;
         this.mediaProcessor = container.resolve('MediaProcessor');
+        try {
+            this.logger = container.resolve('logger') as Logger;
+        } catch (error) {
+            // Logger not available
+        }
     }
 
     /**
@@ -90,6 +97,7 @@ Examples:
      */
     private async execute(filePatterns: string[], options: MediaUploadOptions): Promise<void> {
         try {
+            this.logger?.debug('Media upload command starting', { filePatterns, options });
             console.log('🎨 Starting media upload...\n');
 
             // Resolve file patterns to actual file paths
@@ -121,7 +129,10 @@ Examples:
 
             console.log('\n✅ Media upload completed successfully!');
 
+            this.logger?.info('Media upload completed', { fileCount: filePaths.length, options });
+
         } catch (error) {
+            this.logger?.error('Media upload failed', error as Error, { filePatterns, options });
             if (error instanceof BaseException) {
                 console.error(`\n❌ ${error.getFormattedError()}`);
                 process.exit(1);

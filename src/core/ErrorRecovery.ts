@@ -16,10 +16,11 @@
  */
 
 import { EventEmitter } from 'events';
-import { ApiError } from '../exceptions/ApiError';
-import { AuthenticationError } from '../exceptions/AuthenticationError';
-import { BaseException } from '../exceptions/BaseException';
-import { SystemError } from '../exceptions/SystemError';
+import { ApiError } from '../exceptions/ApiError.js';
+import { AuthenticationError } from '../exceptions/AuthenticationError.js';
+import { BaseException } from '../exceptions/BaseException.js';
+import { SystemError } from '../exceptions/SystemError.js';
+import { Logger } from '../logging/Logger.js';
 
 export interface RecoveryContext {
     originalOperation?: () => Promise<any>;
@@ -44,9 +45,11 @@ export interface RecoveryResult {
 export class ErrorRecovery extends EventEmitter {
     private recoveryHistory: Map<string, RecoveryResult[]> = new Map();
     private readonly maxHistoryPerError = 10;
+    private logger: Logger;
 
     constructor() {
         super();
+        this.logger = new Logger({ level: 'debug' });
     }
 
     /**
@@ -282,33 +285,29 @@ export class ErrorRecovery extends EventEmitter {
         const steps = error.recoveryStrategy.manualSteps;
 
         if (!steps || steps.length === 0) {
-            console.log('💡 Manual intervention required (no specific steps available)');
+            this.logger.info('Manual intervention required (no specific steps available)', { errorCode: error.code });
             return;
         }
 
-        console.log('\n💡 To resolve this issue:');
-        steps.forEach((step, index) => {
-            console.log(`   ${index + 1}. ${step}`);
+        this.logger.info('Displaying manual recovery instructions', {
+            errorCode: error.code,
+            stepCount: steps.length
         });
 
         // Add error-specific additional guidance
         if (error instanceof AuthenticationError) {
-            console.log('\n🔑 Authentication Help:');
             const instructions = error.getLoginInstructions();
-            instructions.forEach((instruction, _index) => {
-                console.log(`   • ${instruction}`);
+            this.logger.info('Authentication help provided', {
+                errorCode: error.code,
+                instructionCount: instructions.length
             });
         }
 
         if (error instanceof SystemError) {
-            console.log('\n🛠️  System Help:');
             if (error.systemDetails.type === 'dependency_missing') {
-                console.log('   • Check system requirements documentation');
-                console.log('   • Use package manager to install dependencies');
+                this.logger.info('System dependency help provided', { errorCode: error.code });
             }
         }
-
-        console.log('');
     }
 
     /**

@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-09
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * @see        docs/providers/media.md
  * 
@@ -22,16 +22,21 @@
 import type { MediaProcessingConfig } from '../types/Media.js';
 
 import { MediaUploadCommand } from '../commands/media/MediaUploadCommand.js';
+import type { Logger } from '../logging/Logger.js';
 import { MediaProcessor } from '../media/MediaProcessor.js';
 import { CloudinaryProvider } from '../media/providers/CloudinaryProvider.js';
 import { LocalMediaProvider } from '../media/providers/LocalMediaProvider.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
 export class MediaServiceProvider extends ServiceProvider {
+    private logger!: Logger;
     /**
      * Register services with the container
      */
     public register(): void {
+        // Get logger from container
+        this.logger = this.container.resolve<Logger>('logger');
+
         // Register MediaProcessor
         this.container.singleton('MediaProcessor', () => {
             const config = this.getMediaConfig();
@@ -64,8 +69,8 @@ export class MediaServiceProvider extends ServiceProvider {
      * Bootstrap services after all providers have been registered
      */
     public boot(): void {
-        // Register CLI commands
-        this.registerCommands();
+        // Services are already registered, no additional boot actions needed
+        // Commands will be registered by Application.registerProviderCommands()
     }
 
     /**
@@ -101,7 +106,10 @@ export class MediaServiceProvider extends ServiceProvider {
             processor.registerProvider('cloudinary', cloudinaryProvider);
         } catch (error) {
             // Cloudinary not configured, skip
-            console.warn('⚠️  Cloudinary provider not configured, skipping...');
+            this.logger.warn('Cloudinary provider not configured, skipping', {
+                provider: 'MediaServiceProvider',
+                reason: 'Missing configuration or credentials'
+            });
         }
     }
 

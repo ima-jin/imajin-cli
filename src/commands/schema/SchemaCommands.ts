@@ -8,7 +8,7 @@
  * @license     .fair LICENSING AGREEMENT
  * @version     0.1.0
  * @since       2025-06-13
- * @updated      2025-06-25
+ * @updated      2025-07-03
  *
  * Integration Points:
  * - Schema registry management via CLI
@@ -22,6 +22,7 @@ import * as fs from 'fs';
 import { SchemaRegistry } from '../../schemas/SchemaRegistry.js';
 // CompatibilityLayer removed - using business context system instead
 // import { initializeCompatibilityLayer, getSchemaRegistry } from '../../schemas/CompatibilityLayer.js';
+import type { Logger } from '../../logging/Logger.js';
 import chalk from 'chalk';
 
 // =============================================================================
@@ -32,6 +33,17 @@ import chalk from 'chalk';
  * Register schema management commands
  */
 export function registerSchemaCommands(program: Command): void {
+    // Get logger from container
+    let logger: Logger | null = null;
+    try {
+        const container = (globalThis as any).imajinApp?.container;
+        if (container) {
+            logger = container.resolve('logger') as Logger;
+        }
+    } catch (error) {
+        // Logger not available yet
+    }
+
     const schemaCmd = program
         .command('schema')
         .description('Schema management commands for external Universal schemas');
@@ -43,8 +55,11 @@ export function registerSchemaCommands(program: Command): void {
         .option('-d, --directory <dir>', 'Schema directory', 'schemas')
         .action(async (options) => {
             try {
-                await listSchemas(options.directory);
+                logger?.debug('schema list command starting', { directory: options.directory });
+                await listSchemas(options.directory, logger);
+                logger?.info('schema list command completed', { directory: options.directory });
             } catch (error) {
+                logger?.error('schema list command failed', error as Error, { directory: options.directory });
                 console.error(chalk.red('Error listing schemas:'), error instanceof Error ? error.message : 'Unknown error');
                 process.exit(1);
             }
@@ -58,8 +73,11 @@ export function registerSchemaCommands(program: Command): void {
         .option('-f, --format <format>', 'Output format (json|yaml|typescript)', 'json')
         .action(async (entityName, options) => {
             try {
-                await showSchema(entityName, options.directory, options.format);
+                logger?.debug('schema show command starting', { entityName, directory: options.directory, format: options.format });
+                await showSchema(entityName, options.directory, options.format, logger);
+                logger?.info('schema show command completed', { entityName, format: options.format });
             } catch (error) {
+                logger?.error('schema show command failed', error as Error, { entityName, directory: options.directory });
                 console.error(chalk.red('Error showing schema:'), error instanceof Error ? error.message : 'Unknown error');
                 process.exit(1);
             }
@@ -74,8 +92,11 @@ export function registerSchemaCommands(program: Command): void {
         .option('-f, --file', 'Treat data as file path instead of JSON string')
         .action(async (entityName, data, options) => {
             try {
-                await validateData(entityName, data, options.directory, options.schema, options.file);
+                logger?.debug('schema validate command starting', { entityName, schema: options.schema, isFile: options.file });
+                await validateData(entityName, data, options.directory, options.schema, options.file, logger);
+                logger?.info('schema validate command completed', { entityName, schema: options.schema });
             } catch (error) {
+                logger?.error('schema validate command failed', error as Error, { entityName, schema: options.schema });
                 console.error(chalk.red('Error validating data:'), error instanceof Error ? error.message : 'Unknown error');
                 process.exit(1);
             }
@@ -89,8 +110,11 @@ export function registerSchemaCommands(program: Command): void {
         .option('-o, --output <file>', 'Output file path', 'src/types/Generated.ts')
         .action(async (options) => {
             try {
-                await generateTypes(options.directory, options.output);
+                logger?.debug('schema generate-types command starting', { directory: options.directory, output: options.output });
+                await generateTypes(options.directory, options.output, logger);
+                logger?.info('schema generate-types command completed', { output: options.output });
             } catch (error) {
+                logger?.error('schema generate-types command failed', error as Error, { directory: options.directory, output: options.output });
                 console.error(chalk.red('Error generating types:'), error instanceof Error ? error.message : 'Unknown error');
                 process.exit(1);
             }
@@ -105,8 +129,11 @@ export function registerSchemaCommands(program: Command): void {
         .option('-n, --new <schema>', 'New schema name', 'core')
         .action(async (options) => {
             try {
-                await checkCompatibility(options.directory, options.old, options.new);
+                logger?.debug('schema check-compatibility command starting', { directory: options.directory, old: options.old, new: options.new });
+                await checkCompatibility(options.directory, options.old, options.new, logger);
+                logger?.info('schema check-compatibility command completed', { old: options.old, new: options.new });
             } catch (error) {
+                logger?.error('schema check-compatibility command failed', error as Error, { old: options.old, new: options.new });
                 console.error(chalk.red('Error checking compatibility:'), error instanceof Error ? error.message : 'Unknown error');
                 process.exit(1);
             }
@@ -123,8 +150,11 @@ export function registerSchemaCommands(program: Command): void {
         .option('-o, --output <file>', 'Output file for migrated data')
         .action(async (options) => {
             try {
-                await migrateData(options.directory, options.from, options.to, options.file, options.output);
+                logger?.debug('schema migrate command starting', { directory: options.directory, from: options.from, to: options.to, file: options.file });
+                await migrateData(options.directory, options.from, options.to, options.file, options.output, logger);
+                logger?.info('schema migrate command completed', { from: options.from, to: options.to });
             } catch (error) {
+                logger?.error('schema migrate command failed', error as Error, { from: options.from, to: options.to, file: options.file });
                 console.error(chalk.red('Error migrating data:'), error instanceof Error ? error.message : 'Unknown error');
                 process.exit(1);
             }
@@ -138,7 +168,8 @@ export function registerSchemaCommands(program: Command): void {
 /**
  * List all available schemas
  */
-async function listSchemas(directory: string): Promise<void> {
+async function listSchemas(directory: string, logger: Logger | null): Promise<void> {
+    logger?.debug('listSchemas function called', { directory });
     console.log(chalk.blue('📋 Loading schemas...'));
     
     const registry = new SchemaRegistry({ schemaDirectory: directory });
@@ -169,7 +200,8 @@ async function listSchemas(directory: string): Promise<void> {
 /**
  * Show schema definition for an entity
  */
-async function showSchema(entityName: string, directory: string, format: string): Promise<void> {
+async function showSchema(entityName: string, directory: string, format: string, logger: Logger | null): Promise<void> {
+    logger?.debug('showSchema function called', { entityName, directory, format });
     const registry = new SchemaRegistry({ schemaDirectory: directory });
     await registry.loadSchemas();
     
@@ -212,7 +244,8 @@ async function showSchema(entityName: string, directory: string, format: string)
 /**
  * Validate data against schema
  */
-async function validateData(entityName: string, dataInput: string, directory: string, schemaName: string, isFile: boolean): Promise<void> {
+async function validateData(entityName: string, dataInput: string, directory: string, schemaName: string, isFile: boolean, logger: Logger | null): Promise<void> {
+    logger?.debug('validateData function called', { entityName, directory, schemaName, isFile });
     const registry = new SchemaRegistry({ schemaDirectory: directory });
     await registry.loadSchemas();
     
@@ -260,7 +293,8 @@ async function validateData(entityName: string, dataInput: string, directory: st
 /**
  * Generate TypeScript types from schemas
  */
-async function generateTypes(directory: string, outputPath: string): Promise<void> {
+async function generateTypes(directory: string, outputPath: string, logger: Logger | null): Promise<void> {
+    logger?.debug('generateTypes function called', { directory, outputPath });
     console.log(chalk.blue('🔄 Generating TypeScript types...'));
     
     const registry = new SchemaRegistry({ schemaDirectory: directory });
@@ -275,7 +309,8 @@ async function generateTypes(directory: string, outputPath: string): Promise<voi
 /**
  * Check schema compatibility
  */
-async function checkCompatibility(directory: string, oldSchema: string, newSchema: string): Promise<void> {
+async function checkCompatibility(directory: string, oldSchema: string, newSchema: string, logger: Logger | null): Promise<void> {
+    logger?.debug('checkCompatibility function called', { directory, oldSchema, newSchema });
     console.log(chalk.blue('🔍 Checking schema compatibility...'));
     
     const registry = new SchemaRegistry({ schemaDirectory: directory });
@@ -316,7 +351,8 @@ async function checkCompatibility(directory: string, oldSchema: string, newSchem
 /**
  * Migrate data between schema versions
  */
-async function migrateData(directory: string, fromVersion: string, toVersion: string, inputFile?: string, outputFile?: string): Promise<void> {
+async function migrateData(directory: string, fromVersion: string, toVersion: string, inputFile?: string, outputFile?: string, logger?: Logger | null): Promise<void> {
+    logger?.debug('migrateData function called', { directory, fromVersion, toVersion, inputFile, outputFile });
     console.log(chalk.blue('🔄 Migrating data...'));
     
     if (!inputFile) {

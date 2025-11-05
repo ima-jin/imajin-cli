@@ -1,6 +1,6 @@
 /**
  * BusinessSchemaRegistry - Clean business context schema management
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  context
  * @author      Generated
@@ -18,13 +18,19 @@
 import { z } from 'zod';
 import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
 import type { BusinessDomainModel } from './BusinessContextProcessor.js';
+import type { Logger } from '../logging/Logger.js';
+
+const logger = new (require('../logging/Logger.js').Logger)({ level: 'info' });
 
 /**
  * Initialize business schema registry
  */
 export async function initializeBusinessSchemas(businessContext: BusinessDomainModel): Promise<void> {
     BusinessTypeRegistry.initialize(businessContext);
-    console.log(`✅ Business schemas initialized for ${businessContext.businessType}`);
+    logger.info('Business schemas initialized', {
+        businessType: businessContext.businessType,
+        entitiesCount: Object.keys(businessContext.entities).length
+    });
 }
 
 /**
@@ -145,4 +151,4 @@ export function exportBusinessSchemaDefinitions(): Record<string, any> {
     }
 
     return definitions;
-} 
+}
