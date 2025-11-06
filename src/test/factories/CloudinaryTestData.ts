@@ -282,7 +282,7 @@ export class CloudinaryTestData {
         });
     }
 
-    createMockResourceList(options?: any): any {
+    createMockResourceList(_options?: any): any {
         return CloudinaryTestData.createSearchResponse([
             CloudinaryTestData.createResource(),
             CloudinaryTestData.createResource({ public_id: 'test/image2' }),
@@ -290,7 +290,7 @@ export class CloudinaryTestData {
         ]);
     }
 
-    createMockBulkDeleteResult(options?: any): any {
+    createMockBulkDeleteResult(_options?: any): any {
         return {
             batch_id: 'batch-123',
             status: 'completed',
@@ -298,7 +298,7 @@ export class CloudinaryTestData {
         };
     }
 
-    createMockUrl(publicId?: string, options?: any): string {
+    createMockUrl(publicId?: string, _options?: any): string {
         return `https://res.cloudinary.com/test-cloud/image/upload/${publicId || 'test/sample.jpg'}`;
     }
 
@@ -440,7 +440,7 @@ export interface CloudinaryWebhookNotification {
     secure_url: string;
 }
 
-export interface CloudinaryAdminApiResponse<T> extends Record<string, any> {
+export interface CloudinaryAdminApiResponse<_T> extends Record<string, any> {
     rate_limit_remaining: number;
     rate_limit_reset_at: string;
 } 

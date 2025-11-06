@@ -17,7 +17,6 @@
  * - CI/CD pipeline integration
  */
 
-import { ServiceTestBase } from '../framework/ServiceTestBase.js';
 import { BaseService } from '../../services/BaseService.js';
 import { PerformanceTestBase } from './PerformanceTestBase.js';
 import { PerformanceMonitor } from './PerformanceMonitor.js';
@@ -141,7 +140,7 @@ export class PerformanceTestIntegration {
         // Generate reports if enabled
         if (this.options.enableReporting && this.reportGenerator && this.results.length > 0) {
             console.log('Generating performance reports...');
-            const report = this.reportGenerator.generateReport(this.results);
+            const _report = this.reportGenerator.generateReport(this.results);
             console.log(`Generated report with ${this.results.length} test results`);
         }
 
@@ -247,12 +246,12 @@ export class PerformanceTestIntegration {
                 
                 const startTime = Date.now();
                 let result;
-                let error;
-                
+                let _error;
+
                 try {
                     result = await method.apply(this, args);
                 } catch (err) {
-                    error = err;
+                    _error = err;
                     throw err;
                 } finally {
                     const duration = Date.now() - startTime;
@@ -281,7 +280,7 @@ export class PerformanceTestUtils {
     /**
      * Setup performance testing for Jest environment
      */
-    static setupJestEnvironment(config?: PerformanceTestSuiteConfig): void {
+    static setupJestEnvironment(_config?: PerformanceTestSuiteConfig): void {
         // Global Jest setup
         const originalDescribe = global.describe;
         

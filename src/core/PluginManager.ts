@@ -16,8 +16,8 @@
  * - Service provider integration
  */
 
-import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
+import { promises as fs } from 'node:fs';
+import { join, resolve } from 'node:path';
 import type { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
 import type { CommandManager, ICommand } from './commands/CommandManager.js';

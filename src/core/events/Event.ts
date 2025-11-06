@@ -16,7 +16,7 @@
  * - Foundation for real-time communication
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 /**
  * Base event interface that all events must implement

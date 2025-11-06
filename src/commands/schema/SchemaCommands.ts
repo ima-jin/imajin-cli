@@ -17,8 +17,8 @@
  */
 
 import { Command } from 'commander';
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import { SchemaRegistry } from '../../schemas/SchemaRegistry.js';
 // CompatibilityLayer removed - using business context system instead
 // import { initializeCompatibilityLayer, getSchemaRegistry } from '../../schemas/CompatibilityLayer.js';

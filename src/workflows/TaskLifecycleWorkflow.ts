@@ -215,7 +215,7 @@ export class TaskLifecycleWorkflow extends EventEmitter {
    * Handle status transition workflow
    */
   private async handleStatusTransition(context: WorkflowContext): Promise<WorkflowResult> {
-    const { taskId, fromStatus, toStatus, task } = context.parameters as {
+    const { taskId: _taskId, fromStatus, toStatus, task } = context.parameters as {
       taskId: string;
       fromStatus: TaskEntity['status'];
       toStatus: TaskEntity['status'];
@@ -365,7 +365,7 @@ export class TaskLifecycleWorkflow extends EventEmitter {
   /**
    * Apply business rules
    */
-  private async applyBusinessRules(task: TaskEntity, action: 'create' | 'update'): Promise<WorkflowResult> {
+  private async applyBusinessRules(task: TaskEntity, _action: 'create' | 'update'): Promise<WorkflowResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
 

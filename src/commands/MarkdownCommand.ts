@@ -18,8 +18,8 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import { glob } from 'glob';
 import { mdToPdf } from 'md-to-pdf';
 import type { LLMResponse } from '../types/LLM.js';

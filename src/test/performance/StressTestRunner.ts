@@ -19,10 +19,9 @@
 
 import { BaseService } from '../../services/BaseService.js';
 import { PerformanceMetricsCollector } from './PerformanceMetricsCollector.js';
-import { 
-    StressTestConfig, 
-    PerformanceTestResult, 
-    TestMetrics, 
+import {
+    PerformanceTestResult,
+    TestMetrics,
     SystemMetrics,
     MemoryUsage
 } from './types.js';
@@ -102,7 +101,7 @@ export class StressTestRunner {
 
                 try {
                     // Inject chaos conditions
-                    const chaosResult = await this.applyChaosConditions(operation, config);
+                    const _chaosResult = await this.applyChaosConditions(operation, config);
                     operationCount++;
                 } catch (err) {
                     error = err instanceof Error ? err : new Error(String(err));

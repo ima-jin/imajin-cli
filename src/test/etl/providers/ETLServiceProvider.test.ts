@@ -71,7 +71,7 @@ describe('ETLServiceProvider', () => {
 
         it('should register event listeners', () => {
             const registerSpy = jest.spyOn(eventManager, 'registerListener');
-            const logSpy = jest.spyOn(logger, 'info');
+            const _logSpy = jest.spyOn(logger, 'info');
 
             provider.boot();
 

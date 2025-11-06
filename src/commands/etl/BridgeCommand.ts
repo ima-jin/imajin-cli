@@ -1,8 +1,8 @@
 import { BaseCommand } from '../../core/commands/BaseCommand.js';
 import { Bridge, DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 import type { Logger } from '../../logging/Logger.js';
 import type { EventManager } from '../../core/events/EventManager.js';
 

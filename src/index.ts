@@ -22,10 +22,10 @@ import { config } from 'dotenv';
 import 'reflect-metadata';
 import { Application } from './core/Application.js';
 import { ExceptionUtils, SystemError } from './exceptions/index.js';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname } from 'node:path';
 
 // Load environment variables
 config();

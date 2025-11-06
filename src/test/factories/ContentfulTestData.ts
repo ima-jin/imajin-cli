@@ -298,7 +298,7 @@ export class ContentfulTestData {
     /**
      * Create mock Contentful error
      */
-    static createError(status: number = 400, message: string = 'Bad Request'): ContentfulError {
+    static createError(_status: number = 400, message: string = 'Bad Request'): ContentfulError {
         return {
             sys: {
                 id: 'BadRequest',

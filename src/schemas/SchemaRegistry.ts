@@ -16,7 +16,6 @@
  * - Schema compatibility checking and migration
  */
 
-import { promises as fs } from 'fs';
 import { basename, extname } from 'path';
 import { SchemaLoader } from './SchemaLoader.js';
 import { SchemaValidator } from './SchemaValidator.js';

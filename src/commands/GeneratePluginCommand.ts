@@ -17,7 +17,7 @@
  * - Credential management integration
  */
 
-import { promises as fs } from 'fs';
+import { promises as fs } from 'node:fs';
 import { BaseCommand } from '../core/commands/BaseCommand.js';
 import type { CredentialManager } from '../core/credentials/CredentialManager.js';
 import type { PluginGenerator } from '../generators/types.js';

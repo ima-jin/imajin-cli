@@ -130,7 +130,7 @@ const crypto = require('crypto');
 const randomBytes = crypto.randomBytes;
 
 // AFTER:
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 ```
 
 #### 3.3 Promise Handling (9 fixes)

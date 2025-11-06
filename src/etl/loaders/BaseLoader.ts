@@ -16,7 +16,7 @@
  */
 
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { ETLConfig, ETLContext, ETLProgress, ETLResult, Loader } from '../core/interfaces.js';
 

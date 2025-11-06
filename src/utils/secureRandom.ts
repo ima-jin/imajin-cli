@@ -11,7 +11,7 @@
  * @since       2025-11-05
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 /**
  * Generate a cryptographically secure random string

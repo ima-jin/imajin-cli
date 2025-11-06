@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
 import type { Logger } from '../../logging/Logger.js';
 import { CommonOptions } from '../../utils/commonOptions.js';

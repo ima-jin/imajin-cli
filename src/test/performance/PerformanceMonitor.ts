@@ -17,11 +17,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { 
-    PerformanceTestResult, 
-    PerformanceThresholds, 
+import {
+    PerformanceTestResult,
+    PerformanceThresholds,
     ResourceUsage,
-    SystemMetrics,
     RegressionAnalysis
 } from './types.js';
 import { PerformanceBenchmarks } from './PerformanceBenchmarks.js';
@@ -298,7 +297,7 @@ export class PerformanceMonitor extends EventEmitter {
         }
         
         const testHistory = Array.from(this.performanceHistory.entries())
-            .filter(([testName, results]) => results.length > 0)
+            .filter(([_testName, results]) => results.length > 0)
             .map(([testName, results]) => {
                 const latestResult = results[results.length - 1];
                 if (!latestResult) {

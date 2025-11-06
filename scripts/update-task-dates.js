@@ -20,9 +20,9 @@
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { glob } from 'glob';
-import { join, dirname, extname } from 'path';
+import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);

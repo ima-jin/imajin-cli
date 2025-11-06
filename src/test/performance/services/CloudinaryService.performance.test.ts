@@ -17,7 +17,7 @@
  */
 
 import { CloudinaryService, CloudinaryConfig } from '../../../services/cloudinary/CloudinaryService.js';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { PerformanceTestBase } from '../PerformanceTestBase.js';
 import { CloudinaryTestData } from '../../factories/CloudinaryTestData.js';
 import { ServiceStatus } from '../../../services/interfaces/ServiceInterface.js';

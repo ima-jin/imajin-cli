@@ -16,7 +16,7 @@
  * - Performance monitoring and metrics
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { EventEmitter as NodeEventEmitter } from 'events';
 import type { EventMetadata, IEvent, IEventListener } from './Event.js';
 import { EventPriority } from './Event.js';

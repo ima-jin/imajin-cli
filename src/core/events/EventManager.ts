@@ -17,7 +17,7 @@
  */
 
 import type { EventMetadata, IEvent, IEventListener, IEventSubscriber } from './Event.js';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { SystemEventType } from './Event.js';
 import { ImajinEventEmitter, type EventMiddleware, type ListenerOptions } from './EventEmitter.js';
 import { Logger } from '../../logging/Logger.js';

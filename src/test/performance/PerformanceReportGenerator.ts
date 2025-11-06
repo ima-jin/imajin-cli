@@ -16,13 +16,12 @@
  * - Trend analysis and recommendations
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
-import { 
-    PerformanceTestResult, 
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+    PerformanceTestResult,
     PerformanceReport,
-    RegressionAnalysis,
-    PerformanceThresholds
+    RegressionAnalysis
 } from './types.js';
 import { PerformanceBenchmarks } from './PerformanceBenchmarks.js';
 
@@ -675,7 +674,7 @@ return true;
     /**
      * Extract service version from results
      */
-    private extractServiceVersion(results: PerformanceTestResult[]): string {
+    private extractServiceVersion(_results: PerformanceTestResult[]): string {
         // In a real implementation, this would be extracted from service metadata
         return '1.0.0';
     }

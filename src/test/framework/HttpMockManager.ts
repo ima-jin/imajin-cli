@@ -16,7 +16,7 @@
  * - API interaction testing
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 export interface HttpRequest {
     method: string;

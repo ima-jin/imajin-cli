@@ -18,7 +18,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { BaseEvent, EventMetadata } from '../core/events/Event.js';
 
 /**

@@ -20,7 +20,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { Logger } from '../logging/Logger.js';
 
 export interface Workflow {

@@ -24,7 +24,6 @@ import { PerformanceTestBase } from '../PerformanceTestBase.js';
 import { StripeTestData } from '../../factories/StripeTestData.js';
 import { ServiceStatus } from '../../../services/interfaces/ServiceInterface.js';
 import { LoadTestConfig, StressTestConfig } from '../types.js';
-import { StripeCustomerResponse, StripePaymentResponse } from '../../../types/Stripe.js';
 
 // Mock Stripe SDK for performance testing
 const mockStripeCustomers = {

@@ -17,7 +17,7 @@
  */
 
 import type { Logger } from '../../logging/Logger.js';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { SystemEventType } from '../events/Event.js';
 import type { EventManager } from '../events/EventManager.js';
 import type { ICommand } from './CommandManager.js';

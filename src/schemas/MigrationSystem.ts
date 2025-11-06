@@ -17,8 +17,8 @@
  * - Rollback and recovery capabilities
  */
 
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import type { Migration, Transform, ValidationResult } from './types/SchemaTypes.js';
 
 // =============================================================================

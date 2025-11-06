@@ -18,7 +18,7 @@
  */
 
 import type { EventEmitter } from 'events';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';
 // Universal types removed - now using dynamic business context types

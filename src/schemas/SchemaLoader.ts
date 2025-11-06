@@ -16,8 +16,8 @@
  * - File system integration for schema discovery
  */
 
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import * as yaml from 'js-yaml';
 import { glob } from 'glob';
 import type { 

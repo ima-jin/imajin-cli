@@ -16,7 +16,7 @@
  */
 
 import { z } from 'zod';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
 import type { BusinessDomainModel } from './BusinessContextProcessor.js';
 import type { Logger } from '../logging/Logger.js';

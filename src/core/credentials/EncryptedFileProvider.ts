@@ -17,10 +17,10 @@
  * - AES-256-GCM encryption
  */
 
-import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'crypto';
-import { promises as fs } from 'fs';
-import { homedir } from 'os';
-import { dirname, join } from 'path';
+import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { ERROR_MESSAGES } from '../../constants/CommonStrings.js';
 import { BaseCredentialProvider } from './BaseCredentialProvider.js';
 import type { CredentialData, EncryptionConfig } from './interfaces.js';

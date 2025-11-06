@@ -261,9 +261,9 @@ return false;
     /**
      * Save benchmarks to file (in a real implementation)
      */
-    async saveBenchmarks(filePath?: string): Promise<void> {
+    async saveBenchmarks(_filePath?: string): Promise<void> {
         // In a real implementation, this would save to file system
-        const benchmarkData = Object.fromEntries(this.benchmarks);
+        const _benchmarkData = Object.fromEntries(this.benchmarks);
         console.log(`Saving ${this.benchmarks.size} benchmarks...`);
         
         // Mock file save
@@ -273,7 +273,7 @@ return false;
     /**
      * Load benchmarks from file (in a real implementation)
      */
-    async loadBenchmarks(filePath?: string): Promise<void> {
+    async loadBenchmarks(_filePath?: string): Promise<void> {
         // In a real implementation, this would load from file system
         console.log('Loading benchmarks (mock implementation)...');
         

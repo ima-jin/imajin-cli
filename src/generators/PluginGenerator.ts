@@ -16,8 +16,8 @@
  * - Plugin structure creation
  */
 
-import { promises as fs } from 'fs';
-import { dirname, join } from 'path';
+import { promises as fs } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { DefaultOpenAPIParser } from './OpenAPIParser.js';
 import { TemplateEngine } from './templates/TemplateEngine.js';
 import {

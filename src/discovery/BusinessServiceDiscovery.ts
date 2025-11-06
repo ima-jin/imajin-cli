@@ -18,7 +18,6 @@
  */
 
 import type { BusinessDomainModel } from '../context/BusinessContextProcessor.js';
-import type { TranslationMapping } from '../etl/graphs/models.js';
 import type { ServiceSchemaType } from '../etl/graphs/BusinessModelFactory.js';
 import { BusinessModelFactory, type WorkflowSuggestion } from '../etl/graphs/BusinessModelFactory.js';
 import { z } from 'zod';
@@ -271,8 +270,8 @@ export class BusinessServiceDiscovery {
         if (mappingCount === 0) {
             return null; // No viable mappings
         }
-        
-        const averageConfidence = totalConfidence / mappingCount;
+
+        const _averageConfidence = totalConfidence / mappingCount;
         
         // Determine integration complexity
         const complexity = this.determineIntegrationComplexity(service, businessContext);
@@ -455,7 +454,7 @@ export class BusinessServiceDiscovery {
         
         // Generate workflows based on service capabilities and business entities
         const businessEntities = Object.keys(businessContext.entities);
-        const serviceName = service.name.toLowerCase();
+        const _serviceName = service.name.toLowerCase();
         
         // Universal workflow patterns based on service capabilities and business entities
         const workflowPatterns = this.generateUniversalWorkflowPatterns(service, businessEntities);

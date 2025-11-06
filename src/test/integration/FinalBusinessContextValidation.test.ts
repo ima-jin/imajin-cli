@@ -24,7 +24,6 @@ import { BusinessModelFactory } from '../../etl/graphs/BusinessModelFactory.js';
 import { RepositoryFactory } from '../../repositories/RepositoryFactory.js';
 import { BusinessTypeRegistry } from '../../context/BusinessTypeRegistry.js';
 import type { Container } from '../../container/Container.js';
-import type { Logger } from '../../logging/Logger.js';
 
 // Mock dependencies
 const mockContainer = {

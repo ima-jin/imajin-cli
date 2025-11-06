@@ -20,7 +20,7 @@
  */
 
 import { z } from 'zod';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import type { BusinessDomainModel } from '../context/BusinessContextProcessor.js';
 import type { BusinessConfiguration } from '../context/BusinessContextManager.js';
 
