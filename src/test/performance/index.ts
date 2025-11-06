@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */ // Test file: Dynamic requires for performance testing
 /**
  * Performance Testing System - Main Export
  *

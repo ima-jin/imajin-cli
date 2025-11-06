@@ -308,15 +308,19 @@ export class EventManager {
             } catch (error) {
                 if (retryCount < maxRetries) {
                     // Schedule retry
-                    setTimeout(async () => {
-                        const retryEvent: IEvent = {
-                            ...event,
-                            metadata: {
-                                ...event.metadata,
-                                retryCount: retryCount + 1
-                            }
-                        };
-                        await this.emitEvent(retryEvent);
+                    setTimeout(() => {
+                        void (async () => {
+                            const retryEvent: IEvent = {
+                                ...event,
+                                metadata: {
+                                    ...event.metadata,
+                                    retryCount: retryCount + 1
+                                }
+                            };
+                            await this.emitEvent(retryEvent);
+                        })().catch(err => {
+                            this.logger?.error('Event retry failed', err instanceof Error ? err : new Error(String(err)));
+                        });
                     }, this.config.retryDelay);
                 } else {
                     throw error;

@@ -150,4 +150,7 @@ async function main(): Promise<void> {
 // This provides better integration with the error handling system
 
 // Start the application
-main(); 
+void main().catch(err => {
+  console.error('Fatal error starting application:', err);
+  process.exit(1);
+}); 

@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Scheduler status logging
 /**
  * JobScheduler - Job scheduling system with cron-like functionality
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  jobs
  * @author      Generated
@@ -354,7 +355,9 @@ return;
 
             // Check if schedule is due
             if (now >= scheduledJob.nextRunTime) {
-                this.triggerSchedule(scheduleId, scheduledJob, now);
+                void this.triggerSchedule(scheduleId, scheduledJob, now).catch(err => {
+                    console.error(`Failed to trigger schedule ${scheduleId}:`, err);
+                });
             }
         }
     }

@@ -164,7 +164,7 @@ export class HttpClientSimple extends EventEmitter {
                 if (this.logger) {
                     this.logger.error('HTTP request setup failed', error);
                 }
-                return Promise.reject(error);
+                return Promise.reject(error instanceof Error ? error : new Error(String(error)));
             }
         );
 
@@ -186,7 +186,7 @@ export class HttpClientSimple extends EventEmitter {
                         message: error.message
                     });
                 }
-                return Promise.reject(error);
+                return Promise.reject(error instanceof Error ? error : new Error(String(error)));
             }
         );
     }

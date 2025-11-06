@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Job status and error logging
 /**
  * JobProcessor - Job execution engine with event integration
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  jobs
  * @author      Generated

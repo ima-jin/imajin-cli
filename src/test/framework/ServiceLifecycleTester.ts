@@ -205,7 +205,7 @@ export class ServiceLifecycleTester {
         const emittedEvents: string[] = [];
         
         // Track emitted events
-        mockEventEmitter.emit.mockImplementation((event: string, ...args: any[]) => {
+        mockEventEmitter.emit.mockImplementation((event: string, ..._args: any[]) => {
             emittedEvents.push(event);
             return true;
         });

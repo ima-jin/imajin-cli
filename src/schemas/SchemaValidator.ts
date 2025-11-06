@@ -421,7 +421,7 @@ export class SchemaValidator {
                 }
                 break;
 
-            case 'email':
+            case 'email': {
                 if (typeof value !== 'string') {
                     return {
                         path: fieldName,
@@ -442,6 +442,7 @@ export class SchemaValidator {
                     };
                 }
                 break;
+            }
 
             case 'object':
                 if (typeof value !== 'object' || value === null || Array.isArray(value)) {

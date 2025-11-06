@@ -91,24 +91,32 @@ export class Application {
    */
   private setupGlobalErrorHandling(): void {
     // Handle unhandled promise rejections
-    process.on('unhandledRejection', async (reason, promise) => {
-      const error = ExceptionUtils.normalize(reason, {
-        source: 'unhandledRejection',
-        promise
-      });
+    process.on('unhandledRejection', (reason, promise) => {
+      void (async () => {
+        const error = ExceptionUtils.normalize(reason, {
+          source: 'unhandledRejection',
+          promise
+        });
 
-      this.logger.error('Unhandled promise rejection', error, { promise });
-      await this.errorHandler.handleError(error);
+        this.logger.error('Unhandled promise rejection', error, { promise });
+        await this.errorHandler.handleError(error);
+      })().catch(err => {
+        this.logger.error('Failed to handle unhandled rejection', err instanceof Error ? err : new Error(String(err)));
+      });
     });
 
     // Handle uncaught exceptions
-    process.on('uncaughtException', async (error) => {
-      const normalizedError = ExceptionUtils.normalize(error, {
-        source: 'uncaughtException'
-      });
+    process.on('uncaughtException', (error) => {
+      void (async () => {
+        const normalizedError = ExceptionUtils.normalize(error, {
+          source: 'uncaughtException'
+        });
 
-      this.logger.error('Uncaught exception', normalizedError);
-      await this.errorHandler.handleError(normalizedError);
+        this.logger.error('Uncaught exception', normalizedError);
+        await this.errorHandler.handleError(normalizedError);
+      })().catch(err => {
+        this.logger.error('Failed to handle uncaught exception', err instanceof Error ? err : new Error(String(err)));
+      });
     });
 
     // Handle SIGINT (Ctrl+C) gracefully

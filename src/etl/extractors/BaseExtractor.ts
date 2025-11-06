@@ -168,7 +168,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
                     });
                     resolve(response.data);
                 } catch (error) {
-                    reject(error);
+                    reject(error instanceof Error ? error : new Error(String(error)));
                 }
             });
 

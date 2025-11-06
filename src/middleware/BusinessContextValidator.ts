@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: User-facing guidance and error messages
 /**
  * BusinessContextValidator - Validate business context before command execution
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  middleware
  * @author      Generated

@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Schema loading status
 /**
  * SchemaLoader - YAML/JSON schema parser
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  schemas
  * @author      Generated

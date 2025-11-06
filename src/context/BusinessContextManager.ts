@@ -158,6 +158,7 @@ export class BusinessContextManager {
         this.configFile = join(this.configDir, 'business-context.yaml');
         this.backupDir = join(this.configDir, 'backups');
         this.contextsDir = join(this.configDir, 'contexts');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for optional logger dependency
         this.logger = logger || new (require('../logging/Logger.js').Logger)({ level: 'info' });
     }
 

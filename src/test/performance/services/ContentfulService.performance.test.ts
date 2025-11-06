@@ -38,19 +38,56 @@ const mockContentfulClient = {
     listContentTypes: jest.fn()
 };
 
-const mockContentfulManagement = {
+const _mockContentfulManagement = {
     getSpace: jest.fn(() => ({
         getEnvironment: jest.fn(() => mockContentfulClient)
     }))
 };
 
-jest.mock('contentful', () => ({
-    createClient: jest.fn(() => mockContentfulClient)
-}));
+jest.mock('contentful', () => {
+    const mockClient = {
+        getEntry: jest.fn(),
+        getContent: jest.fn(),
+        createEntry: jest.fn(),
+        updateEntry: jest.fn(),
+        deleteEntry: jest.fn(),
+        unupdateEntry: jest.fn(),
+        getAsset: jest.fn(),
+        listAssets: jest.fn(),
+        uploadAsset: jest.fn(),
+        publishAsset: jest.fn(),
+        getContentType: jest.fn(),
+        listContentTypes: jest.fn()
+    };
+    return {
+        createClient: jest.fn(() => mockClient)
+    };
+});
 
-jest.mock('contentful-management', () => ({
-    createClient: jest.fn(() => mockContentfulManagement)
-}));
+jest.mock('contentful-management', () => {
+    const mockClient = {
+        getEntry: jest.fn(),
+        getContent: jest.fn(),
+        createEntry: jest.fn(),
+        updateEntry: jest.fn(),
+        deleteEntry: jest.fn(),
+        unupdateEntry: jest.fn(),
+        getAsset: jest.fn(),
+        listAssets: jest.fn(),
+        uploadAsset: jest.fn(),
+        publishAsset: jest.fn(),
+        getContentType: jest.fn(),
+        listContentTypes: jest.fn()
+    };
+    const mockManagement = {
+        getSpace: jest.fn(() => ({
+            getEnvironment: jest.fn(() => mockClient)
+        }))
+    };
+    return {
+        createClient: jest.fn(() => mockManagement)
+    };
+});
 
 /**
  * ContentfulService Performance Tests

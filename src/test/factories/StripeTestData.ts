@@ -478,6 +478,7 @@ export class StripeTestData {
 }
 
 // Type definitions for Stripe objects (simplified for testing)
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 export interface StripeCustomer {
     id: string;
     object: 'customer';
@@ -586,4 +587,5 @@ export interface StripeListResponse<T> {
     has_more: boolean;
     url: string;
     total_count: number;
-} 
+}
+/* eslint-enable @typescript-eslint/no-redundant-type-constituents */ 

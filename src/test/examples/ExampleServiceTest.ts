@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */ // Test file: Dynamic requires for mocking
 /**
  * ExampleServiceTest - Demonstrates testing infrastructure usage
  *

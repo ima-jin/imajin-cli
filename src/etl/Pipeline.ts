@@ -66,6 +66,7 @@ export class Pipeline {
 
     constructor() {
         this.events = new EventEmitter();
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
         this.logger = new (require('../logging/Logger.js').Logger)({ level: 'debug' });
         this.setupDefaultEventHandlers();
     }

@@ -146,8 +146,12 @@ export class StatusCommand {
         // Initial status
         await updateStatus();
 
-        // Set up interval
-        const intervalId = setInterval(updateStatus, interval);
+        // Set up interval - wrap async function for setInterval
+        const intervalId = setInterval(() => {
+            void updateStatus().catch(err => {
+                this.logger?.error('Status update failed', err instanceof Error ? err : new Error(String(err)));
+            });
+        }, interval);
 
         // Handle graceful shutdown
         process.on('SIGINT', () => {

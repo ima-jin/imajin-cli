@@ -89,12 +89,14 @@ export class PerformanceMonitor extends EventEmitter {
         
         this.isMonitoring = true;
         await this.metricsCollector.initialize();
-        
+
         // Start periodic monitoring
         this.monitoringTimer = setInterval(() => {
-            this.performMonitoringCheck();
+            void this.performMonitoringCheck().catch(err => {
+                console.error('Performance monitoring check failed:', err);
+            });
         }, this.config.monitoringInterval);
-        
+
         this.emit('monitoring:started');
     }
 

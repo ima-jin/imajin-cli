@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */ // Test file: Dynamic requires for performance testing
 /**
  * CloudinaryService Performance Test Suite
  *
@@ -24,30 +25,31 @@ import { ServiceStatus } from '../../../services/interfaces/ServiceInterface.js'
 import { LoadTestConfig, StressTestConfig } from '../types.js';
 
 // Mock Cloudinary SDK for performance testing
-const mockCloudinaryV2 = {
-    uploader: {
-        upload: jest.fn(),
-        destroy: jest.fn(),
-        rename: jest.fn(),
-        explicit: jest.fn()
-    },
-    api: {
-        resource: jest.fn(),
-        resources: jest.fn(),
-        delete_resources: jest.fn(),
-        update: jest.fn()
-    },
-    url: jest.fn(),
-    image: jest.fn(),
-    video: jest.fn()
-};
-
-const mockCloudinaryConfig = jest.fn();
-
 jest.mock('cloudinary', () => ({
-    v2: mockCloudinaryV2,
-    config: mockCloudinaryConfig
+    v2: {
+        uploader: {
+            upload: jest.fn(),
+            destroy: jest.fn(),
+            rename: jest.fn(),
+            explicit: jest.fn()
+        },
+        api: {
+            resource: jest.fn(),
+            resources: jest.fn(),
+            delete_resources: jest.fn(),
+            update: jest.fn()
+        },
+        url: jest.fn(),
+        image: jest.fn(),
+        video: jest.fn()
+    },
+    config: jest.fn()
 }));
+
+// Get references to mocks after they're created
+const cloudinary = require('cloudinary');
+const mockCloudinaryV2 = cloudinary.v2;
+const _mockCloudinaryConfig = cloudinary.config;
 
 /**
  * CloudinaryService Performance Tests
@@ -116,7 +118,7 @@ class CloudinaryServicePerformanceTest extends PerformanceTestBase<CloudinarySer
 
     private setupMockResponses(): void {
         // Upload operations with realistic delays based on file size simulation
-        mockCloudinaryV2.uploader.upload.mockImplementation(async (file, options) => {
+        mockCloudinaryV2.uploader.upload.mockImplementation(async (file: any, options: any) => {
             const fileSize = options?.fileSize || 1024 * 1024; // Default 1MB
             const baseDelay = 500;
             const sizeDelay = fileSize / (1024 * 1024) * 200; // 200ms per MB
@@ -125,31 +127,31 @@ class CloudinaryServicePerformanceTest extends PerformanceTestBase<CloudinarySer
             return this.testData.createMockUploadResult(options);
         });
 
-        mockCloudinaryV2.uploader.destroy.mockImplementation(async (publicId) => {
+        mockCloudinaryV2.uploader.destroy.mockImplementation(async (publicId: any) => {
             await this.simulateNetworkDelay(300, 80);
             return this.testData.createMockDeleteResult(publicId);
         });
 
-        mockCloudinaryV2.uploader.explicit.mockImplementation(async (publicId, options) => {
+        mockCloudinaryV2.uploader.explicit.mockImplementation(async (publicId: any, options: any) => {
             const transformationDelay = options?.transformation ? 400 : 200;
             await this.simulateNetworkDelay(transformationDelay, 100);
             return this.testData.createMockTransformationResult(publicId, options);
         });
 
         // API operations
-        mockCloudinaryV2.api.resource.mockImplementation(async (publicId, options) => {
+        mockCloudinaryV2.api.resource.mockImplementation(async (publicId: any, _options: any) => {
             await this.simulateNetworkDelay(200, 60);
             return this.testData.createMockResource(publicId);
         });
 
-        mockCloudinaryV2.api.resources.mockImplementation(async (options) => {
+        mockCloudinaryV2.api.resources.mockImplementation(async (options: any) => {
             const limit = options?.max_results || 10;
             const delay = 250 + (limit * 5); // Base delay + 5ms per resource
             await this.simulateNetworkDelay(delay, 80);
             return this.testData.createMockResourceList(limit);
         });
 
-        mockCloudinaryV2.api.delete_resources.mockImplementation(async (publicIds) => {
+        mockCloudinaryV2.api.delete_resources.mockImplementation(async (publicIds: any) => {
             const count = Array.isArray(publicIds) ? publicIds.length : 1;
             const delay = 400 + (count * 50); // Base delay + 50ms per resource
             await this.simulateNetworkDelay(delay, 100);
@@ -157,11 +159,11 @@ class CloudinaryServicePerformanceTest extends PerformanceTestBase<CloudinarySer
         });
 
         // URL generation (fast operations)
-        mockCloudinaryV2.url.mockImplementation((publicId, options) => {
+        mockCloudinaryV2.url.mockImplementation((publicId: any, options: any) => {
             return this.testData.createMockUrl(publicId, options);
         });
 
-        mockCloudinaryV2.image.mockImplementation((publicId, options) => {
+        mockCloudinaryV2.image.mockImplementation((publicId: any, options: any) => {
             return this.testData.createMockImageTag(publicId, options);
         });
     }
@@ -414,8 +416,8 @@ const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").
                             fileName: `medium-${i}-${Date.now()}`
                         }));
                     }
-                    
-                    const results = await Promise.all(operations);
+
+                    const _results = await Promise.all(operations);
                     
                     // Simplified transformations (getAsset only takes 1 argument)
                     const transformations = [
@@ -450,7 +452,7 @@ const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").
 
         test('should handle upload failures gracefully', async () => {
             // Setup intermittent failures
-            mockCloudinaryV2.uploader.upload.mockImplementation(async (file, options) => {
+            mockCloudinaryV2.uploader.upload.mockImplementation(async (file: any, options: any) => {
                 await performanceTest['simulateNetworkDelay'](600, 200);
                 if (Math.random() < 0.2) { // 20% failure rate
                     throw new Error('Upload failed - network error');

@@ -43,7 +43,7 @@ export class CustomerRepository extends MemoryRepository<any> {
     /**
      * Find customers by email
      */
-    async findByEmail(email: string): Promise<any | null> {
+    async findByEmail(email: string): Promise<any> {
         const customers = await this.findAll({
             filters: [{ field: 'email', operator: 'eq', value: email }]
         });

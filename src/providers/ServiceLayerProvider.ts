@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Service layer bootstrap logging
 /**
  * ServiceLayerProvider - Service provider for the service layer architecture
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  providers
  * @author      Generated
@@ -120,7 +121,10 @@ export class ServiceLayerProvider extends ServiceProvider {
             .option('--status <status>', 'Filter by service status')
             .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
-                this.handleListServices(options);
+                void this.handleListServices(options).catch(err => {
+                    console.error('Failed to list services:', err);
+                    process.exit(1);
+                });
             });
 
         // Service health check
@@ -130,7 +134,10 @@ export class ServiceLayerProvider extends ServiceProvider {
             .option('--service <name>', 'Check specific service')
             .option(ServiceLayerProvider.JSON_OPTION, 'Output in JSON format')
             .action((options) => {
-                this.handleHealthCheck(options);
+                void this.handleHealthCheck(options).catch(err => {
+                    console.error('Failed to check health:', err);
+                    process.exit(1);
+                });
             });
 
         // Service statistics
@@ -148,7 +155,10 @@ export class ServiceLayerProvider extends ServiceProvider {
             .argument('<service>', 'Service name to restart')
             .description('Restart a specific service')
             .action((serviceName: string) => {
-                this.handleRestartService(serviceName);
+                void this.handleRestartService(serviceName).catch(err => {
+                    console.error('Failed to restart service:', err);
+                    process.exit(1);
+                });
             });
 
         // Factory management commands

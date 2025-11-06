@@ -274,10 +274,14 @@ return null;
      * Setup periodic health checks
      */
     private setupHealthChecks(): void {
-        setInterval(async () => {
-            for (const serviceId of this.connections.keys()) {
-                await this.healthCheck(serviceId);
-            }
+        setInterval(() => {
+            void (async () => {
+                for (const serviceId of this.connections.keys()) {
+                    await this.healthCheck(serviceId);
+                }
+            })().catch(err => {
+                console.error('Health check failed:', err);
+            });
         }, 60 * 1000); // Check every minute
     }
 }

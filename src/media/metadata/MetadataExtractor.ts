@@ -55,26 +55,20 @@ export class MetadataExtractor {
                 metadata.height = buffer.readUInt32BE(ihdrStart + 12);
                 metadata.bitrate = buffer.readUInt8(ihdrStart + 16);
             }
-        }
-
+        } else if ((format === 'jpg' || format === 'jpeg') && buffer.length >= 4) {
         // JPEG metadata
-        else if ((format === 'jpg' || format === 'jpeg') && buffer.length >= 4) {
             const dimensions = this.extractJPEGDimensions(buffer);
             if (dimensions) {
                 metadata.width = dimensions.width;
                 metadata.height = dimensions.height;
             }
-        }
-
+        } else if (format === 'gif' && buffer.length >= 10) {
         // GIF metadata
-        else if (format === 'gif' && buffer.length >= 10) {
             // GIF dimensions are at bytes 6-9 (little endian)
             metadata.width = buffer.readUInt16LE(6);
             metadata.height = buffer.readUInt16LE(8);
-        }
-
+        } else if (format === 'webp' && buffer.length >= 30) {
         // WebP metadata
-        else if (format === 'webp' && buffer.length >= 30) {
             const webpData = this.extractWebPData(buffer);
             if (webpData) {
                 metadata.width = webpData.width;

@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Media operation status logging
 /**
  * LocalMediaProvider - Local filesystem media provider
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  media/providers
  * @author      Generated

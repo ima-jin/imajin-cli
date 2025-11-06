@@ -60,6 +60,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
 
     constructor() {
         super();
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
         this.logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
         this.initializeModelDetectionRules();
     }
@@ -255,7 +256,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
                 this.logger.error('HTTP request failed', error as Error, {
                     extractor: 'GraphExtractor'
                 });
-                return Promise.reject(error);
+                return Promise.reject(error instanceof Error ? error : new Error(String(error)));
             }
         );
 
@@ -275,7 +276,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
                     statusText: error.response?.statusText,
                     extractor: 'GraphExtractor'
                 });
-                return Promise.reject(error);
+                return Promise.reject(error instanceof Error ? error : new Error(String(error)));
             }
         );
     }

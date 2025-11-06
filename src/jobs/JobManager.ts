@@ -105,7 +105,7 @@ export class JobManager extends EventEmitter {
     ): void {
         const queue = this.getQueue(queueName);
 
-        queue.process(jobName, concurrency, async (job: Job<T>) => {
+        void queue.process(jobName, concurrency, async (job: Job<T>) => {
             this.logger.info(`Processing job ${jobName}`, {
                 jobId: job.id,
                 queueName,
@@ -131,6 +131,8 @@ export class JobManager extends EventEmitter {
                 });
                 throw error;
             }
+        }).catch(err => {
+            this.logger.error(`Failed to register processor for ${jobName}`, err instanceof Error ? err : new Error(String(err)));
         });
 
         this.logger.info(`Registered processor for ${jobName} in queue ${queueName}`);

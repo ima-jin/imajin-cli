@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */ // Test file: Dynamic requires for mocking
 /**
  * CloudinaryService Test Suite - Comprehensive service-specific testing
  *

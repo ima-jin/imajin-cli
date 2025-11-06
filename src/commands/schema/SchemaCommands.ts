@@ -216,17 +216,17 @@ async function showSchema(entityName: string, directory: string, format: string,
             console.log(chalk.gray('='.repeat(50)));
             
             switch (format.toLowerCase()) {
-                case 'typescript':
+                case 'typescript': {
                     const interfaceCode = registry.generateInterface(schemaName);
                     const entityInterface = extractEntityInterface(interfaceCode, entityName);
                     console.log(chalk.white(entityInterface));
                     break;
-                    
-                case 'yaml':
+                }
+                case 'yaml': {
                     const yamlOutput = formatAsYaml(schema.entities[entityName]);
                     console.log(chalk.white(yamlOutput));
                     break;
-                    
+                }
                 case 'json':
                 default:
                     console.log(chalk.white(JSON.stringify(schema.entities[entityName], null, 2)));

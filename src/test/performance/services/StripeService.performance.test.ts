@@ -25,7 +25,7 @@ import { StripeTestData } from '../../factories/StripeTestData.js';
 import { ServiceStatus } from '../../../services/interfaces/ServiceInterface.js';
 import { LoadTestConfig, StressTestConfig } from '../types.js';
 
-// Mock Stripe SDK for performance testing
+// Mock Stripe SDK for performance testing - define inline to avoid hoisting issues
 const mockStripeCustomers = {
     create: jest.fn(),
     retrieve: jest.fn(),
@@ -52,10 +52,36 @@ const mockStripeSubscriptions = {
 };
 
 jest.mock('stripe', () => {
+    // Create fresh mocks inside the factory to avoid hoisting issues
+    const mockCustomers = {
+        create: jest.fn(),
+        retrieve: jest.fn(),
+        list: jest.fn(),
+        update: jest.fn(),
+        del: jest.fn()
+    };
+
+    const mockPaymentIntents = {
+        create: jest.fn(),
+        confirm: jest.fn(),
+        list: jest.fn(),
+        retrieve: jest.fn(),
+        update: jest.fn(),
+        cancel: jest.fn()
+    };
+
+    const mockSubscriptions = {
+        create: jest.fn(),
+        cancel: jest.fn(),
+        list: jest.fn(),
+        retrieve: jest.fn(),
+        update: jest.fn()
+    };
+
     return jest.fn().mockImplementation(() => ({
-        customers: mockStripeCustomers,
-        paymentIntents: mockStripePaymentIntents,
-        subscriptions: mockStripeSubscriptions
+        customers: mockCustomers,
+        paymentIntents: mockPaymentIntents,
+        subscriptions: mockSubscriptions
     }));
 });
 
@@ -117,12 +143,14 @@ class StripeServicePerformanceTest extends PerformanceTestBase<StripeService> {
 
     private setupMockResponses(): void {
         // Customer creation with realistic response time simulation
-        mockStripeCustomers.create.mockImplementation(async (params) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripeCustomers.create.mockImplementation(async (params: any) => {
             await this.simulateNetworkDelay(150, 50); // 150ms ±50ms
             return this.testData.createMockCustomer(params);
         });
 
-        mockStripeCustomers.retrieve.mockImplementation(async (id) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripeCustomers.retrieve.mockImplementation(async (id: any) => {
             await this.simulateNetworkDelay(100, 30); // 100ms ±30ms
             return this.testData.createMockCustomer({ id });
         });
@@ -132,34 +160,40 @@ class StripeServicePerformanceTest extends PerformanceTestBase<StripeService> {
             return this.testData.createMockCustomerList();
         });
 
-        mockStripeCustomers.update.mockImplementation(async (id, params) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripeCustomers.update.mockImplementation(async (id: any, params: any) => {
             await this.simulateNetworkDelay(180, 60); // 180ms ±60ms
             return this.testData.createMockCustomer({ id, ...params });
         });
 
         // Payment Intent operations
-        mockStripePaymentIntents.create.mockImplementation(async (params) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripePaymentIntents.create.mockImplementation(async (params: any) => {
             await this.simulateNetworkDelay(200, 80); // 200ms ±80ms
             return this.testData.createMockPaymentIntent(params);
         });
 
-        mockStripePaymentIntents.confirm.mockImplementation(async (id) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripePaymentIntents.confirm.mockImplementation(async (id: any) => {
             await this.simulateNetworkDelay(300, 100); // 300ms ±100ms
             return this.testData.createMockPaymentIntent({ id, status: 'succeeded' });
         });
 
-        mockStripePaymentIntents.retrieve.mockImplementation(async (id) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripePaymentIntents.retrieve.mockImplementation(async (id: any) => {
             await this.simulateNetworkDelay(120, 40); // 120ms ±40ms
             return this.testData.createMockPaymentIntent({ id });
         });
 
         // Subscription operations
-        mockStripeSubscriptions.create.mockImplementation(async (params) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripeSubscriptions.create.mockImplementation(async (params: any) => {
             await this.simulateNetworkDelay(250, 90); // 250ms ±90ms
             return this.testData.createMockSubscription(params);
         });
 
-        mockStripeSubscriptions.retrieve.mockImplementation(async (id) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockStripeSubscriptions.retrieve.mockImplementation(async (id: any) => {
             await this.simulateNetworkDelay(130, 45); // 130ms ±45ms
             return this.testData.createMockSubscription({ id });
         });
@@ -418,7 +452,8 @@ describe.skip('StripeService Performance Tests', () => {
         test('should handle rate limiting gracefully', async () => {
             // Simulate rate limiting by adding delays
             let requestCount = 0;
-            mockStripeCustomers.create.mockImplementation(async (params) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            mockStripeCustomers.create.mockImplementation(async (params: any) => {
                 requestCount++;
                 if (requestCount > 10) {
                     await performanceTest['simulateNetworkDelay'](1000, 200); // Simulate rate limiting delay

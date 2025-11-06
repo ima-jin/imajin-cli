@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Schema registry status logging
 /**
  * SchemaRegistry - Dynamic schema loading system
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  schemas
  * @author      Generated

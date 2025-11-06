@@ -425,9 +425,10 @@ export class TaskLifecycleWorkflow extends EventEmitter {
     switch (condition) {
       case 'has_assignee':
         return !!task.assignee;
-      case 'dependencies_complete':
+      case 'dependencies_complete': {
         const depCheck = await this.checkDependencies(task);
         return depCheck.allSatisfied;
+      }
       case 'has_completion_date':
         return !!task.completedAt;
       default:

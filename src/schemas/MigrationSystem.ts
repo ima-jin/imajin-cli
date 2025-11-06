@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Migration status and progress logging
 /**
  * MigrationSystem - Schema migration discovery and execution system
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  schemas
  * @author      Generated

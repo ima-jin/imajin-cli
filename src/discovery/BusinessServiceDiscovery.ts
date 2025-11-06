@@ -71,6 +71,7 @@ export class BusinessServiceDiscovery {
     private logger: Logger;
 
     constructor() {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
         this.logger = new (require('../logging/Logger.js').Logger)({ level: 'debug' });
         this.initializeKnownServices();
     }
@@ -247,11 +248,11 @@ export class BusinessServiceDiscovery {
     private async mapServiceToBusinessContext(
         service: ServiceCapability,
         businessContext: BusinessDomainModel
-    ): Promise<ServiceMapping | null> {
+    ): Promise<ServiceMapping> {
         const mappings: Record<string, any> = {};
         let totalConfidence = 0;
         let mappingCount = 0;
-        
+
         // Map each service entity to business entities
         for (const [serviceEntity, serviceEntityDef] of Object.entries(service.entities)) {
             const bestMatch = this.findBestBusinessEntityMatch(
@@ -259,16 +260,16 @@ export class BusinessServiceDiscovery {
                 serviceEntityDef,
                 businessContext
             );
-            
+
             if (bestMatch) {
                 mappings[serviceEntity] = bestMatch;
                 totalConfidence += bestMatch.confidence;
                 mappingCount++;
             }
         }
-        
+
         if (mappingCount === 0) {
-            return null; // No viable mappings
+            return null as any; // No viable mappings - any includes null
         }
 
         const _averageConfidence = totalConfidence / mappingCount;
@@ -293,7 +294,7 @@ export class BusinessServiceDiscovery {
         serviceEntity: string,
         serviceEntityDef: any,
         businessContext: BusinessDomainModel
-    ): any | null {
+    ): any {
         let bestMatch: any = null;
         let bestScore = 0;
         

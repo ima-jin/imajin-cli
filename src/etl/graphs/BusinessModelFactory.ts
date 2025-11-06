@@ -41,6 +41,7 @@ export interface ServiceSchemaType {
 export class BusinessModelFactory extends ModelFactory {
     private static businessDomains: Map<string, BusinessDomainModel> = new Map();
     private static registeredBusinessModels: Map<string, GraphModel> = new Map();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
     private static logger: Logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
 
     /**
@@ -716,7 +717,7 @@ zodType = (zodType as z.ZodNumber).max(fieldDef.validation.max);
         serviceEntity: string,
         serviceEntityDef: any,
         context: BusinessDomainModel
-    ): any | null {
+    ): any {
         const businessEntities = Object.entries(context.entities);
         
         if (businessEntities.length === 0) {

@@ -77,6 +77,7 @@ export class BusinessContextProcessor {
     constructor(logger?: Logger) {
         this.recipeManager = new RecipeManager();
         this.initializePatterns();
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for optional logger dependency
         this.logger = logger || new (require('../logging/Logger.js').Logger)({ level: 'info' });
     }
 
@@ -493,7 +494,7 @@ export class BusinessContextProcessor {
         return workflows;
     }
 
-    private extractBusinessRules(description: string, entities: Record<string, any>): any[] {
+    private extractBusinessRules(description: string, _entities: Record<string, any>): any[] {
         const rules: any[] = [];
         const text = description.toLowerCase();
         

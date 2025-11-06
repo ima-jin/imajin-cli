@@ -18,7 +18,7 @@
  */
 
 import { ContentfulService, ContentfulConfig } from '../../../services/contentful/ContentfulService.js';
-import { ServiceTestBase, ServiceConfig } from '../../framework/ServiceTestBase.js';
+import { ServiceTestBase } from '../../framework/ServiceTestBase.js';
 import { ContentfulTestData } from '../../factories/ContentfulTestData.js';
 import { ServiceStatus } from '../../../services/interfaces/ServiceInterface.js';
 import { BusinessDomainModel } from '../../../context/BusinessContextProcessor.js';
@@ -65,7 +65,7 @@ jest.mock('contentful-management', () => ({
 describe('ContentfulService', () => {
     let contentfulService: ContentfulService;
     let testBase: ServiceTestBase<ContentfulService>;
-    let mockConfig: ContentfulConfig;
+    let _mockConfig: ContentfulConfig;
 
     beforeEach(async () => {
         // Clear all mocks before each test
@@ -90,7 +90,7 @@ describe('ContentfulService', () => {
         })();
 
         await testBase.setupTest();
-        mockConfig = testBase.getMockConfig() as ContentfulConfig;
+        _mockConfig = testBase.getMockConfig() as ContentfulConfig;
         contentfulService = testBase.getService();
 
         // Setup default successful API connection validation
@@ -623,7 +623,7 @@ describe('ContentfulService', () => {
 
     describe('Business Context Integration', () => {
         it('should initialize with business context', async () => {
-            const businessContext: BusinessDomainModel = {
+            const _businessContext: BusinessDomainModel = {
                 businessType: 'content-management',
                 description: 'Content management domain for testing',
                 entities: {

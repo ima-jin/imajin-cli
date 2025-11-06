@@ -77,7 +77,7 @@ interface StripeServiceConfig extends ServiceConfig {
 describe('StripeService', () => {
     let stripeService: StripeService;
     let testBase: ServiceTestBase<StripeService>;
-    let mockConfig: StripeServiceConfig;
+    let _mockConfig: StripeServiceConfig;
 
     beforeEach(async () => {
         // Clear all mocks before each test
@@ -102,7 +102,7 @@ describe('StripeService', () => {
         })();
 
         await testBase.setupTest();
-        mockConfig = testBase.getMockConfig() as StripeServiceConfig;
+        _mockConfig = testBase.getMockConfig() as StripeServiceConfig;
         stripeService = testBase.getService();
 
         // Setup default successful account validation mock
@@ -463,7 +463,7 @@ describe('StripeService', () => {
 
     describe('Business Context Integration', () => {
         it('should initialize with business context', async () => {
-            const businessContext: BusinessDomainModel = {
+            const _businessContext: BusinessDomainModel = {
                 businessType: 'payment-processing',
                 description: 'Payment processing domain for testing',
                 entities: {

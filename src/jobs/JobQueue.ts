@@ -1,6 +1,7 @@
+/* eslint-disable no-console */ // CLI Output: Queue status logging
 /**
  * JobQueue - Priority-based job queue management with persistence
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  jobs
  * @author      Generated
@@ -215,7 +216,9 @@ return;
 
         this.rateLimitTokens--;
 
-        this.processJob(queuedJob);
+        void this.processJob(queuedJob).catch(err => {
+            console.error('Job processing failed:', err);
+        });
     }
 
     /**

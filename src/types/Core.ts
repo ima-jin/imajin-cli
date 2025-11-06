@@ -142,7 +142,7 @@ export class BusinessTypeRegistry {
         let zodType: z.ZodType<any>;
         
         switch (fieldDef.type) {
-            case 'string':
+            case 'string': {
                 let stringType = z.string();
                 if (fieldDef.validation?.min) {
 stringType = stringType.min(fieldDef.validation.min);
@@ -155,8 +155,8 @@ stringType = stringType.max(fieldDef.validation.max);
                 }
                 zodType = stringType;
                 break;
-                
-            case 'number':
+            }
+            case 'number': {
                 let numberType = z.number();
                 if (fieldDef.validation?.min !== undefined) {
 numberType = numberType.min(fieldDef.validation.min);
@@ -166,22 +166,22 @@ numberType = numberType.max(fieldDef.validation.max);
 }
                 zodType = numberType;
                 break;
-                
+            }
             case 'boolean':
                 zodType = z.boolean();
                 break;
-                
+
             case 'date':
                 zodType = z.date();
                 break;
-                
-            case 'array':
-                const itemType = fieldDef.items === 'string' ? z.string() : 
-                               fieldDef.items === 'number' ? z.number() : 
+
+            case 'array': {
+                const itemType = fieldDef.items === 'string' ? z.string() :
+                               fieldDef.items === 'number' ? z.number() :
                                z.any();
                 zodType = z.array(itemType);
                 break;
-                
+            }
             case 'object':
 zodType = z.record(z.string(), z.any());
                 break;

@@ -199,26 +199,33 @@ export class MarkdownCommand {
             persistent: true
         });
 
-        watcher.on('change', async (filePath) => {
-            if (path.extname(filePath).toLowerCase() === '.md') {
-                this.logger?.debug('File changed in watch mode', { filePath });
-                console.log(chalk.yellow(`📝 File changed: ${filePath}`));
-                try {
-                    const result = await this.convertSingleFile(filePath, options);
-                    this.logger?.info('Watch mode conversion successful', { filePath, outputPath: result.outputPath });
-                    console.log(chalk.green(`✅ Converted: ${result.outputPath}`));
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    this.logger?.error('Watch mode conversion failed', error as Error, { filePath });
-                    console.log(chalk.red(`❌ Failed to convert ${filePath}: ${errorMessage}`));
+        watcher.on('change', (filePath) => {
+            void (async () => {
+                if (path.extname(filePath).toLowerCase() === '.md') {
+                    this.logger?.debug('File changed in watch mode', { filePath });
+                    console.log(chalk.yellow(`📝 File changed: ${filePath}`));
+                    try {
+                        const result = await this.convertSingleFile(filePath, options);
+                        this.logger?.info('Watch mode conversion successful', { filePath, outputPath: result.outputPath });
+                        console.log(chalk.green(`✅ Converted: ${result.outputPath}`));
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        this.logger?.error('Watch mode conversion failed', error as Error, { filePath });
+                        console.log(chalk.red(`❌ Failed to convert ${filePath}: ${errorMessage}`));
+                    }
                 }
-            }
+            })().catch(err => {
+                this.logger?.error('Watch mode handler failed', err instanceof Error ? err : new Error(String(err)));
+                console.log(chalk.red(`❌ Watch mode error: ${err instanceof Error ? err.message : String(err)}`));
+            });
         });
 
         // Handle graceful shutdown
         process.on('SIGINT', () => {
             console.log(chalk.yellow('\n👋 Stopping watch mode...'));
-            watcher.close();
+            void watcher.close().catch(err => {
+                this.logger?.error('Failed to close watcher', err instanceof Error ? err : new Error(String(err)));
+            });
             process.exit(0);
         });
     }
@@ -279,17 +286,24 @@ export class MarkdownCommand {
     private getOutputPath(inputPath: string, outputOption?: string): string {
         const inputDir = path.dirname(inputPath);
         const inputName = path.basename(inputPath, path.extname(inputPath));
-        
+
         if (!outputOption) {
             // Default: same directory as input with .pdf extension
             return path.join(inputDir, `${inputName}.pdf`);
         }
-        
-        const outputStats = fs.stat(outputOption).catch(() => null);
-        
-        // If output is a directory, put file there
-        if (outputStats && (outputStats as any).isDirectory?.()) {
-            return path.join(outputOption, `${inputName}.pdf`);
+
+        // Check if output is a directory (synchronously)
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for synchronous fs check
+            const fsSync = require('fs');
+            const outputStats = fsSync.statSync(outputOption);
+
+            // If output is a directory, put file there
+            if (outputStats.isDirectory()) {
+                return path.join(outputOption, `${inputName}.pdf`);
+            }
+        } catch {
+            // File doesn't exist yet, continue with path logic
         }
         
         // If output has .pdf extension, use as-is

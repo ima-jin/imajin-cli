@@ -81,23 +81,7 @@ export interface Transformation {
     params: TransformationParams;
 }
 
-export type TransformationType =
-    | 'resize'
-    | 'crop'
-    | 'format'
-    | 'quality'
-    | 'rotate'
-    | 'blur'
-    | 'sharpen'
-    | 'brightness'
-    | 'contrast'
-    | 'saturation'
-    | 'watermark'
-    | 'overlay'
-    | 'video_transcode'
-    | 'thumbnail'
-    | 'optimize'
-    | string; // Allow string values for additional transformation types
+export type TransformationType = string; // Allow any string for transformation types including: resize, crop, format, quality, rotate, blur, sharpen, brightness, contrast, saturation, watermark, overlay, video_transcode, thumbnail, optimize
 
 export interface TransformationParams {
     width?: number;
