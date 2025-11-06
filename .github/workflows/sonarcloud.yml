@@ -61,4 +61,8 @@ jobs:
             -Dsonar.projectKey=ima-jin_imajin-cli
             -Dsonar.organization=ima-jin
             -Dsonar.scm.provider=git
+            -Dsonar.sources=src
+            -Dsonar.tests=src/test
+            -Dsonar.test.inclusions=src/**/__tests__/**,src/test/**/*.test.ts,src/**/*.test.ts
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.test.ts,**/__tests__/**
           projectBaseDir: .
