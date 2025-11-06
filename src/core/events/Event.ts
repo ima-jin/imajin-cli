@@ -1,6 +1,6 @@
 /**
  * Event - Base event interface and types for event-driven architecture
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  core/events
  * @author      Generated
@@ -15,6 +15,8 @@
  * - Event versioning and backward compatibility
  * - Foundation for real-time communication
  */
+
+import { randomBytes } from 'crypto';
 
 /**
  * Base event interface that all events must implement
@@ -90,7 +92,9 @@ export abstract class BaseEvent<T = any> implements IEvent<T> {
      * Generate unique event ID
      */
     private generateId(): string {
-        return `${this.type}_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        return `${this.type}_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
     }
 
     /**

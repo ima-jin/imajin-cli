@@ -519,7 +519,9 @@ export class PerformanceMonitor extends EventEmitter {
         // Simple memory leak detection based on trend analysis
         const recentMetrics = this.metricsCollector.getSamples().slice(-20); // Last 20 samples
         
-        if (recentMetrics.length < 10) return;
+        if (recentMetrics.length < 10) {
+return;
+}
         
         const memoryUsages = recentMetrics.map(sample => sample.memory.used);
         const trend = this.calculateTrend(memoryUsages);
@@ -544,7 +546,9 @@ export class PerformanceMonitor extends EventEmitter {
      * Calculate trend from a series of values
      */
     private calculateTrend(values: number[]): number {
-        if (values.length < 2) return 0;
+        if (values.length < 2) {
+return 0;
+}
         
         const firstHalf = values.slice(0, Math.floor(values.length / 2));
         const secondHalf = values.slice(Math.floor(values.length / 2));

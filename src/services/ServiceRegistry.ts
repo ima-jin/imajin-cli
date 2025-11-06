@@ -46,8 +46,12 @@ export class ServiceRegistry implements IServiceRegistry {
         this.eventEmitter = container.resolve<EventEmitter>('eventEmitter');
 
         // Set up cleanup on process termination
-        process.on('SIGINT', () => this.gracefulShutdown());
-        process.on('SIGTERM', () => this.gracefulShutdown());
+        process.on('SIGINT', () => {
+ void this.gracefulShutdown(); 
+});
+        process.on('SIGTERM', () => {
+ void this.gracefulShutdown(); 
+});
     }
 
     /**

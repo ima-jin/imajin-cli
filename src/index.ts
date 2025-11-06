@@ -66,11 +66,17 @@ function isNpmLinkMode(): boolean {
  */
 function shouldEnableDebugMode(): boolean {
   // Explicit debug flag takes precedence
-  if (process.env.DEBUG === 'true') return true;
-  if (process.env.DEBUG === 'false') return false;
+  if (process.env.DEBUG === 'true') {
+return true;
+}
+  if (process.env.DEBUG === 'false') {
+return false;
+}
   
   // Check for debug command line flag
-  if (process.argv.includes('--debug')) return true;
+  if (process.argv.includes('--debug')) {
+return true;
+}
   
   // Auto-enable for npm link development
   if (isNpmLinkMode()) {

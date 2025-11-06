@@ -187,8 +187,11 @@ export class MemoryRepository<T extends Record<string, any>, TKey = string> exte
 
                 let comparison = 0;
 
-                if (aValue < bValue) comparison = -1;
-                else if (aValue > bValue) comparison = 1;
+                if (aValue < bValue) {
+comparison = -1;
+} else if (aValue > bValue) {
+comparison = 1;
+}
 
                 if (comparison !== 0) {
                     return sort.direction === 'asc' ? comparison : -comparison;

@@ -642,9 +642,15 @@ export class PerformanceReportGenerator {
         }
         
         // Check against absolute thresholds
-        if (result.statistics.average > 5000) return true; // 5 second response time
-        if (result.systemMetrics?.errorRate && result.systemMetrics.errorRate > 0.1) return true; // 10% error rate
-        if (result.systemMetrics?.throughput && result.systemMetrics.throughput < 1) return true; // Less than 1 op/sec
+        if (result.statistics.average > 5000) {
+return true;
+} // 5 second response time
+        if (result.systemMetrics?.errorRate && result.systemMetrics.errorRate > 0.1) {
+return true;
+} // 10% error rate
+        if (result.systemMetrics?.throughput && result.systemMetrics.throughput < 1) {
+return true;
+} // Less than 1 op/sec
         
         return false;
     }

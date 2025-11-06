@@ -16,6 +16,7 @@
  * - Performance monitoring and metrics
  */
 
+import { randomBytes } from 'crypto';
 import { EventEmitter as NodeEventEmitter } from 'events';
 import type { EventMetadata, IEvent, IEventListener } from './Event.js';
 import { EventPriority } from './Event.js';
@@ -88,12 +89,14 @@ export class ImajinEventEmitter extends NodeEventEmitter {
         listenersSet.add(listener as IEventListener);
 
         // Register with Node.js EventEmitter
-        const handler = async (event: IEvent<T>) => {
-            try {
-                await this.executeListener(listener, event, options);
-            } catch (error) {
-                this.handleListenerError(error as Error, event, listener);
-            }
+        const handler = (event: IEvent<T>) => {
+            void (async () => {
+                try {
+                    await this.executeListener(listener, event, options);
+                } catch (error) {
+                    this.handleListenerError(error as Error, event, listener);
+                }
+            })();
         };
 
         if (options.once) {
@@ -288,7 +291,9 @@ export class ImajinEventEmitter extends NodeEventEmitter {
      * Generate unique event ID
      */
     private generateEventId(eventType: string): string {
-        return `${eventType}_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        const b = randomBytes(6);
+        const randomPart = b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+        return `${eventType}_${Date.now()}_${randomPart}`;
     }
 }
 

@@ -61,7 +61,7 @@ export class BasicMediaServiceProvider extends ServiceProvider {
      * Register CLI commands
      */
     public registerCommands(): void {
-        const mediaCommand = this.container.resolve('MediaCommand') as MediaCommand;
+        const mediaCommand = this.container.resolve<MediaCommand>('MediaCommand');
         mediaCommand.register(this.program);
     }
 } 

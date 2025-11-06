@@ -94,15 +94,15 @@ export class BridgeComponent implements ETLComponent {
     public readonly id: string;
     public readonly version: string;
 
-    async validate(context: ETLContext): Promise<boolean> {
+    async validate(_context: ETLContext): Promise<boolean> {
         return this.registry.validate(this.bridge);
     }
 
     async execute(context: ETLContext): Promise<ETLResult> {
         const startTime = Date.now();
-        let processed = 0;
-        let succeeded = 0;
-        let failed = 0;
+        const processed = 0;
+        const succeeded = 0;
+        const failed = 0;
 
         try {
             const transformedData = await this.transformData(context.data);
@@ -149,7 +149,7 @@ export class BridgeComponent implements ETLComponent {
     private applyTransformations(data: any): any {
         const result = { ...data };
 
-        for (const [key, transformation] of Object.entries(this.bridge.transformations)) {
+        for (const [_key, transformation] of Object.entries(this.bridge.transformations)) {
             const sourceValue = this.getNestedValue(data, transformation.source);
             
             if (sourceValue !== undefined) {

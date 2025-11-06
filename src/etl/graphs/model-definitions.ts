@@ -13,8 +13,7 @@
 
 import { z } from 'zod';
 import { ModelFactory } from './models.js';
-import { GraphSchema, CompatibilityMatrix } from '../core/interfaces.js';
-import { DEFAULT_MODEL_VERSIONS } from '../../constants/ETLConstants.js';
+import { GraphSchema } from '../core/interfaces.js';
 
 // Base Entity Schemas - Common to all models
 const BaseEntitySchema = {

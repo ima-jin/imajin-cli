@@ -178,7 +178,7 @@ export class JobManager extends EventEmitter {
         const progress = job.progress();
 
         const jobStatus: JobStatus = {
-            id: job.id!.toString(),
+            id: job.id.toString(),
             name: job.name,
             queue: queueName,
             state: safeState,
@@ -223,7 +223,7 @@ export class JobManager extends EventEmitter {
                 const progress = job.progress();
 
                 const jobStatus: JobStatus = {
-                    id: job.id!.toString(),
+                    id: job.id.toString(),
                     name: job.name,
                     queue: queueName,
                     state: safeState,
@@ -328,7 +328,7 @@ export class JobManager extends EventEmitter {
     private emitJobProgress(job: Job, progress: number, message?: string): void {
         const progressData: JobProgress = {
             queueName: job.queue.name,
-            jobId: job.id!.toString(),
+            jobId: job.id.toString(),
             jobName: job.name,
             progress,
             message: message || `Progress: ${progress}%`,

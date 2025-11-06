@@ -1,13 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm run type-check:*)",
-      "Bash(npx tsc:*)",
-      "Bash(find:*)",
-      "Bash(for file in *)",
-      "Bash(npm run lint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(python -c:*)",
+      "Bash(npm run clean:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

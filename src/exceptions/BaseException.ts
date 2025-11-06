@@ -101,12 +101,24 @@ export abstract class BaseException extends Error {
     private extractMetadataFromContext(context: ErrorContext): Partial<ErrorMetadata> {
         const metadata: Partial<ErrorMetadata> = {};
 
-        if (context.requestId) metadata.requestId = context.requestId;
-        if (context.userId) metadata.userId = context.userId;
-        if (context.command) metadata.command = context.command;
-        if (context.args) metadata.args = context.args;
-        if (context.options) metadata.options = context.options;
-        if (context.innerError) metadata.innerError = context.innerError;
+        if (context.requestId) {
+metadata.requestId = context.requestId;
+}
+        if (context.userId) {
+metadata.userId = context.userId;
+}
+        if (context.command) {
+metadata.command = context.command;
+}
+        if (context.args) {
+metadata.args = context.args;
+}
+        if (context.options) {
+metadata.options = context.options;
+}
+        if (context.innerError) {
+metadata.innerError = context.innerError;
+}
 
         return metadata;
     }

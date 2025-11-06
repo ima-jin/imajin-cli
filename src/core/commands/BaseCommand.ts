@@ -17,6 +17,7 @@
  */
 
 import type { Logger } from '../../logging/Logger.js';
+import { randomBytes } from 'crypto';
 import { SystemEventType } from '../events/Event.js';
 import type { EventManager } from '../events/EventManager.js';
 import type { ICommand } from './CommandManager.js';
@@ -238,6 +239,8 @@ export abstract class BaseCommand implements ICommand {
      * Get correlation ID for event tracking
      */
     private getCorrelationId(): string {
-        return `cmd_${this.name}_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        return `cmd_${this.name}_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
     }
 } 

@@ -55,7 +55,7 @@ export class MediaUploadCommand {
         this.container = container;
         this.mediaProcessor = container.resolve('MediaProcessor');
         try {
-            this.logger = container.resolve('logger') as Logger;
+            this.logger = container.resolve('logger');
         } catch (error) {
             // Logger not available
         }
@@ -219,11 +219,21 @@ Examples:
     private prepareProcessingOptions(options: MediaUploadOptions): MediaProcessingOptions {
         const processingOptions: MediaProcessingOptions = {};
 
-        if (options.provider) processingOptions.provider = options.provider;
-        if (options.folder) processingOptions.folder = options.folder;
-        if (options.tags) processingOptions.tags = options.tags;
-        if (options.public !== undefined) processingOptions.public = options.public;
-        if (options.overwrite !== undefined) processingOptions.overwrite = options.overwrite;
+        if (options.provider) {
+processingOptions.provider = options.provider;
+}
+        if (options.folder) {
+processingOptions.folder = options.folder;
+}
+        if (options.tags) {
+processingOptions.tags = options.tags;
+}
+        if (options.public !== undefined) {
+processingOptions.public = options.public;
+}
+        if (options.overwrite !== undefined) {
+processingOptions.overwrite = options.overwrite;
+}
 
         return processingOptions;
     }

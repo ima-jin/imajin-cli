@@ -20,7 +20,7 @@ import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import type { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
-import type { CommandManager } from './commands/CommandManager.js';
+import type { CommandManager, ICommand } from './commands/CommandManager.js';
 
 export interface PluginInfo {
     name: string;
@@ -191,7 +191,7 @@ export class PluginManager {
                 if (exportName.endsWith('Command') && typeof exportValue === 'function') {
                     try {
                         // Create command instance
-                        const commandInstance = this.container.resolve(exportValue as any) as any;
+                        const commandInstance = this.container.resolve(exportValue as any) as ICommand;
 
                         // Verify it's a valid command
                         if (commandInstance && typeof commandInstance.execute === 'function' && commandInstance.name) {

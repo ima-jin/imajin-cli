@@ -77,7 +77,9 @@ export class PerformanceBenchmarks {
      * Compare test result against benchmark
      */
     compareAgainstBenchmark(result: PerformanceTestResult): RegressionAnalysis[] {
-        if (!result.testName) return [];
+        if (!result.testName) {
+return [];
+}
         const benchmark = this.getBenchmark(result.testName);
         if (!benchmark) {
             return [];
@@ -87,7 +89,7 @@ export class PerformanceBenchmarks {
 
         // Check average response time
         regressions.push(this.analyzeMetric(
-            result.testName!,
+            result.testName,
             'averageResponseTime',
             result.statistics.average,
             benchmark.averageResponseTime,
@@ -97,7 +99,7 @@ export class PerformanceBenchmarks {
 
         // Check max response time
         regressions.push(this.analyzeMetric(
-            result.testName!,
+            result.testName,
             'maxResponseTime',
             result.statistics.max,
             benchmark.maxResponseTime,
@@ -109,7 +111,7 @@ export class PerformanceBenchmarks {
         if (result.systemMetrics?.throughput && benchmark.throughput > 0) {
             const throughputChange = (benchmark.throughput - result.systemMetrics.throughput) / benchmark.throughput;
             regressions.push({
-                testName: result.testName!,
+                testName: result.testName,
                 metric: 'throughput',
                 currentValue: result.systemMetrics.throughput,
                 baselineValue: benchmark.throughput,
@@ -124,7 +126,7 @@ export class PerformanceBenchmarks {
         if (result.systemMetrics?.errorRate !== undefined && benchmark.errorRate !== undefined) {
             const errorRateChange = (result.systemMetrics.errorRate - benchmark.errorRate) / Math.max(benchmark.errorRate, 0.001);
             regressions.push({
-                testName: result.testName!,
+                testName: result.testName,
                 metric: 'errorRate',
                 currentValue: result.systemMetrics.errorRate,
                 baselineValue: benchmark.errorRate,
@@ -143,7 +145,7 @@ export class PerformanceBenchmarks {
         if (avgMemoryUsage > 0 && benchmark.memoryUsage > 0) {
             const memoryChange = (avgMemoryUsage - benchmark.memoryUsage) / benchmark.memoryUsage;
             regressions.push({
-                testName: result.testName!,
+                testName: result.testName,
                 metric: 'memoryUsage',
                 currentValue: avgMemoryUsage,
                 baselineValue: benchmark.memoryUsage,
@@ -187,9 +189,15 @@ export class PerformanceBenchmarks {
      * Determine severity level
      */
     private getSeverity(value: number, warningThreshold: number, criticalThreshold: number): 'low' | 'medium' | 'high' | 'critical' {
-        if (value >= criticalThreshold) return 'critical';
-        if (value >= criticalThreshold * 0.8) return 'high';
-        if (value >= warningThreshold) return 'medium';
+        if (value >= criticalThreshold) {
+return 'critical';
+}
+        if (value >= criticalThreshold * 0.8) {
+return 'high';
+}
+        if (value >= warningThreshold) {
+return 'medium';
+}
         return 'low';
     }
 
@@ -197,12 +205,14 @@ export class PerformanceBenchmarks {
      * Update benchmark with new result if it's better
      */
     updateBenchmarkIfBetter(result: PerformanceTestResult): boolean {
-        if (!result.testName) return false;
+        if (!result.testName) {
+return false;
+}
         const existingBenchmark = this.getBenchmark(result.testName);
         if (!existingBenchmark) {
             // No existing benchmark, create one
             const newBenchmark = this.createBenchmarkFromResult(result);
-            this.setBenchmark(result.testName!, newBenchmark);
+            this.setBenchmark(result.testName, newBenchmark);
             return true;
         }
 
@@ -210,7 +220,7 @@ export class PerformanceBenchmarks {
         const isBetter = this.isResultBetter(result, existingBenchmark);
         if (isBetter) {
             const updatedBenchmark = this.createBenchmarkFromResult(result);
-            this.setBenchmark(result.testName!, updatedBenchmark);
+            this.setBenchmark(result.testName, updatedBenchmark);
             console.log(`Updated benchmark for ${result.testName} with better performance`);
             return true;
         }
@@ -425,7 +435,9 @@ export class PerformanceBenchmarks {
         let improvements = 0;
 
         for (const result of results) {
-            if (!result.testName) continue;
+            if (!result.testName) {
+continue;
+}
             const benchmark = this.getBenchmark(result.testName);
             if (benchmark) {
                 benchmarkedTests++;
@@ -436,8 +448,12 @@ export class PerformanceBenchmarks {
                     analysis.changePercent < -10 // 10% improvement
                 );
 
-                if (hasRegression) regressions++;
-                if (hasImprovement) improvements++;
+                if (hasRegression) {
+regressions++;
+}
+                if (hasImprovement) {
+improvements++;
+}
             }
         }
 

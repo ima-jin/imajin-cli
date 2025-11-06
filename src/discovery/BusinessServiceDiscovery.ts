@@ -558,23 +558,37 @@ export class BusinessServiceDiscovery {
         let complexityScore = 0;
         
         // Authentication complexity
-        if (service.authentication.type === 'oauth') complexityScore += 2;
-        else if (service.authentication.type === 'bearer') complexityScore += 1;
+        if (service.authentication.type === 'oauth') {
+complexityScore += 2;
+} else if (service.authentication.type === 'bearer') {
+complexityScore += 1;
+}
         
         // API type complexity
-        if (service.endpoints.length > 2) complexityScore += 1;
+        if (service.endpoints.length > 2) {
+complexityScore += 1;
+}
         
         // Entity count
         const entityCount = Object.keys(service.entities).length;
-        if (entityCount > 10) complexityScore += 2;
-        else if (entityCount > 5) complexityScore += 1;
+        if (entityCount > 10) {
+complexityScore += 2;
+} else if (entityCount > 5) {
+complexityScore += 1;
+}
         
         // Business entity mapping complexity
         const businessEntityCount = Object.keys(businessContext.entities).length;
-        if (businessEntityCount > 8) complexityScore += 1;
+        if (businessEntityCount > 8) {
+complexityScore += 1;
+}
         
-        if (complexityScore >= 4) return 'complex';
-        if (complexityScore >= 2) return 'moderate';
+        if (complexityScore >= 4) {
+return 'complex';
+}
+        if (complexityScore >= 2) {
+return 'moderate';
+}
         return 'simple';
     }
 

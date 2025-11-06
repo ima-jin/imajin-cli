@@ -107,12 +107,22 @@ export class ApiError extends BaseException {
     private static determineSeverity(details: ApiErrorDetails): 'low' | 'medium' | 'high' | 'critical' {
         const { statusCode } = details;
 
-        if (!statusCode) return 'medium';
+        if (!statusCode) {
+return 'medium';
+}
 
-        if (statusCode >= 500) return 'high';
-        if (statusCode === 429) return 'medium';
-        if (statusCode === 401 || statusCode === 403) return 'high';
-        if (statusCode >= 400) return 'medium';
+        if (statusCode >= 500) {
+return 'high';
+}
+        if (statusCode === 429) {
+return 'medium';
+}
+        if (statusCode === 401 || statusCode === 403) {
+return 'high';
+}
+        if (statusCode >= 400) {
+return 'medium';
+}
 
         return 'low';
     }
@@ -123,7 +133,9 @@ export class ApiError extends BaseException {
     private static isRecoverable(details: ApiErrorDetails): boolean {
         const { statusCode } = details;
 
-        if (!statusCode) return false;
+        if (!statusCode) {
+return false;
+}
 
         // Retryable status codes
         return statusCode === 429 || statusCode >= 500 || statusCode === 408 || statusCode === 504;

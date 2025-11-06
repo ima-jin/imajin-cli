@@ -92,7 +92,7 @@ export class CreatePaymentCommand {
                 ...(validatedParams.customerId && { customerId: validatedParams.customerId }),
                 ...(validatedParams.paymentMethodId && { paymentMethodId: validatedParams.paymentMethodId }),
                 ...(validatedParams.description && { description: validatedParams.description }),
-...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata as Record<string, string> }),
+...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata }),
             };
 
             const _startTime = Date.now();

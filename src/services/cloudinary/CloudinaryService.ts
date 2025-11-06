@@ -30,8 +30,7 @@ import type {
     MediaAssetCollection,
     MediaMetadata,
     Transformation,
-    UploadOptions,
-    CloudinaryUploadResponse
+    UploadOptions
 } from '../../types/Media.js';
 
 export interface CloudinaryConfig extends ServiceConfig {
@@ -362,8 +361,12 @@ export class CloudinaryService extends BaseService {
         if (transformation.type === 'resize' && transformation.params) {
             const { width, height, crop } = transformation.params;
             parts.push(`c_${crop || 'fill'}`);
-            if (width) parts.push(`w_${width}`);
-            if (height) parts.push(`h_${height}`);
+            if (width) {
+parts.push(`w_${width}`);
+}
+            if (height) {
+parts.push(`h_${height}`);
+}
         }
 
         if (transformation.type === 'quality' && transformation.params.quality) {
@@ -414,7 +417,6 @@ export class CloudinaryService extends BaseService {
     }
 
     private generatePublicId(fileName: string): string {
-        const extension = fileName.split('.').pop();
         const baseName = fileName.replace(/\.[^/.]+$/, '');
         const timestamp = Date.now();
         const uniqueId = uuidv4().substring(0, 8);

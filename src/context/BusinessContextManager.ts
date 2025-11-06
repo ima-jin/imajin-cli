@@ -19,17 +19,15 @@
 
 import { z } from 'zod';
 import { readFile, writeFile, mkdir, access, readdir } from 'fs/promises';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { homedir } from 'os';
 import yaml from 'js-yaml';
 import type {
-    BusinessDomainModel,
-    BusinessDomainModelSchema
+    BusinessDomainModel
 } from './BusinessContextProcessor.js';
+import type { Recipe } from './RecipeManager.js';
 import type { ServiceMapping } from '../discovery/BusinessServiceDiscovery.js';
 import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
-import type { TaskEntity } from '../commands/TaskMigrationCommand.js';
-import type { Recipe } from './RecipeManager.js';
 import type { Logger } from '../logging/Logger.js';
 
 // =============================================================================
@@ -566,7 +564,9 @@ export class BusinessContextManager {
     }
 
     private async createBackup(): Promise<void> {
-        if (!this.currentConfig) return;
+        if (!this.currentConfig) {
+return;
+}
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backupName = `business-context-${timestamp}.backup.yaml`;
@@ -646,7 +646,7 @@ export class BusinessContextManager {
         // Validate service mappings
         if (config.translations?.services) {
             for (const [serviceName, serviceConfig] of Object.entries(config.translations.services)) {
-                for (const [fieldPath, businessField] of Object.entries(serviceConfig.fields)) {
+                for (const [_fieldPath, businessField] of Object.entries(serviceConfig.fields)) {
                     const [entityName] = businessField.split('.');
                     if (entityName && !config.entities[entityName]) {
                         result.warnings.push({
@@ -728,7 +728,6 @@ export class BusinessContextManager {
         
         // Check semantic similarity with business type keywords
         const businessKeywords = businessType.toLowerCase().split(/[-_\s]/);
-        const entityKeywords = entityName.toLowerCase().split(/[-_\s]/);
         
         // Entity-business type semantic mappings
         const semanticMappings: Record<string, string[]> = {

@@ -17,9 +17,8 @@
  * - Retry mechanisms
  */
 
-import { Logger, LogContext } from './Logger.js';
+import { Logger } from './Logger.js';
 import { LoggerConfig } from './LoggerConfig.js';
-import { ApiLogContext } from './formatters/ApiFormatter.js';
 
 export interface ApiMetrics {
     totalRequests: number;
@@ -312,7 +311,9 @@ export class ApiLogger extends Logger {
     }
 
     private sanitizeHeaders(headers?: Record<string, string>): Record<string, string> {
-        if (!headers) return {};
+        if (!headers) {
+return {};
+}
         
         const sanitized = { ...headers };
         const sensitiveHeaders = ['authorization', 'x-api-key', 'cookie', 'set-cookie'];

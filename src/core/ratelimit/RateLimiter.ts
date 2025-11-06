@@ -231,7 +231,9 @@ export class RateLimiter extends EventEmitter {
      */
     private recordViolation(serviceId: string): void {
         const config = this.configs.get(serviceId);
-        if (!config) return;
+        if (!config) {
+return;
+}
 
         const violation: RateLimitViolation = {
             serviceId,

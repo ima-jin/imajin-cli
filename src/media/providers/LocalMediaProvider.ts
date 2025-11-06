@@ -48,7 +48,7 @@ export class LocalMediaProvider implements MediaProvider {
 
     constructor(config: LocalProviderConfig) {
         this.config = config;
-        this.ensureDirectories();
+        void this.ensureDirectories();
     }
 
     /**
@@ -90,7 +90,9 @@ export class LocalMediaProvider implements MediaProvider {
                     });
                 } catch (error) {
                     // File doesn't exist, which is what we want
-                    if (error instanceof ValidationError) throw error;
+                    if (error instanceof ValidationError) {
+throw error;
+}
                 }
             }
 

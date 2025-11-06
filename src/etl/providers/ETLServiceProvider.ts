@@ -6,7 +6,6 @@ import { EventEmitter } from 'events';
 import { Logger } from '../../logging/Logger.js';
 import type { Command } from 'commander';
 import type { Container } from '../../container/Container.js';
-import type { PipelineDefinition } from '../core/interfaces.js';
 
 /**
  * ETLServiceProvider - ETL Pipeline Service Registration
@@ -102,7 +101,7 @@ export class ETLServiceProvider extends ServiceProvider {
             eventManager.registerListener({
                 eventType: 'etl.pipeline.completed'
             }, {
-                handle: (pipelineId: string, result: any) => {
+                handle: (pipelineId: string, _result: any) => {
                     logger.info(`Pipeline completed: ${pipelineId}`);
                 }
             });

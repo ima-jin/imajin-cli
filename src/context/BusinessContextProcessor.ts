@@ -18,7 +18,7 @@
  */
 
 import { z } from 'zod';
-import { RecipeManager, type Recipe } from './RecipeManager.js';
+import { RecipeManager } from './RecipeManager.js';
 import type { Logger } from '../logging/Logger.js';
 
 // =============================================================================
@@ -286,7 +286,7 @@ export class BusinessContextProcessor {
         return entities;
     }
 
-    private extractCustomEntities(description: string, businessType: string): Record<string, any> {
+    private extractCustomEntities(description: string, _businessType: string): Record<string, any> {
         const entities: Record<string, any> = {};
         const text = description.toLowerCase();
         
@@ -444,7 +444,6 @@ export class BusinessContextProcessor {
 
     private extractWorkflows(description: string, entities: Record<string, any>): any[] {
         const workflows: any[] = [];
-        const text = description.toLowerCase();
         
         // Universal workflow patterns based on entity presence
         const availableEntities = Object.keys(entities);
@@ -497,7 +496,6 @@ export class BusinessContextProcessor {
     private extractBusinessRules(description: string, entities: Record<string, any>): any[] {
         const rules: any[] = [];
         const text = description.toLowerCase();
-        const availableEntities = Object.keys(entities);
         
         // Universal business rule patterns based on keywords and available entities
         const rulePatterns = [
@@ -548,7 +546,7 @@ export class BusinessContextProcessor {
         return rules;
     }
 
-    private extractIntegrations(description: string): string[] {
+    private extractIntegrations(_description: string): string[] {
         // Implement the logic to extract integrations from the description
         // This is a placeholder and should be replaced with the actual implementation
         return [];
@@ -681,7 +679,7 @@ export class BusinessContextProcessor {
         };
     }
 
-    private generateFieldBasedCommands(entityName: string, entityDef: any, domain: BusinessDomainModel): CommandDefinition[] {
+    private generateFieldBasedCommands(entityName: string, entityDef: any, _domain: BusinessDomainModel): CommandDefinition[] {
         const commands: CommandDefinition[] = [];
         const fields = entityDef.fields || [];
 
@@ -745,7 +743,7 @@ export class BusinessContextProcessor {
         return options;
     }
 
-    private generateWorkflowCommands(workflow: any, domain: BusinessDomainModel): CommandDefinition[] {
+    private generateWorkflowCommands(workflow: any, _domain: BusinessDomainModel): CommandDefinition[] {
         const commands: CommandDefinition[] = [];
 
         commands.push({

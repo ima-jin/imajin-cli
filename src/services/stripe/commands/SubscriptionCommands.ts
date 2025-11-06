@@ -56,7 +56,7 @@ export class SubscriptionCommands {
                         paymentBehavior: options.paymentBehavior
                     });
 
-                    const metadata = options.metadata ? JSON.parse(options.metadata) : undefined;
+                    const _metadata = options.metadata ? JSON.parse(options.metadata) : undefined;
                     
                     const progressCallback = options.watch ? (event: any) => {
                         if (!options.json) {

@@ -17,6 +17,7 @@
  */
 
 import { ApiLogger, LoggerConfig } from '../index.js';
+import { randomBytes } from 'crypto';
 
 export class ApiLoggingExample {
     private logger: ApiLogger;
@@ -216,7 +217,6 @@ export class ApiLoggingExample {
      */
     public async performBulkOperation(items: any[]): Promise<void> {
         const startTime = Date.now();
-        const startMemory = process.memoryUsage();
         const startCpu = process.cpuUsage();
 
         try {
@@ -293,7 +293,9 @@ export class ApiLoggingExample {
                 'x-ratelimit-reset': Math.floor(Date.now() / 1000) + 3600,
             },
             data: {
-                id: 'cus_' + (()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})(),
+                id: 'cus_' + (()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})(),
                 email: data.email,
                 name: data.name,
                 created: Math.floor(Date.now() / 1000),

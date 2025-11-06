@@ -17,12 +17,12 @@
  */
 
 import { promises as fs } from 'fs';
-import * as path from 'path';
+import { basename, extname } from 'path';
 import { SchemaLoader } from './SchemaLoader.js';
 import { SchemaValidator } from './SchemaValidator.js';
 import { TypeGenerator } from './TypeGenerator.js';
-import type { 
-    SchemaDefinition, 
+import type {
+    SchemaDefinition,
     SchemaMetadata,
     SchemaRegistryOptions,
     ValidationResult,
@@ -86,11 +86,11 @@ export class SchemaRegistry {
     async loadSchema(filePath: string): Promise<void> {
         try {
             const { schema, metadata } = await this.loader.loadSchemaFile(filePath);
-            const schemaName = path.basename(filePath, path.extname(filePath));
-            
+            const schemaName = basename(filePath, extname(filePath));
+
             this.schemas.set(schemaName, { schema, metadata });
             this.validator.registerSchema(schemaName, schema);
-            
+
             console.log(`Loaded schema '${schemaName}' from ${filePath}`);
         } catch (error) {
             throw new Error(`Failed to load schema from ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -385,19 +385,19 @@ export class SchemaRegistry {
         for (const [fieldName, newFieldDef] of Object.entries(newEntity.fields)) {
             const oldFieldDef = oldEntity.fields[fieldName];
             if (oldFieldDef) {
-                if ((oldFieldDef as any).type !== (newFieldDef as any).type) {
+                if ((oldFieldDef).type !== (newFieldDef as any).type) {
                     breaking.push({
                         type: 'field_type_changed',
                         path: `${basePath}.fields.${fieldName}.type`,
-                        message: `Field '${fieldName}' type changed from '${(oldFieldDef as any).type}' to '${(newFieldDef as any).type}'`,
+                        message: `Field '${fieldName}' type changed from '${(oldFieldDef).type}' to '${(newFieldDef as any).type}'`,
                         severity: 'error',
-                        oldValue: (oldFieldDef as any).type,
+                        oldValue: (oldFieldDef).type,
                         newValue: (newFieldDef as any).type
                     });
                 }
 
                 // Check if field became required
-                if (!(oldFieldDef as any).required && (newFieldDef as any).required) {
+                if (!(oldFieldDef).required && (newFieldDef as any).required) {
                     breaking.push({
                         type: 'field_required_added',
                         path: `${basePath}.fields.${fieldName}.required`,

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { ETLContext, ETLProgress, ETLResult, ETLEvents as IETLEvents, PipelineResult } from './interfaces.js';
+import { ETLContext, ETLProgress, ETLResult, PipelineResult } from './interfaces.js';
 
 export class ETLEvents extends EventEmitter {
     on(event: 'progress', listener: (progress: ETLProgress) => void): this;

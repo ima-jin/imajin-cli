@@ -433,10 +433,18 @@ function formatAsYaml(entityDef: any): string {
         yaml += `    required: ${field.required}\n`;
         yaml += `    description: "${field.description}"\n`;
         
-        if (field.min !== undefined) yaml += `    min: ${field.min}\n`;
-        if (field.max !== undefined) yaml += `    max: ${field.max}\n`;
-        if (field.pattern) yaml += `    pattern: "${field.pattern}"\n`;
-        if (field.values) yaml += `    values: [${field.values.map((v: string) => `"${v}"`).join(', ')}]\n`;
+        if (field.min !== undefined) {
+yaml += `    min: ${field.min}\n`;
+}
+        if (field.max !== undefined) {
+yaml += `    max: ${field.max}\n`;
+}
+        if (field.pattern) {
+yaml += `    pattern: "${field.pattern}"\n`;
+}
+        if (field.values) {
+yaml += `    values: [${field.values.map((v: string) => `"${v}"`).join(', ')}]\n`;
+}
     }
     
     return yaml;

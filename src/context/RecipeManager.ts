@@ -18,12 +18,9 @@
  */
 
 import { readFile, readdir } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import type { BusinessDomainModel } from './BusinessContextProcessor.js';
 import type { Logger } from '../logging/Logger.js';
-
-const logger = new (require('../logging/Logger.js').Logger)({ level: 'info' });
 
 export interface Recipe {
     name: string;
@@ -60,11 +57,13 @@ export interface ContextView {
 
 export class RecipeManager {
     private readonly recipesDir: string;
+    private logger: Logger | undefined;
 
-    constructor() {
+    constructor(logger?: Logger) {
         // Use absolute path resolution to avoid import.meta.url issues
         // This works in both ES modules and CommonJS environments
         this.recipesDir = join(process.cwd(), 'src/templates/recipes');
+        this.logger = logger;
     }
 
     /**
@@ -78,14 +77,16 @@ export class RecipeManager {
             for (const file of files) {
                 if (file.endsWith('.json')) {
                     const recipe = await this.loadRecipe(file);
-                    if (recipe) recipes.push(recipe);
+                    if (recipe) {
+recipes.push(recipe);
+}
                 }
             }
 
             return recipes;
         } catch (error) {
             // No recipes directory found - return empty array
-            logger.warn('No recipes directory found', {
+            this.logger?.warn('No recipes directory found', {
                 recipesDir: this.recipesDir
             });
             return [];
@@ -128,7 +129,9 @@ export class RecipeManager {
      * This method will be expanded when implementing identity-based context switching
      */
     getContextViewForRole(recipe: Recipe, role: string): ContextView | null {
-        if (!recipe.contextViews) return null;
+        if (!recipe.contextViews) {
+return null;
+}
         return recipe.contextViews[role] || null;
     }
 
@@ -138,7 +141,7 @@ export class RecipeManager {
             const content = await readFile(filePath, 'utf-8');
             return JSON.parse(content);
         } catch (error) {
-            logger.warn('Failed to load recipe', {
+            this.logger?.warn('Failed to load recipe', {
                 filename,
                 error: error instanceof Error ? error.message : String(error)
             });

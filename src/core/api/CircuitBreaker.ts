@@ -289,7 +289,7 @@ export class CircuitBreaker extends EventEmitter {
     public getAllStats(): CircuitBreakerStats[] {
         return Array.from(this.circuits.keys())
             .map(serviceId => this.getStats(serviceId))
-            .filter(stats => stats !== null) as CircuitBreakerStats[];
+            .filter(stats => stats !== null);
     }
 
     /**
@@ -349,7 +349,9 @@ export class CircuitBreaker extends EventEmitter {
         const circuit = this.circuits.get(serviceId);
         const config = this.configs.get(serviceId);
 
-        if (!circuit || !config) return;
+        if (!circuit || !config) {
+return;
+}
 
         circuit.successes++;
         circuit.requests++;
@@ -369,7 +371,9 @@ export class CircuitBreaker extends EventEmitter {
         const circuit = this.circuits.get(serviceId);
         const config = this.configs.get(serviceId);
 
-        if (!circuit || !config) return;
+        if (!circuit || !config) {
+return;
+}
 
         const now = Date.now();
         circuit.failures++;
@@ -395,7 +399,9 @@ export class CircuitBreaker extends EventEmitter {
      */
     private transitionToOpen(serviceId: string): void {
         const circuit = this.circuits.get(serviceId);
-        if (!circuit) return;
+        if (!circuit) {
+return;
+}
 
         const oldState = circuit.state;
         circuit.state = CircuitBreakerState.OPEN;
@@ -410,7 +416,9 @@ export class CircuitBreaker extends EventEmitter {
      */
     private transitionToHalfOpen(serviceId: string): void {
         const circuit = this.circuits.get(serviceId);
-        if (!circuit) return;
+        if (!circuit) {
+return;
+}
 
         const oldState = circuit.state;
         circuit.state = CircuitBreakerState.HALF_OPEN;
@@ -426,7 +434,9 @@ export class CircuitBreaker extends EventEmitter {
      */
     private transitionToClosed(serviceId: string): void {
         const circuit = this.circuits.get(serviceId);
-        if (!circuit) return;
+        if (!circuit) {
+return;
+}
 
         const oldState = circuit.state;
         circuit.state = CircuitBreakerState.CLOSED;

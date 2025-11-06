@@ -113,7 +113,9 @@ export class JobProcessor extends EventEmitter {
      */
     public unregisterQueue(queueName: string): boolean {
         const queue = this.queues.get(queueName);
-        if (!queue) return false;
+        if (!queue) {
+return false;
+}
 
         this.queues.delete(queueName);
 

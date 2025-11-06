@@ -82,9 +82,9 @@ export class CloudinaryServiceProvider extends ServiceProvider {
             const serviceConfig: CloudinaryConfig = {
                 name: 'cloudinary',
                 enabled: true,
-                cloudName: cloudName!,
-                apiKey: apiKey!,
-                apiSecret: apiSecret!,
+                cloudName: cloudName,
+                apiKey: apiKey,
+                apiSecret: apiSecret,
                 secure: config?.secure ?? true,
                 ...(config?.uploadPreset && { uploadPreset: config.uploadPreset }),
             };
@@ -100,7 +100,7 @@ export class CloudinaryServiceProvider extends ServiceProvider {
             this.container.instance('cloudinaryService', this.cloudinaryService);
 
             this.logger.info('CloudinaryServiceProvider registered with credentials', {
-                cloudName: cloudName!,
+                cloudName: cloudName,
                 secure: serviceConfig.secure
             });
         } else {

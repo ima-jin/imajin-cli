@@ -477,15 +477,25 @@ export class BusinessModelFactory extends ModelFactory {
         switch (fieldDef.type) {
             case 'string':
                 zodType = z.string();
-                if (fieldDef.validation?.min) zodType = (zodType as z.ZodString).min(fieldDef.validation.min);
-                if (fieldDef.validation?.max) zodType = (zodType as z.ZodString).max(fieldDef.validation.max);
-                if (fieldDef.validation?.pattern) zodType = (zodType as z.ZodString).regex(new RegExp(fieldDef.validation.pattern));
+                if (fieldDef.validation?.min) {
+zodType = (zodType as z.ZodString).min(fieldDef.validation.min);
+}
+                if (fieldDef.validation?.max) {
+zodType = (zodType as z.ZodString).max(fieldDef.validation.max);
+}
+                if (fieldDef.validation?.pattern) {
+zodType = (zodType as z.ZodString).regex(new RegExp(fieldDef.validation.pattern));
+}
                 break;
                 
             case 'number':
                 zodType = z.number();
-                if (fieldDef.validation?.min) zodType = (zodType as z.ZodNumber).min(fieldDef.validation.min);
-                if (fieldDef.validation?.max) zodType = (zodType as z.ZodNumber).max(fieldDef.validation.max);
+                if (fieldDef.validation?.min) {
+zodType = (zodType as z.ZodNumber).min(fieldDef.validation.min);
+}
+                if (fieldDef.validation?.max) {
+zodType = (zodType as z.ZodNumber).max(fieldDef.validation.max);
+}
                 break;
                 
             case 'boolean':
@@ -545,7 +555,7 @@ export class BusinessModelFactory extends ModelFactory {
         return relationships;
     }
 
-    private static generateCompatibilityMap(context: BusinessDomainModel): ModelCompatibility {
+    private static generateCompatibilityMap(_context: BusinessDomainModel): ModelCompatibility {
         return {
             directCompatible: ['universal'], // Can work with universal schemas
             translatableFrom: ['stripe', 'shopify', 'mailchimp'], // Can translate from these services

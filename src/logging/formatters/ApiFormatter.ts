@@ -147,7 +147,9 @@ export class ApiFormatter {
     }
 
     private static sanitizeHeaders(headers?: Record<string, string>): Record<string, string> {
-        if (!headers) return {};
+        if (!headers) {
+return {};
+}
         
         const sanitized = { ...headers };
         const sensitiveHeaders = ['authorization', 'x-api-key', 'cookie', 'set-cookie'];

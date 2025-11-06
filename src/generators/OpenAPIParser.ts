@@ -138,7 +138,9 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
         }
 
         for (const [path, pathItem] of Object.entries(spec.paths)) {
-            if (!pathItem || typeof pathItem !== 'object') continue;
+            if (!pathItem || typeof pathItem !== 'object') {
+continue;
+}
 
             const pathObj = pathItem as OpenAPIPathItem;
 
@@ -204,7 +206,9 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
         }
 
         for (const [name, schema] of Object.entries(spec.components.schemas)) {
-            if (!schema || typeof schema !== 'object') continue;
+            if (!schema || typeof schema !== 'object') {
+continue;
+}
 
             const schemaObj = schema as OpenAPISchema;
             if (schemaObj.type === 'object' || schemaObj.properties) {
@@ -318,7 +322,9 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
         const allParams = [...(pathParams || []), ...(operationParams || [])];
 
         for (const param of allParams) {
-            if (!param || typeof param !== 'object' || param.$ref) continue;
+            if (!param || typeof param !== 'object' || param.$ref) {
+continue;
+}
 
             const enumValues = this.extractEnum(param.schema);
 
@@ -378,7 +384,9 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
         const responseList: ResponseDefinition[] = [];
 
         for (const [statusCode, response] of Object.entries(responses)) {
-            if (!response || typeof response !== 'object' || response.$ref) continue;
+            if (!response || typeof response !== 'object' || response.$ref) {
+continue;
+}
 
             responseList.push({
                 statusCode: parseInt(statusCode, 10) || 200,
@@ -397,7 +405,9 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
         const props: PropertyDefinition[] = [];
 
         for (const [name, schema] of Object.entries(properties)) {
-            if (!schema || typeof schema !== 'object' || schema.$ref) continue;
+            if (!schema || typeof schema !== 'object' || schema.$ref) {
+continue;
+}
 
             props.push({
                 name,
@@ -463,10 +473,14 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
      * Extract response schema
      */
     private extractResponseSchema(content?: Record<string, any>): any {
-        if (!content || typeof content !== 'object') return undefined;
+        if (!content || typeof content !== 'object') {
+return undefined;
+}
 
         const contentTypes = Object.keys(content);
-        if (contentTypes.length === 0) return undefined;
+        if (contentTypes.length === 0) {
+return undefined;
+}
 
         const contentType = contentTypes[0];
         if (!contentType) {

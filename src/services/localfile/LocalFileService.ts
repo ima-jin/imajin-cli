@@ -362,9 +362,8 @@ export class LocalFileService extends BaseService {
     // PRIVATE HELPER METHODS
     // ==========================================================================
 
-    private async extractMetadata(filePath: string, buffer: Buffer): Promise<MediaMetadata> {
+    private async extractMetadata(filePath: string, _buffer: Buffer): Promise<MediaMetadata> {
         const extension = path.extname(filePath).slice(1);
-        const stats = await fs.stat(filePath);
 
         return {
             format: extension,
@@ -372,7 +371,7 @@ export class LocalFileService extends BaseService {
         };
     }
 
-    private async applyTransformation(buffer: Buffer, transformation: Transformation): Promise<Buffer> {
+    private async applyTransformation(buffer: Buffer, _transformation: Transformation): Promise<Buffer> {
         // Basic transformation implementation - in practice you'd use libraries like Sharp
         // For now, just return the original buffer
         return buffer;

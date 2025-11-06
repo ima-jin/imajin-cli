@@ -325,14 +325,30 @@ export class CloudinaryProvider implements MediaProvider {
             tags: result.tags || []
         };
 
-        if (result.width) metadata.width = result.width;
-        if (result.height) metadata.height = result.height;
-        if (result.duration) metadata.duration = result.duration;
-        if (result.bit_rate) metadata.bitrate = result.bit_rate;
-        if (result.frame_rate) metadata.frameRate = result.frame_rate;
-        if (result.aspect_ratio) metadata.aspectRatio = result.aspect_ratio;
-        if (result.audio) metadata.hasAudio = result.audio.codec !== null;
-        if (result.video) metadata.codec = result.video.codec;
+        if (result.width) {
+metadata.width = result.width;
+}
+        if (result.height) {
+metadata.height = result.height;
+}
+        if (result.duration) {
+metadata.duration = result.duration;
+}
+        if (result.bit_rate) {
+metadata.bitrate = result.bit_rate;
+}
+        if (result.frame_rate) {
+metadata.frameRate = result.frame_rate;
+}
+        if (result.aspect_ratio) {
+metadata.aspectRatio = result.aspect_ratio;
+}
+        if (result.audio) {
+metadata.hasAudio = result.audio.codec !== null;
+}
+        if (result.video) {
+metadata.codec = result.video.codec;
+}
 
         // Extract EXIF data if available
         if (result.image_metadata) {

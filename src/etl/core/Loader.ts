@@ -18,15 +18,15 @@ export abstract class Loader<TInput = any> implements ILoader<TInput> {
 
     abstract load(data: TInput[], context: ETLContext, config?: ETLConfig): Promise<ETLResult<any>>;
 
-    async loadItem(item: TInput, context: ETLContext): Promise<any> {
+    async loadItem(_item: TInput, _context: ETLContext): Promise<any> {
         throw new Error('loadItem not implemented');
     }
 
-    async validate(config?: ETLConfig): Promise<boolean> {
+    async validate(_config?: ETLConfig): Promise<boolean> {
         return true;
     }
 
-    async handleConflict(existing: any, incoming: TInput, context: ETLContext): Promise<TInput> {
+    async handleConflict(_existing: any, incoming: TInput, _context: ETLContext): Promise<TInput> {
         return incoming;
     }
 } 

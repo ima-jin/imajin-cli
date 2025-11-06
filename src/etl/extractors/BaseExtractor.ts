@@ -250,7 +250,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
         // Add authentication interceptor
         if (this.config.auth) {
             client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-                return this.addAuthentication(config, this.config.auth!) as InternalAxiosRequestConfig;
+                return this.addAuthentication(config, this.config.auth!);
             });
         }
 

@@ -96,8 +96,12 @@ export class MediaProcessor extends EventEmitter {
             };
 
             // Add optional properties only if they have values
-            if (options.folder) uploadOptions.folder = options.folder;
-            if (options.tags) uploadOptions.tags = options.tags;
+            if (options.folder) {
+uploadOptions.folder = options.folder;
+}
+            if (options.tags) {
+uploadOptions.tags = options.tags;
+}
 
             // Upload file
             const asset = await provider.upload(buffer, uploadOptions);
@@ -326,30 +330,42 @@ export class MediaProcessor extends EventEmitter {
      * Check if file has valid magic bytes for media files
      */
     private hasValidMagicBytes(buffer: Buffer): boolean {
-        if (buffer.length < 4) return false;
+        if (buffer.length < 4) {
+return false;
+}
 
         const magic = buffer.subarray(0, 4);
 
         // JPEG
-        if (magic[0] === 0xFF && magic[1] === 0xD8) return true;
+        if (magic[0] === 0xFF && magic[1] === 0xD8) {
+return true;
+}
 
         // PNG
-        if (magic[0] === 0x89 && magic[1] === 0x50 && magic[2] === 0x4E && magic[3] === 0x47) return true;
+        if (magic[0] === 0x89 && magic[1] === 0x50 && magic[2] === 0x4E && magic[3] === 0x47) {
+return true;
+}
 
         // GIF
-        if (magic.toString('ascii', 0, 3) === 'GIF') return true;
+        if (magic.toString('ascii', 0, 3) === 'GIF') {
+return true;
+}
 
         // WebP
         if (buffer.length >= 12) {
             const riff = buffer.toString('ascii', 0, 4);
             const webp = buffer.toString('ascii', 8, 12);
-            if (riff === 'RIFF' && webp === 'WEBP') return true;
+            if (riff === 'RIFF' && webp === 'WEBP') {
+return true;
+}
         }
 
         // MP4/MOV (check for ftyp box)
         if (buffer.length >= 8) {
             const ftyp = buffer.toString('ascii', 4, 8);
-            if (ftyp === 'ftyp') return true;
+            if (ftyp === 'ftyp') {
+return true;
+}
         }
 
         return true; // Allow other formats for now

@@ -168,8 +168,12 @@ export class MetadataExtractor {
      */
     private static extractWebPData(buffer: Buffer): { width: number; height: number } | null {
         // Check for RIFF header
-        if (buffer.toString('ascii', 0, 4) !== 'RIFF') return null;
-        if (buffer.toString('ascii', 8, 12) !== 'WEBP') return null;
+        if (buffer.toString('ascii', 0, 4) !== 'RIFF') {
+return null;
+}
+        if (buffer.toString('ascii', 8, 12) !== 'WEBP') {
+return null;
+}
 
         // Look for VP8 chunk
         const vp8Index = buffer.indexOf('VP8 ');
@@ -201,33 +205,47 @@ export class MetadataExtractor {
      * Get file type from magic bytes
      */
     public static detectFormat(buffer: Buffer): string {
-        if (buffer.length < 4) return 'unknown';
+        if (buffer.length < 4) {
+return 'unknown';
+}
 
         // JPEG
-        if (buffer[0] === 0xFF && buffer[1] === 0xD8) return 'jpeg';
+        if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+return 'jpeg';
+}
 
         // PNG
         if (buffer[0] === 0x89 && buffer[1] === 0x50 &&
-            buffer[2] === 0x4E && buffer[3] === 0x47) return 'png';
+            buffer[2] === 0x4E && buffer[3] === 0x47) {
+return 'png';
+}
 
         // GIF
-        if (buffer.toString('ascii', 0, 3) === 'GIF') return 'gif';
+        if (buffer.toString('ascii', 0, 3) === 'GIF') {
+return 'gif';
+}
 
         // WebP
         if (buffer.length >= 12) {
             const riff = buffer.toString('ascii', 0, 4);
             const webp = buffer.toString('ascii', 8, 12);
-            if (riff === 'RIFF' && webp === 'WEBP') return 'webp';
+            if (riff === 'RIFF' && webp === 'WEBP') {
+return 'webp';
+}
         }
 
         // MP4
         if (buffer.length >= 8) {
             const ftyp = buffer.toString('ascii', 4, 8);
-            if (ftyp === 'ftyp') return 'mp4';
+            if (ftyp === 'ftyp') {
+return 'mp4';
+}
         }
 
         // BMP
-        if (buffer[0] === 0x42 && buffer[1] === 0x4D) return 'bmp';
+        if (buffer[0] === 0x42 && buffer[1] === 0x4D) {
+return 'bmp';
+}
 
         return 'unknown';
     }

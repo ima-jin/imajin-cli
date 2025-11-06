@@ -184,7 +184,9 @@ export class ApiManager extends EventEmitter {
      */
     public getPoolStats(serviceId: string): ConnectionPoolStats | null {
         const connection = this.connections.get(serviceId);
-        if (!connection) return null;
+        if (!connection) {
+return null;
+}
 
         const activeRequests = this.activeRequests.get(serviceId)?.size || 0;
         const queuedRequests = this.requestQueues.get(serviceId)?.length || 0;

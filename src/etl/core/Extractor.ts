@@ -18,7 +18,7 @@ export abstract class Extractor<TOutput = any> implements IExtractor<TOutput> {
 
     abstract extract(context: ETLContext, config?: ETLConfig): Promise<ETLResult<TOutput[]>>;
 
-    async validate(config?: ETLConfig): Promise<boolean> {
+    async validate(_config?: ETLConfig): Promise<boolean> {
         return true;
     }
 

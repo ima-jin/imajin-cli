@@ -272,10 +272,13 @@ export class ServiceLayerProvider extends ServiceProvider {
     }
 
     // Private command handlers
+    // NOTE: All console.log/error in these handlers are CLI output (user-facing interface)
+    // These are command action handlers, not internal service logic
+    /* eslint-disable no-console */
 
     private async handleListServices(options: any): Promise<void> {
         if (!this.serviceRegistry) {
-            // User-facing error: use console
+            // CLI Output: User-facing error message (console is the UI)
             console.error(ServiceLayerProvider.SERVICE_REGISTRY_NOT_AVAILABLE);
             return;
         }
@@ -289,7 +292,7 @@ export class ServiceLayerProvider extends ServiceProvider {
             }
 
             if (options.json) {
-                // User-facing output: use console for JSON
+                // CLI Output: User-facing JSON (console is the UI)
                 console.log(JSON.stringify({
                     success: true,
                     data: services.map(service => ({
@@ -301,7 +304,6 @@ export class ServiceLayerProvider extends ServiceProvider {
                     total: services.length
                 }, null, 2));
             } else {
-                // User-facing output: use console for formatted display
                 console.log(`\n📋 Registered Services (${services.length}):\n`);
                 services.forEach(service => {
                     const status = service.getStatus();
@@ -310,14 +312,12 @@ export class ServiceLayerProvider extends ServiceProvider {
                 });
             }
         } catch (error) {
-            // User-facing error: use console
             console.error('❌ Failed to list services:', error);
         }
     }
 
     private async handleHealthCheck(options: any): Promise<void> {
         if (!this.serviceRegistry) {
-            // User-facing error: use console
             console.error(ServiceLayerProvider.SERVICE_REGISTRY_NOT_AVAILABLE);
             return;
         }
@@ -327,14 +327,12 @@ export class ServiceLayerProvider extends ServiceProvider {
                 // Check specific service
                 const service = this.serviceRegistry.get(options.service);
                 if (!service) {
-                    // User-facing error: use console
                     console.error(`❌ Service '${options.service}' not found`);
                     return;
                 }
 
                 const health = await service.getHealth();
                 if (options.json) {
-                    // User-facing output: use console for JSON
                     console.log(JSON.stringify({ success: true, data: health }, null, 2));
                 } else {
                     this.displayServiceHealth(health);
@@ -343,10 +341,8 @@ export class ServiceLayerProvider extends ServiceProvider {
                 // Check all services
                 const healthReport = await this.serviceRegistry.getHealth();
                 if (options.json) {
-                    // User-facing output: use console for JSON
                     console.log(JSON.stringify({ success: true, data: healthReport }, null, 2));
                 } else {
-                    // User-facing output: use console
                     console.log('\n🏥 Service Health Report:\n');
                     Object.values(healthReport).forEach(health => {
                         this.displayServiceHealth(health);
@@ -354,14 +350,12 @@ export class ServiceLayerProvider extends ServiceProvider {
                 }
             }
         } catch (error) {
-            // User-facing error: use console
             console.error('❌ Failed to check service health:', error);
         }
     }
 
     private handleStatistics(options: any): void {
         if (!this.serviceRegistry || !this.serviceFactory || !this.strategyManager) {
-            // User-facing error: use console
             console.error('❌ Service layer components not available');
             return;
         }
@@ -377,10 +371,8 @@ export class ServiceLayerProvider extends ServiceProvider {
         };
 
         if (options.json) {
-            // User-facing output: use console for JSON
             console.log(JSON.stringify({ success: true, data: stats }, null, 2));
         } else {
-            // User-facing output: use console
             console.log('\n📊 Service Layer Statistics:\n');
             console.log(`Registry: ${registryStats.total} services`);
             console.log(`Factory: ${factoryStats.totalFactories} types`);
@@ -390,7 +382,6 @@ export class ServiceLayerProvider extends ServiceProvider {
 
     private async handleRestartService(serviceName: string): Promise<void> {
         if (!this.serviceRegistry) {
-            // User-facing error: use console
             console.error(ServiceLayerProvider.SERVICE_REGISTRY_NOT_AVAILABLE);
             return;
         }
@@ -398,25 +389,21 @@ export class ServiceLayerProvider extends ServiceProvider {
         try {
             const service = this.serviceRegistry.get(serviceName);
             if (!service) {
-                // User-facing error: use console
                 console.error(`❌ Service '${serviceName}' not found`);
                 return;
             }
 
-            // User-facing output: use console
             console.log(`🔄 Restarting service: ${serviceName}`);
             await service.shutdown();
             await service.initialize();
             console.log(`✅ Service restarted: ${serviceName}`);
         } catch (error) {
-            // User-facing error: use console
             console.error(`❌ Failed to restart service '${serviceName}':`, error);
         }
     }
 
     private handleListServiceTypes(options: any): void {
         if (!this.serviceFactory) {
-            // User-facing error: use console
             console.error('❌ Service factory not available');
             return;
         }
@@ -429,14 +416,12 @@ export class ServiceLayerProvider extends ServiceProvider {
         }
 
         if (options.json) {
-            // User-facing output: use console for JSON
             console.log(JSON.stringify({
                 success: true,
                 data: filteredDefinitions,
                 total: filteredDefinitions.length
             }, null, 2));
         } else {
-            // User-facing output: use console
             console.log(`\n🏭 Available Service Types (${filteredDefinitions.length}):\n`);
             filteredDefinitions.forEach(def => {
                 console.log(`  📦 ${def.name} - ${def.description || 'No description'}`);
@@ -449,7 +434,6 @@ export class ServiceLayerProvider extends ServiceProvider {
 
     private handleListStrategies(options: any): void {
         if (!this.strategyManager) {
-            // User-facing error: use console
             console.error('❌ Strategy manager not available');
             return;
         }
@@ -457,7 +441,6 @@ export class ServiceLayerProvider extends ServiceProvider {
         const strategies = this.strategyManager.getAllStrategies();
 
         if (options.json) {
-            // User-facing output: use console for JSON
             console.log(JSON.stringify({
                 success: true,
                 data: strategies.map(s => ({
@@ -467,7 +450,6 @@ export class ServiceLayerProvider extends ServiceProvider {
                 total: strategies.length
             }, null, 2));
         } else {
-            // User-facing output: use console
             console.log(`\n🎯 Registered Strategies (${strategies.length}):\n`);
             strategies.forEach(strategy => {
                 console.log(`  🔥 ${strategy.getName()} (Priority: ${strategy.getPriority()})`);
@@ -489,7 +471,6 @@ export class ServiceLayerProvider extends ServiceProvider {
 
     private displayServiceHealth(health: any): void {
         const statusIcon = this.getStatusIcon(health.status);
-        // User-facing output: use console
         console.log(`${statusIcon} ${health.name} (${health.status})`);
         console.log(`   Uptime: ${Math.floor(health.uptime / 1000)}s`);
         console.log(`   Operations: ${health.metrics.operationsCount}`);
@@ -502,4 +483,5 @@ export class ServiceLayerProvider extends ServiceProvider {
         }
         console.log('');
     }
+    /* eslint-enable no-console */
 } 

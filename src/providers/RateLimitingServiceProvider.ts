@@ -230,7 +230,11 @@ export class RateLimitingServiceProvider extends ServiceProvider {
             }
         };
 
-        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+        process.on('SIGTERM', () => {
+ void gracefulShutdown('SIGTERM'); 
+});
+        process.on('SIGINT', () => {
+ void gracefulShutdown('SIGINT'); 
+});
     }
 } 

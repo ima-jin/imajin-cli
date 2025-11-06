@@ -19,7 +19,7 @@
 
 import axios, { AxiosRequestConfig } from 'axios';
 import { z } from 'zod';
-import { ALL_MODEL_TYPES, DEBUG_LABELS } from '../../constants/ETLConstants.js';
+import { ALL_MODEL_TYPES } from '../../constants/ETLConstants.js';
 import {
     CompatibilityMatrix,
     ETLContext,
@@ -410,7 +410,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
     /**
      * Validate graph model against schema
      */
-    private async validateGraphModel(data: any, modelType: string): Promise<GraphModel> {
+    private async validateGraphModel(data: any, _modelType: string): Promise<GraphModel> {
         // For now, return the data as-is
         // In a full implementation, we would validate against the Zod schemas
         return data as GraphModel;

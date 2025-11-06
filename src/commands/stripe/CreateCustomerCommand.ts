@@ -23,7 +23,6 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { Logger } from '../../logging/Logger.js';
 import { StripeService } from '../../services/stripe/StripeService.js';
-import { CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js';
 import type { LLMResponse } from '../../types/LLM.js';
 import { CommonOptions } from '../../utils/commonOptions.js';
 

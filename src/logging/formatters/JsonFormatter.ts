@@ -16,7 +16,6 @@
  */
 
 import winston from 'winston';
-import { LogContext } from '../Logger.js';
 
 export class JsonFormatter {
     public static format(): winston.Logform.Format {

@@ -35,9 +35,9 @@ describe('ETLServiceProvider', () => {
         it('should register core ETL services', () => {
             provider.register();
 
-            const bridgeRegistry = container.resolve('etl.bridgeRegistry') as DefaultBridgeRegistry;
-            const pipeline = container.resolve('etl.pipeline') as ETLPipeline;
-            
+            const bridgeRegistry = container.resolve<DefaultBridgeRegistry>('etl.bridgeRegistry');
+            const pipeline = container.resolve<ETLPipeline>('etl.pipeline');
+
             expect(bridgeRegistry).toBeDefined();
             expect(pipeline).toBeDefined();
             expect(bridgeRegistry.constructor.name).toBe('DefaultBridgeRegistry');

@@ -339,7 +339,9 @@ export class ErrorRecovery extends EventEmitter {
      */
     public getSuccessRate(errorCode: string): number {
         const history = this.getRecoveryHistory(errorCode);
-        if (history.length === 0) return 0;
+        if (history.length === 0) {
+return 0;
+}
 
         const successCount = history.filter(r => r.success).length;
         return successCount / history.length;

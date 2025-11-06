@@ -142,8 +142,12 @@ export class CustomerCommands {
                             const customer = customerResponse.customer;
                             console.log(chalk.cyan(`\n${index + 1}. ${customer.id}`));
                             console.log(`   Email: ${customer.email}`);
-                            if (customer.name) console.log(`   Name: ${customer.name}`);
-                            if (customer.phone) console.log(`   Phone: ${customer.phone}`);
+                            if (customer.name) {
+console.log(`   Name: ${customer.name}`);
+}
+                            if (customer.phone) {
+console.log(`   Phone: ${customer.phone}`);
+}
                             console.log(`   Created: ${customer.created.toISOString()}`);
                         });
 
@@ -194,8 +198,12 @@ export class CustomerCommands {
                         console.log(chalk.green('👤 Customer Details'));
                         console.log(chalk.cyan(`ID: ${customer.id}`));
                         console.log(chalk.cyan(`Email: ${customer.email}`));
-                        if (customer.name) console.log(chalk.cyan(`Name: ${customer.name}`));
-                        if (customer.phone) console.log(chalk.cyan(`Phone: ${customer.phone}`));
+                        if (customer.name) {
+console.log(chalk.cyan(`Name: ${customer.name}`));
+}
+                        if (customer.phone) {
+console.log(chalk.cyan(`Phone: ${customer.phone}`));
+}
                         console.log(chalk.cyan(`Created: ${customer.created.toISOString()}`));
 
                         if (customer.metadata && Object.keys(customer.metadata).length > 0) {

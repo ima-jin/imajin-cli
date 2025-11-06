@@ -572,7 +572,7 @@ export function createContentfulCommands(): Command {
                 // Get services
                 const recipeManager = new RecipeManager();
                 const container = globalThis.imajinApp?.container || new Container();
-                const contentfulService = container.resolve('contentfulService');
+                const _contentfulService = container.resolve('contentfulService');
 
                 // Load recipe
                 const recipe = await recipeManager.getRecipe(options.context);
@@ -634,10 +634,10 @@ export function createContentfulCommands(): Command {
         .description('Show current content type schema')
         .argument('<contentType>', 'Content type to inspect')
         .addOption(CommonOptions.json())
-        .action(async (contentType, options) => {
+        .action(async (contentType, _options) => {
             try {
                 const container = globalThis.imajinApp?.container || new Container();
-                const contentfulService = container.resolve('contentfulService');
+                const _contentfulService = container.resolve('contentfulService');
 
                 logger?.debug('Showing schema', { contentType });
 

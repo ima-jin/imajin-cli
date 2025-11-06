@@ -15,7 +15,6 @@
  * - Performance monitoring
  */
 
-import winston from 'winston';
 import Transport from 'winston-transport';
 import { LoggerConfig } from '../LoggerConfig.js';
 

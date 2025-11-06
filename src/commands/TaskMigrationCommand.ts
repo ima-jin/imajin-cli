@@ -408,7 +408,9 @@ export class TaskMigrationCommand {
   }
 
   private mapStatus(status?: string): TaskEntity['status'] {
-    if (!status) return 'planned';
+    if (!status) {
+return 'planned';
+}
     
     const statusMap: Record<string, TaskEntity['status']> = {
       'ready for implementation': 'planned',
@@ -428,7 +430,9 @@ export class TaskMigrationCommand {
   }
 
   private mapPriority(priority?: string): TaskEntity['priority'] {
-    if (!priority) return 'medium';
+    if (!priority) {
+return 'medium';
+}
     
     const priorityMap: Record<string, TaskEntity['priority']> = {
       'low': 'low',
@@ -450,11 +454,15 @@ export class TaskMigrationCommand {
 
     for (const header of sectionHeaders) {
       const headerIndex = body.toLowerCase().indexOf(header.toLowerCase());
-      if (headerIndex === -1) continue;
+      if (headerIndex === -1) {
+continue;
+}
 
       // Find the start of content after the header
       const contentStart = body.indexOf('\n', headerIndex);
-      if (contentStart === -1) continue;
+      if (contentStart === -1) {
+continue;
+}
 
       // Find the next header (## or #) or end of string
       let contentEnd = body.length;
@@ -480,7 +488,9 @@ export class TaskMigrationCommand {
     // First, try to find effort keywords
     for (const term of searchTerms) {
       const index = body.toLowerCase().indexOf(term);
-      if (index === -1) continue;
+      if (index === -1) {
+continue;
+}
 
       // Extract text after the keyword (up to next newline or 100 chars)
       const startPos = index + term.length;
@@ -499,7 +509,9 @@ export class TaskMigrationCommand {
     // Second, try to find time unit patterns (e.g., "3 hours", "2.5 days")
     for (const unit of timeUnits) {
       const unitIndex = body.toLowerCase().indexOf(unit);
-      if (unitIndex === -1) continue;
+      if (unitIndex === -1) {
+continue;
+}
 
       // Look backwards for a number (max 20 chars back)
       const searchStart = Math.max(0, unitIndex - 20);
@@ -584,8 +596,12 @@ export class TaskMigrationCommand {
     const warnings: string[] = [];
 
     // Basic validation
-    if (!task.id) errors.push('Task ID is required');
-    if (!task.title) errors.push('Task title is required');
+    if (!task.id) {
+errors.push('Task ID is required');
+}
+    if (!task.title) {
+errors.push('Task title is required');
+}
     if (!task.description || task.description.trim().length < 10) {
       errors.push('Task description must be at least 10 characters');
     }
@@ -729,10 +745,18 @@ export class TaskMigrationCommand {
         updated: new Date().toISOString()
       };
       
-      if (options.status) updateData.status = options.status;
-      if (options.priority) updateData.priority = options.priority;
-      if (options.assignee !== undefined) updateData.assignee = options.assignee;
-      if (options.notes) updateData.updateNotes = options.notes;
+      if (options.status) {
+updateData.status = options.status;
+}
+      if (options.priority) {
+updateData.priority = options.priority;
+}
+      if (options.assignee !== undefined) {
+updateData.assignee = options.assignee;
+}
+      if (options.notes) {
+updateData.updateNotes = options.notes;
+}
       
       const updatedContent = await this.updateTaskFrontmatter(content, updateData);
 
@@ -829,7 +853,7 @@ export class TaskMigrationCommand {
     }
   }
 
-  private displayTaskSummary(allTasks: TaskEntity[], filteredTasks: TaskEntity[]): void {
+  private displayTaskSummary(allTasks: TaskEntity[], _filteredTasks: TaskEntity[]): void {
     const statusCounts = allTasks.reduce((acc, task) => {
       acc[task.status] = (acc[task.status] || 0) + 1;
       return acc;
@@ -931,9 +955,15 @@ export class TaskMigrationCommand {
     const { frontmatter, body } = this.parseMarkdown(content);
     
     // Update frontmatter fields
-    if (updates.status) frontmatter.status = updates.status;
-    if (updates.priority) frontmatter.priority = updates.priority;
-    if (updates.assignee !== undefined) frontmatter.assignee = updates.assignee;
+    if (updates.status) {
+frontmatter.status = updates.status;
+}
+    if (updates.priority) {
+frontmatter.priority = updates.priority;
+}
+    if (updates.assignee !== undefined) {
+frontmatter.assignee = updates.assignee;
+}
     frontmatter.updated = updates.updated;
     
     // Add update notes to body if provided

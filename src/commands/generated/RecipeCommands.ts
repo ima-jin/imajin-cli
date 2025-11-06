@@ -18,7 +18,6 @@
 
 import { Command } from 'commander';
 import { RecipeManager } from '../../context/RecipeManager.js';
-import { BusinessContextManager } from '../../context/BusinessContextManager.js';
 import chalk from 'chalk';
 import type { Logger } from '../../logging/Logger.js';
 import { CommonOptions } from '../../utils/commonOptions.js';

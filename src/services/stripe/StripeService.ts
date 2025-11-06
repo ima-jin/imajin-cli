@@ -24,20 +24,16 @@ import type { EventEmitter } from 'events';
 import type { Container } from '../../container/Container.js';
 import { BaseService } from '../BaseService.js';
 import type { ServiceConfig } from '../interfaces/ServiceInterface.js';
-import type { LLMProgressCallback, LLMProgressEvent } from '../../types/LLM.js';
+import type { LLMProgressCallback } from '../../types/LLM.js';
 import { BusinessTypeRegistry } from '../../context/BusinessTypeRegistry.js';
 import { transformToBusinessEntity } from '../../context/BusinessSchemaRegistry.js';
 import type { BusinessDomainModel } from '../../context/BusinessContextProcessor.js';
 import type {
-    StripeConfig,
     StripeCustomerData,
     StripeCustomerResponse,
     StripePaymentData,
     StripePaymentResponse,
-    StripeSubscriptionData,
-    StripeSubscriptionResponse,
     CreatePaymentIntentParams,
-    StripeCommandContext,
     StripeServiceError,
 } from '../../types/Stripe.js';
 
@@ -368,7 +364,7 @@ export class StripeService extends BaseService {
     /**
      * List customers
      */
-    async listCustomers(options: any, progressCallback?: (event: any) => void): Promise<any> {
+    async listCustomers(options: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listCustomers', async () => {
             const customers = await this.stripe.customers.list(options);
 
@@ -392,7 +388,7 @@ export class StripeService extends BaseService {
     /**
      * Confirm payment intent
      */
-    async confirmPaymentIntent(paymentIntentId: string, options: any = {}, progressCallback?: (event: any) => void): Promise<any> {
+    async confirmPaymentIntent(paymentIntentId: string, options: any = {}, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('confirmPaymentIntent', async () => {
             const paymentIntent = await this.stripe.paymentIntents.confirm(paymentIntentId, options);
 
@@ -416,7 +412,7 @@ export class StripeService extends BaseService {
     /**
      * List payment intents
      */
-    async listPaymentIntents(options: any, progressCallback?: (event: any) => void): Promise<any> {
+    async listPaymentIntents(options: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listPaymentIntents', async () => {
             const paymentIntents = await this.stripe.paymentIntents.list(options);
 
@@ -438,7 +434,7 @@ export class StripeService extends BaseService {
     /**
      * Create subscription
      */
-    async createSubscription(params: any, progressCallback?: (event: any) => void): Promise<any> {
+    async createSubscription(params: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('createSubscription', async () => {
             const subscription = await this.stripe.subscriptions.create(params);
 
@@ -462,7 +458,7 @@ export class StripeService extends BaseService {
     /**
      * Cancel subscription
      */
-    async cancelSubscription(subscriptionId: string, options: any = {}, progressCallback?: (event: any) => void): Promise<any> {
+    async cancelSubscription(subscriptionId: string, options: any = {}, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('cancelSubscription', async () => {
             const subscription = await this.stripe.subscriptions.cancel(subscriptionId, options);
 
@@ -484,7 +480,7 @@ export class StripeService extends BaseService {
     /**
      * List subscriptions
      */
-    async listSubscriptions(options: any, progressCallback?: (event: any) => void): Promise<any> {
+    async listSubscriptions(options: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listSubscriptions', async () => {
             const subscriptions = await this.stripe.subscriptions.list(options);
 
@@ -506,7 +502,7 @@ export class StripeService extends BaseService {
     /**
      * List products
      */
-    async listProducts(options: any, progressCallback?: (event: any) => void): Promise<any> {
+    async listProducts(options: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listProducts', async () => {
             const products = await this.stripe.products.list(options);
             
@@ -528,7 +524,7 @@ export class StripeService extends BaseService {
     /**
      * List prices
      */
-    async listPrices(options: any, progressCallback?: (event: any) => void): Promise<any> {
+    async listPrices(options: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listPrices', async () => {
             const prices = await this.stripe.prices.list(options);
             

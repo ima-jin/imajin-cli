@@ -61,8 +61,12 @@ export class CatalogCommands {
                     } : undefined;
 
                     let active: boolean | undefined;
-                    if (options.active) active = true;
-                    if (options.inactive) active = false;
+                    if (options.active) {
+active = true;
+}
+                    if (options.inactive) {
+active = false;
+}
 
                     const listOptions: any = {
                         limit: parseInt(options.limit),
@@ -128,8 +132,12 @@ export class CatalogCommands {
                     } : undefined;
 
                     let active: boolean | undefined;
-                    if (options.active) active = true;
-                    if (options.inactive) active = false;
+                    if (options.active) {
+active = true;
+}
+                    if (options.inactive) {
+active = false;
+}
 
                     const priceOptions: any = {
                         limit: parseInt(options.limit),

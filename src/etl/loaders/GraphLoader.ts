@@ -476,8 +476,12 @@ export class GraphLoader extends BaseLoader<GraphModel> implements IGraphLoader 
         const updated = graph.metadata?.updated || graph.metadata?.lastUpdated;
         const created = graph.metadata?.created || graph.metadata?.createdAt;
 
-        if (updated) return new Date(updated).getTime();
-        if (created) return new Date(created).getTime();
+        if (updated) {
+return new Date(updated).getTime();
+}
+        if (created) {
+return new Date(created).getTime();
+}
 
         return 0;
     }
@@ -493,8 +497,12 @@ export class GraphLoader extends BaseLoader<GraphModel> implements IGraphLoader 
             const aPart = aParts[i] || 0;
             const bPart = bParts[i] || 0;
 
-            if (aPart > bPart) return 1;
-            if (aPart < bPart) return -1;
+            if (aPart > bPart) {
+return 1;
+}
+            if (aPart < bPart) {
+return -1;
+}
         }
 
         return 0;

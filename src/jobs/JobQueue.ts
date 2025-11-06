@@ -209,7 +209,9 @@ export class JobQueue extends EventEmitter {
         }
 
         const queuedJob = this.pendingJobs.shift();
-        if (!queuedJob) return;
+        if (!queuedJob) {
+return;
+}
 
         this.rateLimitTokens--;
 
@@ -356,7 +358,9 @@ export class JobQueue extends EventEmitter {
      * Refill rate limit tokens
      */
     private refillRateLimitTokens(): void {
-        if (!this.config.rateLimitPerSecond) return;
+        if (!this.config.rateLimitPerSecond) {
+return;
+}
 
         const now = Date.now();
         const timePassed = now - this.lastTokenRefill;
@@ -456,7 +460,9 @@ export class JobQueue extends EventEmitter {
      */
     public cancelJob(jobId: string): boolean {
         const queuedJob = this.jobs.get(jobId);
-        if (!queuedJob) return false;
+        if (!queuedJob) {
+return false;
+}
 
         if (queuedJob.status === 'pending' || queuedJob.status === 'retrying') {
             // Remove from pending queue

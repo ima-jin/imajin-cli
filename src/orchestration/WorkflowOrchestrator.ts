@@ -20,6 +20,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { randomBytes } from 'crypto';
 import { Logger } from '../logging/Logger.js';
 
 export interface Workflow {
@@ -531,7 +532,9 @@ export class WorkflowOrchestrator extends EventEmitter {
      * Generate unique execution ID
      */
     private generateExecutionId(): string {
-        return `exec_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        return `exec_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
     }
 
     /**

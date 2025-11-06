@@ -33,7 +33,9 @@ export class TemplateEngine {
     private registerHelpers(): void {
         // Register utility helpers
         this.handlebars.registerHelper('pascalCase', (str: string) => {
-            if (!str) return '';
+            if (!str) {
+return '';
+}
             // Handle camelCase, kebab-case, snake_case, and space-separated words
             return str
                 .replace(/([a-z])([A-Z])/g, '$1 $2') // Split camelCase
@@ -44,7 +46,9 @@ export class TemplateEngine {
         });
 
         this.handlebars.registerHelper('camelCase', (str: string) => {
-            if (!str) return '';
+            if (!str) {
+return '';
+}
             const pascalCase = str
                 .split(/[-_\s]+/)
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -53,7 +57,9 @@ export class TemplateEngine {
         });
 
         this.handlebars.registerHelper('kebabCase', (str: string) => {
-            if (!str) return '';
+            if (!str) {
+return '';
+}
             return str
                 .replace(/([a-z])([A-Z])/g, '$1-$2')
                 .toLowerCase()
@@ -61,7 +67,9 @@ export class TemplateEngine {
         });
 
         this.handlebars.registerHelper('snakeCase', (str: string) => {
-            if (!str) return '';
+            if (!str) {
+return '';
+}
             return str
                 .replace(/([a-z])([A-Z])/g, '$1_$2')
                 .toLowerCase()
@@ -120,7 +128,9 @@ export class TemplateEngine {
 
         // Array helpers
         this.handlebars.registerHelper('join', (array: any[], separator: string = ', ') => {
-            if (!Array.isArray(array)) return '';
+            if (!Array.isArray(array)) {
+return '';
+}
             return array.join(separator);
         });
 
@@ -154,7 +164,9 @@ export class TemplateEngine {
                 ...context,
                 utils: {
                     pascalCase: (str: string) => {
-                        if (!str) return '';
+                        if (!str) {
+return '';
+}
                         // Handle camelCase, kebab-case, snake_case, and space-separated words
                         return str
                             .replace(/([a-z])([A-Z])/g, '$1 $2') // Split camelCase
@@ -164,7 +176,9 @@ export class TemplateEngine {
                             .join('');
                     },
                     camelCase: (str: string) => {
-                        if (!str) return '';
+                        if (!str) {
+return '';
+}
                         const pascalCase = str
                             .split(/[-_\s]+/)
                             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -172,14 +186,18 @@ export class TemplateEngine {
                         return pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1);
                     },
                     kebabCase: (str: string) => {
-                        if (!str) return '';
+                        if (!str) {
+return '';
+}
                         return str
                             .replace(/([a-z])([A-Z])/g, '$1-$2')
                             .toLowerCase()
                             .replace(/[_\s]+/g, '-');
                     },
                     snakeCase: (str: string) => {
-                        if (!str) return '';
+                        if (!str) {
+return '';
+}
                         return str
                             .replace(/([a-z])([A-Z])/g, '$1_$2')
                             .toLowerCase()

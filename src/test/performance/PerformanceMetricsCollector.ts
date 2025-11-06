@@ -16,10 +16,11 @@
  * - Custom metric collection
  */
 
-import { 
-    SystemMetrics, 
-    ResourceUsage, 
-    PerformanceMonitoringConfig 
+import * as os from 'os';
+import {
+    SystemMetrics,
+    ResourceUsage,
+    PerformanceMonitoringConfig
 } from './types.js';
 
 /**
@@ -122,7 +123,9 @@ export class PerformanceMetricsCollector {
      * Record a custom metric value
      */
     recordCustomMetric(name: string, value: number): void {
-        if (!this.config.collectCustomMetrics) return;
+        if (!this.config.collectCustomMetrics) {
+return;
+}
         
         if (!this.customMetrics[name]) {
             this.customMetrics[name] = [];
@@ -203,7 +206,9 @@ export class PerformanceMetricsCollector {
      * Collect a single resource usage sample
      */
     private collectSample(): void {
-        if (!this.isCollecting) return;
+        if (!this.isCollecting) {
+return;
+}
         
         try {
             const sample = this.getCurrentResourceUsage();
@@ -268,7 +273,6 @@ export class PerformanceMetricsCollector {
     private getSystemLoad(): number[] {
         try {
             // Node.js os.loadavg() returns load averages for 1, 5, and 15 minutes
-            const os = require('os');
             return os.loadavg ? os.loadavg() : [0, 0, 0];
         } catch (error) {
             return [0, 0, 0];

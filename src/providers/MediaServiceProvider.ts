@@ -19,7 +19,7 @@
  * - Configuration management
  */
 
-import type { MediaProcessingConfig } from '../types/Media.js';
+import type { MediaProcessingConfig, MediaProvider } from '../types/Media.js';
 
 import { MediaUploadCommand } from '../commands/media/MediaUploadCommand.js';
 import type { Logger } from '../logging/Logger.js';
@@ -97,12 +97,12 @@ export class MediaServiceProvider extends ServiceProvider {
      */
     private registerProviders(processor: MediaProcessor): void {
         // Register local provider
-        const localProvider = this.container.resolve('LocalMediaProvider') as any;
+        const localProvider = this.container.resolve<MediaProvider>('LocalMediaProvider');
         processor.registerProvider('local', localProvider);
 
         // Register Cloudinary provider if configured
         try {
-            const cloudinaryProvider = this.container.resolve('CloudinaryProvider') as any;
+            const cloudinaryProvider = this.container.resolve<MediaProvider>('CloudinaryProvider');
             processor.registerProvider('cloudinary', cloudinaryProvider);
         } catch (error) {
             // Cloudinary not configured, skip
@@ -117,7 +117,7 @@ export class MediaServiceProvider extends ServiceProvider {
      * Register CLI commands
      */
     public registerCommands(): void {
-        const uploadCommand = this.container.resolve('MediaUploadCommand') as any;
+        const uploadCommand = this.container.resolve<MediaUploadCommand>('MediaUploadCommand');
         uploadCommand.register(this.program);
     }
 

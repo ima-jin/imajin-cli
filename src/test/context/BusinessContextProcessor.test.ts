@@ -150,9 +150,9 @@ describe('BusinessContextProcessor', () => {
                 entities: {
                     customer: {
                         fields: [
-                            { name: 'name', type: 'string' as 'string', required: true, optional: false },
-                            { name: 'email', type: 'string' as 'string', required: true, optional: false },
-                            { name: 'phone', type: 'string' as 'string', required: false, optional: true }
+                            { name: 'name', type: 'string' as const, required: true, optional: false },
+                            { name: 'email', type: 'string' as const, required: true, optional: false },
+                            { name: 'phone', type: 'string' as const, required: false, optional: true }
                         ]
                     }
                 },
@@ -179,15 +179,15 @@ describe('BusinessContextProcessor', () => {
                 entities: {
                     customer: {
                         fields: [
-                            { name: 'name', type: 'string' as 'string', required: true, optional: false },
-                            { name: 'email', type: 'string' as 'string', required: true, optional: false }
+                            { name: 'name', type: 'string' as const, required: true, optional: false },
+                            { name: 'email', type: 'string' as const, required: true, optional: false }
                         ]
                     },
                     order: {
                         fields: [
-                            { name: 'id', type: 'string' as 'string', required: true, optional: false },
-                            { name: 'total', type: 'number' as 'number', required: true, optional: false },
-                            { name: 'status', type: 'enum' as 'enum', values: ['pending', 'shipped', 'delivered'], required: true, optional: false }
+                            { name: 'id', type: 'string' as const, required: true, optional: false },
+                            { name: 'total', type: 'number' as const, required: true, optional: false },
+                            { name: 'status', type: 'enum' as const, values: ['pending', 'shipped', 'delivered'], required: true, optional: false }
                         ]
                     }
                 },

@@ -18,6 +18,7 @@
  */
 
 import type { EventEmitter } from 'events';
+import { randomBytes } from 'crypto';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';
 // Universal types removed - now using dynamic business context types
@@ -468,7 +469,9 @@ export abstract class BaseRepository<T extends Record<string, any>, TKey = strin
 
     async beginTransaction(options?: { isolationLevel?: TransactionContext['isolationLevel']; timeout?: number }): Promise<TransactionContext> {
         const context: TransactionContext = {
-            id: `tx_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`,
+            id: `tx_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`,
             isolationLevel: options?.isolationLevel ?? 'READ_COMMITTED',
             timeout: options?.timeout ?? 30000
         };
@@ -614,7 +617,9 @@ export abstract class BaseRepository<T extends Record<string, any>, TKey = strin
 
     protected getFromCache<TCached>(key: string): TCached | undefined {
         const entry = this.cache.get(key);
-        if (!entry) return undefined;
+        if (!entry) {
+return undefined;
+}
 
         // Check if entry is expired
         if (Date.now() - entry.timestamp.getTime() > entry.ttl) {
@@ -626,7 +631,9 @@ export abstract class BaseRepository<T extends Record<string, any>, TKey = strin
     }
 
     protected setCache<TCached>(key: string, data: TCached, ttl?: number): void {
-        if (!this.options.caching?.enabled) return;
+        if (!this.options.caching?.enabled) {
+return;
+}
 
         const actualTtl = ttl ?? this.options.caching.ttl ?? 300000;
 

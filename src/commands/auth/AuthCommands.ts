@@ -442,7 +442,9 @@ export class AuthCommands {
             ]);
 
             credentials.accessToken = accessToken;
-            if (refreshToken) credentials.refreshToken = refreshToken;
+            if (refreshToken) {
+credentials.refreshToken = refreshToken;
+}
             if (expiresAt) {
                 try {
                     credentials.expiresAt = new Date(expiresAt);
@@ -498,9 +500,15 @@ export class AuthCommands {
      * Get credential type for display
      */
     private getCredentialType(credentials: CredentialData): string {
-        if (credentials.apiKey) return 'API Key';
-        if (credentials.accessToken && credentials.refreshToken) return 'OAuth2';
-        if (credentials.accessToken) return 'Bearer Token';
+        if (credentials.apiKey) {
+return 'API Key';
+}
+        if (credentials.accessToken && credentials.refreshToken) {
+return 'OAuth2';
+}
+        if (credentials.accessToken) {
+return 'Bearer Token';
+}
         return 'Unknown';
     }
 } 

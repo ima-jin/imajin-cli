@@ -20,6 +20,7 @@
  */
 
 import { z } from 'zod';
+import { randomBytes } from 'crypto';
 import type { BusinessDomainModel } from '../context/BusinessContextProcessor.js';
 import type { BusinessConfiguration } from '../context/BusinessContextManager.js';
 
@@ -143,8 +144,12 @@ export class BusinessTypeRegistry {
         switch (fieldDef.type) {
             case 'string':
                 let stringType = z.string();
-                if (fieldDef.validation?.min) stringType = stringType.min(fieldDef.validation.min);
-                if (fieldDef.validation?.max) stringType = stringType.max(fieldDef.validation.max);
+                if (fieldDef.validation?.min) {
+stringType = stringType.min(fieldDef.validation.min);
+}
+                if (fieldDef.validation?.max) {
+stringType = stringType.max(fieldDef.validation.max);
+}
                 if (fieldDef.validation?.pattern) {
                     stringType = stringType.regex(new RegExp(fieldDef.validation.pattern));
                 }
@@ -153,8 +158,12 @@ export class BusinessTypeRegistry {
                 
             case 'number':
                 let numberType = z.number();
-                if (fieldDef.validation?.min !== undefined) numberType = numberType.min(fieldDef.validation.min);
-                if (fieldDef.validation?.max !== undefined) numberType = numberType.max(fieldDef.validation.max);
+                if (fieldDef.validation?.min !== undefined) {
+numberType = numberType.min(fieldDef.validation.min);
+}
+                if (fieldDef.validation?.max !== undefined) {
+numberType = numberType.max(fieldDef.validation.max);
+}
                 zodType = numberType;
                 break;
                 
@@ -349,7 +358,9 @@ export class TypeRegistry {
      */
     static getResolutionStrategy(typeName: string): 'namespace' | 'version' | 'merge' {
         const services = this.getServices(typeName);
-        if (services.length <= 1) return 'namespace';
+        if (services.length <= 1) {
+return 'namespace';
+}
         
         // Default strategy for multiple services
         return 'namespace';
@@ -464,7 +475,9 @@ export class UniversalEntityFactory {
      * Generate unique ID
      */
     private static generateId(): string {
-        return `${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        return `${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
     }
 }
 
@@ -502,7 +515,7 @@ export class SchemaVersionManager {
         const migrations: any[] = []; // Placeholder for business context migrations
 
         // Apply migrations sequentially
-        let result = data;
+        const result = data;
         for (const migration of migrations) {
             // Migration application would go here
             console.log(`Applying migration: ${migration.description}`);
@@ -531,7 +544,9 @@ export function createTypeName<T extends ServiceNamespace>(
  */
 export function extractNamespace(typeName: string): ServiceNamespace | null {
     const parts = typeName.split(':');
-    if (parts.length !== 2) return null;
+    if (parts.length !== 2) {
+return null;
+}
     
     const namespace = parts[0] as ServiceNamespace;
     return namespace in ServiceNamespaces ? namespace : null;

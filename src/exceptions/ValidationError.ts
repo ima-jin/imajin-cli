@@ -66,7 +66,9 @@ export class ValidationError extends BaseException {
 
         if (details.length === 1) {
             const detail = details[0];
-            if (!detail) return 'Input validation failed';
+            if (!detail) {
+return 'Input validation failed';
+}
 
             let message = `Invalid value for '${detail.field}'`;
 

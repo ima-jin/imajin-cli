@@ -187,7 +187,9 @@ export class GraphTranslationEngine extends EventEmitter {
      * Get efficiency score for translation between models
      */
     getEfficiency(sourceModel: string, targetModel: string): number {
-        if (sourceModel === targetModel) return 1.0;
+        if (sourceModel === targetModel) {
+return 1.0;
+}
 
         const translatorKey = `${sourceModel}->${targetModel}`;
         const translator = this.translators.get(translatorKey);
@@ -241,7 +243,7 @@ export class GraphTranslationEngine extends EventEmitter {
             sourceModel,
             targetModel,
             version: '1.0.0',
-            async translate(sourceGraph: GraphModel, context: ETLContext): Promise<GraphTranslationResult> {
+            async translate(sourceGraph: GraphModel, _context: ETLContext): Promise<GraphTranslationResult> {
                 const translatedGraph = await engine.performTranslation(sourceGraph, targetModel);
                 const confidence = engine.calculateConfidence(sourceModel, targetModel);
                 const efficiency = engine.calculateEfficiency(sourceModel, targetModel);
@@ -356,7 +358,9 @@ export class GraphTranslationEngine extends EventEmitter {
         const modelTypes = ModelFactory.getModelNames();
         for (const modelType of modelTypes) {
             const modelDef = ModelFactory.getModelDefinition(modelType);
-            if (!modelDef) continue;
+            if (!modelDef) {
+continue;
+}
 
             // Check if graph has required fields for this model
             const requiredFields = Object.keys(modelDef.schema.entities);

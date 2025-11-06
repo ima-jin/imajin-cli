@@ -331,7 +331,9 @@ export class ModelRegistry {
 
         // If no version specified, get the latest version
         const versions = this.versionMap.get(name);
-        if (!versions || versions.size === 0) return undefined;
+        if (!versions || versions.size === 0) {
+return undefined;
+}
 
         const latestVersion = Array.from(versions).sort().pop();
         return this.models.get(`${name}@${latestVersion}`);

@@ -16,18 +16,17 @@
  */
 
 import { z } from 'zod';
+import { randomBytes } from 'crypto';
 import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
 import type { BusinessDomainModel } from './BusinessContextProcessor.js';
 import type { Logger } from '../logging/Logger.js';
 
-const logger = new (require('../logging/Logger.js').Logger)({ level: 'info' });
-
 /**
  * Initialize business schema registry
  */
-export async function initializeBusinessSchemas(businessContext: BusinessDomainModel): Promise<void> {
-    BusinessTypeRegistry.initialize(businessContext);
-    logger.info('Business schemas initialized', {
+export async function initializeBusinessSchemas(businessContext: BusinessDomainModel, logger?: Logger): Promise<void> {
+    BusinessTypeRegistry.initialize(businessContext, logger);
+    logger?.info('Business schemas initialized', {
         businessType: businessContext.businessType,
         entitiesCount: Object.keys(businessContext.entities).length
     });
@@ -126,7 +125,9 @@ export function createBusinessEntity(entityName: string, data: Partial<any>): an
  */
 function generateBusinessEntityId(entityName: string): string {
     const timestamp = Date.now().toString(36);
-    const random = (()=>{const{randomBytes}=require("crypto");const b=randomBytes(5);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,6);})();
+    const random = (()=>{
+const b = randomBytes(5); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,6);
+})();
     return `${entityName}_${timestamp}_${random}`;
 }
 

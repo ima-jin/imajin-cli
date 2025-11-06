@@ -32,7 +32,7 @@ export class MediaCommand {
     constructor(container: Container) {
         this.container = container;
         try {
-            this.logger = container.resolve('logger') as Logger;
+            this.logger = container.resolve('logger');
         } catch (error) {
             // Logger not available
         }
@@ -269,9 +269,15 @@ Examples:
      * Get file type description
      */
     private getFileType(extension: string): string {
-        if (this.isImageFile(extension)) return 'Image';
-        if (this.isVideoFile(extension)) return 'Video';
-        if (this.isAudioFile(extension)) return 'Audio';
+        if (this.isImageFile(extension)) {
+return 'Image';
+}
+        if (this.isVideoFile(extension)) {
+return 'Video';
+}
+        if (this.isAudioFile(extension)) {
+return 'Audio';
+}
         return 'Unknown';
     }
 

@@ -630,7 +630,7 @@ export class Application {
       
       console.log(chalk.yellow('📋 Entities:'));
       for (const [entityName, entityDef] of Object.entries(recipe.entities)) {
-        console.log(chalk.gray(`  • ${entityName}: ${(entityDef as any).fields?.length || 0} fields`));
+        console.log(chalk.gray(`  • ${entityName}: ${(entityDef).fields?.length || 0} fields`));
       }
       
       if (recipe.workflows && recipe.workflows.length > 0) {

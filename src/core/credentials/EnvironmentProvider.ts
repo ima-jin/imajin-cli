@@ -177,9 +177,15 @@ export class EnvironmentProvider extends BaseCredentialProvider {
      * Get credential type for logging
      */
     private getCredentialType(credentials: CredentialData): string {
-        if (credentials.apiKey) return 'api-key';
-        if (credentials.accessToken && credentials.refreshToken) return 'oauth2';
-        if (credentials.accessToken) return 'bearer-token';
+        if (credentials.apiKey) {
+return 'api-key';
+}
+        if (credentials.accessToken && credentials.refreshToken) {
+return 'oauth2';
+}
+        if (credentials.accessToken) {
+return 'bearer-token';
+}
         return 'unknown';
     }
 

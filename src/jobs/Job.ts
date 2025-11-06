@@ -18,6 +18,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { randomBytes } from 'crypto';
 import { BaseEvent, EventMetadata } from '../core/events/Event.js';
 
 /**
@@ -183,7 +184,9 @@ export abstract class BaseJob extends EventEmitter implements Job {
      * Generate unique job ID
      */
     private generateId(): string {
-        return `${this.type}_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        return `${this.type}_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
     }
 
     /**

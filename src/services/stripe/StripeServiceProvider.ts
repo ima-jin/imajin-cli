@@ -92,7 +92,7 @@ export class StripeServiceProvider extends ServiceProvider {
             const serviceConfig = {
                 name: 'stripe',
                 enabled: true,
-                apiKey: apiKey!,
+                apiKey: apiKey,
                 apiVersion: config?.apiVersion ?? '2024-06-20',
                 timeout: config?.timeout ?? 60000,
                 maxNetworkRetries: config?.maxNetworkRetries ?? 3,
@@ -116,7 +116,7 @@ export class StripeServiceProvider extends ServiceProvider {
             this.catalogCommands = new CatalogCommands(this.stripeService, this.logger);
 
             this.logger.info('StripeServiceProvider registered with API key', {
-                mode: apiKey!.startsWith('sk_test_') ? 'test' : 'live'
+                mode: apiKey.startsWith('sk_test_') ? 'test' : 'live'
             });
         } else {
             this.logger.info('StripeServiceProvider registered without API key (introspection only)');

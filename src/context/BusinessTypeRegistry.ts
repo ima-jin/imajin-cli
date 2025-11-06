@@ -20,8 +20,6 @@ import { z } from 'zod';
 import type { BusinessDomainModel } from './BusinessContextProcessor.js';
 import type { Logger } from '../logging/Logger.js';
 
-const logger = new (require('../logging/Logger.js').Logger)({ level: 'info' });
-
 /**
  * Dynamic type registry that generates Zod schemas from business context
  * Replaces hardcoded Universal types with user-defined business models
@@ -29,14 +27,16 @@ const logger = new (require('../logging/Logger.js').Logger)({ level: 'info' });
 export class BusinessTypeRegistry {
     private static businessContext: BusinessDomainModel | null = null;
     private static generatedSchemas: Map<string, z.ZodType<any>> = new Map();
+    private static logger: Logger | null = null;
 
     /**
      * Initialize registry with business context
      */
-    static initialize(context: BusinessDomainModel): void {
+    static initialize(context: BusinessDomainModel, logger?: Logger): void {
         this.businessContext = context;
+        this.logger = logger || null;
         this.generateSchemasFromContext(context);
-        logger.info('Business type registry initialized', {
+        this.logger?.info('Business type registry initialized', {
             businessType: context.businessType,
             schemasCount: this.generatedSchemas.size
         });

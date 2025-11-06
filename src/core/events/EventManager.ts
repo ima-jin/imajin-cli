@@ -17,6 +17,7 @@
  */
 
 import type { EventMetadata, IEvent, IEventListener, IEventSubscriber } from './Event.js';
+import { randomBytes } from 'crypto';
 import { SystemEventType } from './Event.js';
 import { ImajinEventEmitter, type EventMiddleware, type ListenerOptions } from './EventEmitter.js';
 import { Logger } from '../../logging/Logger.js';
@@ -365,7 +366,9 @@ export class EventManager {
      * Generate unique registration ID
      */
     private generateRegistrationId(): string {
-        return `reg_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        return `reg_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
     }
 }
 

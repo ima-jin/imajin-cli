@@ -16,6 +16,7 @@
  */
 
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { ETLConfig, ETLContext, ETLProgress, ETLResult, Loader } from '../core/interfaces.js';
 
@@ -342,7 +343,9 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
      * Uses cryptographically secure random generation
      */
     protected async beginTransaction(_context: ETLContext): Promise<string> {
-        const transactionId = `txn_${Date.now()}_${(()=>{const{randomBytes}=require("crypto");const b=randomBytes(6);return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);})()}`;
+        const transactionId = `txn_${Date.now()}_${(()=>{
+const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+})()}`;
         this.activeTransactions.add(transactionId);
         return transactionId;
     }
@@ -394,7 +397,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
         // Add authentication interceptor
         if (this.config.auth) {
             client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-                return this.addAuthentication(config, this.config.auth!) as InternalAxiosRequestConfig;
+                return this.addAuthentication(config, this.config.auth!);
             });
         }
 

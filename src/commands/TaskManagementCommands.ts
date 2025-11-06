@@ -213,7 +213,9 @@ export class TaskManagementCommands {
       console.log(chalk.green(`✅ Task created: ${task.id}`));
       console.log(chalk.gray(`Title: ${task.title}`));
       console.log(chalk.gray(`Priority: ${task.priority}`));
-      if (task.assignee) console.log(chalk.gray(`Assignee: ${task.assignee}`));
+      if (task.assignee) {
+console.log(chalk.gray(`Assignee: ${task.assignee}`));
+}
 
     } catch (error) {
       this.logger.error('Failed to create task', error instanceof Error ? error : undefined, { context: options.context });
@@ -482,10 +484,18 @@ export class TaskManagementCommands {
 
       const updates: Partial<TaskEntity> = {};
 
-      if (options.title) updates.title = options.title;
-      if (options.description) updates.description = options.description;
-      if (options.priority) updates.priority = options.priority as TaskEntity['priority'];
-      if (options.assignee) updates.assignee = options.assignee;
+      if (options.title) {
+updates.title = options.title;
+}
+      if (options.description) {
+updates.description = options.description;
+}
+      if (options.priority) {
+updates.priority = options.priority as TaskEntity['priority'];
+}
+      if (options.assignee) {
+updates.assignee = options.assignee;
+}
 
       // Handle dependencies
       if (options.addDeps) {

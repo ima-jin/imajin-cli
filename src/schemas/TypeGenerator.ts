@@ -17,7 +17,6 @@
  */
 
 import { promises as fs } from 'fs';
-import * as path from 'path';
 import type { 
     SchemaDefinition, 
     EntityDefinition, 
@@ -124,7 +123,7 @@ export class TypeGenerator {
     /**
      * Generate single TypeScript interface
      */
-    private generateSingleInterface(entityName: string, entityDef: EntityDefinition, schema: SchemaDefinition): string {
+    private generateSingleInterface(entityName: string, entityDef: EntityDefinition, _schema: SchemaDefinition): string {
         const lines: string[] = [];
         
         // Add JSDoc comment
@@ -150,7 +149,7 @@ export class TypeGenerator {
     /**
      * Generate single Zod schema
      */
-    private generateSingleZodSchema(entityName: string, entityDef: EntityDefinition, schema: SchemaDefinition): string {
+    private generateSingleZodSchema(entityName: string, entityDef: EntityDefinition, _schema: SchemaDefinition): string {
         const lines: string[] = [];
         
         // Schema declaration
@@ -298,8 +297,8 @@ export class TypeGenerator {
         lines.push('// =============================================================================');
         
         const exportLines: string[] = [];
-        
-        for (const [schemaName, schema] of schemas.entries()) {
+
+        for (const [_schemaName, schema] of schemas.entries()) {
             for (const entityName of Object.keys(schema.entities)) {
                 exportLines.push(`export type { ${entityName} };`);
                 exportLines.push(`export { ${entityName}Schema };`);

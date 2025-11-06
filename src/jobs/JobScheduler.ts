@@ -268,7 +268,9 @@ export class JobScheduler extends EventEmitter {
      */
     public enableSchedule(scheduleId: string): boolean {
         const scheduledJob = this.schedules.get(scheduleId);
-        if (!scheduledJob) return false;
+        if (!scheduledJob) {
+return false;
+}
 
         scheduledJob.config.enabled = true;
 
@@ -285,7 +287,9 @@ export class JobScheduler extends EventEmitter {
      */
     public disableSchedule(scheduleId: string): boolean {
         const scheduledJob = this.schedules.get(scheduleId);
-        if (!scheduledJob) return false;
+        if (!scheduledJob) {
+return false;
+}
 
         scheduledJob.config.enabled = false;
 
@@ -301,7 +305,9 @@ export class JobScheduler extends EventEmitter {
      * Start the scheduler
      */
     public start(): void {
-        if (this.isRunning) return;
+        if (this.isRunning) {
+return;
+}
 
         this.isRunning = true;
         this.schedulerTimer = setInterval(() => {
@@ -318,7 +324,9 @@ export class JobScheduler extends EventEmitter {
      * Stop the scheduler
      */
     public stop(): void {
-        if (!this.isRunning) return;
+        if (!this.isRunning) {
+return;
+}
 
         this.isRunning = false;
 
@@ -490,7 +498,9 @@ export class JobScheduler extends EventEmitter {
      */
     public getScheduleStats(scheduleId: string): ScheduleStats | undefined {
         const scheduledJob = this.schedules.get(scheduleId);
-        if (!scheduledJob) return undefined;
+        if (!scheduledJob) {
+return undefined;
+}
 
         const averageExecutionTime = scheduledJob.runCount > 0
             ? scheduledJob.totalExecutionTime / scheduledJob.runCount
@@ -537,7 +547,9 @@ export class JobScheduler extends EventEmitter {
      */
     public updateSchedule(scheduleId: string, updates: Partial<ScheduleConfig>): boolean {
         const scheduledJob = this.schedules.get(scheduleId);
-        if (!scheduledJob) return false;
+        if (!scheduledJob) {
+return false;
+}
 
         // Update configuration
         Object.assign(scheduledJob.config, updates);
@@ -566,7 +578,9 @@ export class JobScheduler extends EventEmitter {
      */
     public async triggerNow(scheduleId: string): Promise<boolean> {
         const scheduledJob = this.schedules.get(scheduleId);
-        if (!scheduledJob || scheduledJob.isRunning) return false;
+        if (!scheduledJob || scheduledJob.isRunning) {
+return false;
+}
 
         await this.triggerSchedule(scheduleId, scheduledJob, new Date());
         return true;

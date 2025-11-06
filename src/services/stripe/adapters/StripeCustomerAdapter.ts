@@ -103,7 +103,9 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, any
     private mapMetadataToBusinessFields(metadata: Record<string, string>, businessCustomer: any): void {
         // Map known Stripe metadata fields to business context
         const customerEntity = this.businessContext.entities.customer;
-        if (!customerEntity) return;
+        if (!customerEntity) {
+return;
+}
         
         for (const field of customerEntity.fields) {
             const metadataValue = metadata[field.name];
@@ -116,7 +118,9 @@ export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, any
     private mapBusinessFieldsToMetadata(businessCustomer: any, metadata: Record<string, string>): void {
         // Map business context fields to Stripe metadata
         const customerEntity = this.businessContext.entities.customer;
-        if (!customerEntity) return;
+        if (!customerEntity) {
+return;
+}
         
         for (const field of customerEntity.fields) {
             if (businessCustomer[field.name] !== undefined) {

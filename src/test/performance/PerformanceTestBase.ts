@@ -97,7 +97,7 @@ export abstract class PerformanceTestBase<T extends BaseService> extends Service
         await this.metricsCollector.startCollection(testName);
 
         const results: TestMetrics[] = [];
-        let memoryUsage: MemoryUsage[] = [];
+        const memoryUsage: MemoryUsage[] = [];
 
         try {
             // Warmup iterations
@@ -270,7 +270,9 @@ export abstract class PerformanceTestBase<T extends BaseService> extends Service
      * Compare results against baseline
      */
     private compareAgainstBaseline(result: PerformanceTestResult): void {
-        if (!result.baseline) return;
+        if (!result.baseline) {
+return;
+}
 
         const baseline = result.baseline;
         const stats = result.statistics;

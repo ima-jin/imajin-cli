@@ -21,10 +21,12 @@
 import type { Command } from 'commander';
 import { GeneratePluginCommand } from '../commands/GeneratePluginCommand.js';
 import type { Container } from '../container/Container.js';
+import type { CommandManager } from '../core/commands/CommandManager.js';
 import { PluginManager } from '../core/PluginManager.js';
 import { DefaultOpenAPIParser } from '../generators/OpenAPIParser.js';
 import { DefaultPluginGenerator } from '../generators/PluginGenerator.js';
 import { TemplateEngine } from '../generators/templates/TemplateEngine.js';
+import type { PluginGenerator } from '../generators/types.js';
 import type { Logger } from '../logging/Logger.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
@@ -53,7 +55,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         // Register plugin manager
         this.container.singleton('pluginManager', () => {
             const logger = this.container.resolve<Logger>('logger');
-            const commandManager = this.container.resolve('commandManager') as any;
+            const commandManager = this.container.resolve<CommandManager>('commandManager');
             return new PluginManager(commandManager, this.container, logger);
         });
     }
@@ -83,8 +85,8 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
                 .option('--dry-run', 'Show what would be generated without creating files')
                 .option('--output <dir>', 'Output directory for generated plugin')
                 .action(async (spec: string, options: any) => {
-                    const generator = this.container.resolve('pluginGenerator') as DefaultPluginGenerator;
-                    const credentialManager = this.container.resolve('credentialManager') as any;
+                    const generator = this.container.resolve<PluginGenerator>('pluginGenerator');
+                    const credentialManager = this.container.resolve<any>('credentialManager');
                     const command = new GeneratePluginCommand(generator, credentialManager, logger);
                     const result = await command.execute([spec], options);
 
@@ -105,16 +107,21 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
                     const plugins = pluginManager.getLoadedPlugins();
 
                     if (options.json) {
-                        // User-facing output: use console for JSON
+                        // CLI Output: User-facing JSON response (console is the UI)
+                        // eslint-disable-next-line no-console
                         console.log(JSON.stringify(plugins, null, 2));
                     } else {
-                        // User-facing output: use console for formatted display
+                        // CLI Output: User-facing formatted display (console is the UI)
+                        // eslint-disable-next-line no-console
                         console.log('Loaded plugins:');
                         if (plugins.length === 0) {
+                            // eslint-disable-next-line no-console
                             console.log('  No plugins loaded');
                         } else {
                             plugins.forEach(plugin => {
+                                // eslint-disable-next-line no-console
                                 console.log(`  - ${plugin.name} v${plugin.version}: ${plugin.description}`);
+                                // eslint-disable-next-line no-console
                                 console.log(`    Commands: ${plugin.commands.length}`);
                             });
                         }
@@ -130,7 +137,8 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
                 .action(async () => {
                     const pluginManager = this.container.resolve<PluginManager>('pluginManager');
                     await pluginManager.loadAllPlugins();
-                    // User-facing output: use console for success message
+                    // CLI Output: User-facing success message (console is the UI)
+                    // eslint-disable-next-line no-console
                     console.log('Plugins loaded successfully');
                 });
         }

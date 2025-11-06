@@ -214,7 +214,9 @@ export class MigrationSystem {
      * Rename a field in the data
      */
     private renameField(data: any, transform: Transform): any {
-        if (!data || typeof data !== 'object') return data;
+        if (!data || typeof data !== 'object') {
+return data;
+}
         
         const pathParts = transform.path.split('.');
         const fieldName = pathParts[pathParts.length - 1];
@@ -231,7 +233,9 @@ export class MigrationSystem {
      * Change field type in the data
      */
     private changeFieldType(data: any, transform: Transform): any {
-        if (!data || typeof data !== 'object') return data;
+        if (!data || typeof data !== 'object') {
+return data;
+}
         
         const pathParts = transform.path.split('.');
         const fieldName = pathParts[pathParts.length - 1];
@@ -261,7 +265,9 @@ export class MigrationSystem {
      * Add default value to missing field
      */
     private addDefaultValue(data: any, transform: Transform): any {
-        if (!data || typeof data !== 'object') return data;
+        if (!data || typeof data !== 'object') {
+return data;
+}
         
         const pathParts = transform.path.split('.');
         const fieldName = pathParts[pathParts.length - 1];
@@ -277,7 +283,9 @@ export class MigrationSystem {
      * Remove field from data
      */
     private removeField(data: any, transform: Transform): any {
-        if (!data || typeof data !== 'object') return data;
+        if (!data || typeof data !== 'object') {
+return data;
+}
         
         const pathParts = transform.path.split('.');
         const fieldName = pathParts[pathParts.length - 1];

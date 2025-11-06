@@ -51,11 +51,11 @@ export class SystemMonitor extends EventEmitter {
         this.emit('monitoring:started');
 
         // Run initial health check
-        this.runHealthCheck();
+        void this.runHealthCheck();
 
         // Set up periodic monitoring
         this.monitorInterval = setInterval(() => {
-            this.runHealthCheck();
+            void this.runHealthCheck();
         }, intervalMs);
     }
 

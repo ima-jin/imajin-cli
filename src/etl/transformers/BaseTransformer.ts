@@ -370,16 +370,24 @@ export abstract class BaseTransformer<TInput = any, TOutput = any> implements Tr
 
             switch (rule.operation) {
                 case 'rename':
-                    if (!rule.target) return false;
+                    if (!rule.target) {
+return false;
+}
                     break;
                 case 'convert':
-                    if (!rule.converter) return false;
+                    if (!rule.converter) {
+return false;
+}
                     break;
                 case 'calculate':
-                    if (!rule.converter || !rule.target) return false;
+                    if (!rule.converter || !rule.target) {
+return false;
+}
                     break;
                 case 'default':
-                    if (rule.value === undefined) return false;
+                    if (rule.value === undefined) {
+return false;
+}
                     break;
             }
         }

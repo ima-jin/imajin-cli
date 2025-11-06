@@ -12,7 +12,6 @@
  */
 
 import { ModelFactory } from '../etl/graphs/models.js';
-import { GraphModel } from '../etl/core/interfaces.js';
 
 export interface PromptDefinition {
     id: string;

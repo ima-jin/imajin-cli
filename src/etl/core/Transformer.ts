@@ -27,11 +27,11 @@ export abstract class Transformer<TInput = any, TOutput = any> implements ITrans
 
     abstract transform(data: TInput[], context: ETLContext, config?: ETLConfig): Promise<ETLResult<TOutput[]>>;
 
-    async transformItem(item: TInput, context: ETLContext): Promise<TOutput> {
+    async transformItem(_item: TInput, _context: ETLContext): Promise<TOutput> {
         throw new Error('transformItem not implemented');
     }
 
-    async validate(config?: ETLConfig): Promise<boolean> {
+    async validate(_config?: ETLConfig): Promise<boolean> {
         return true;
     }
 } 

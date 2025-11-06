@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import * as fs from 'fs';
 import { DefaultBridgeRegistry, BridgeComponent } from '../../etl/bridges.js';
 import type { Logger } from '../../logging/Logger.js';
 import { CommonOptions } from '../../utils/commonOptions.js';
@@ -49,7 +50,6 @@ export class GraphCommand {
                     });
 
                     if (options.output) {
-                        const fs = require('fs');
                         fs.writeFileSync(options.output, JSON.stringify(result.data, null, 2));
                         console.log(`Translation saved to ${options.output}`);
                     } else {
@@ -89,7 +89,6 @@ export class GraphCommand {
                     });
 
                     if (options.output) {
-                        const fs = require('fs');
                         fs.writeFileSync(options.output, JSON.stringify(result.data, null, 2));
                         console.log(`Normalized data saved to ${options.output}`);
                     } else {

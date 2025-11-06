@@ -257,7 +257,7 @@ export class ContentfulService extends BaseService {
     /**
      * Update existing content entry
      */
-    async updateEntry(entryId: string, fields: any, progressCallback?: any): Promise<any> {
+    async updateEntry(entryId: string, fields: any, _progressCallback?: any): Promise<any> {
         return this.execute('updateEntry', async () => {
             const environment = await this.getManagementEnvironment();
             const entry = await environment.getEntry(entryId);
