@@ -108,8 +108,8 @@ export class ContentfulService extends BaseService {
 
         // Test connection
         await this.testConnection();
-        
-        this.logger.info('Universal Contentful service initialized successfully');
+
+        this.logger.info('ContentfulService initialized');
     }
 
     protected async onShutdown(): Promise<void> {
@@ -123,15 +123,15 @@ export class ContentfulService extends BaseService {
         try {
             await this.client.getSpace();
             checks.push({
-                name: 'contentful-connection',
+                name: 'contentful-api',
                 healthy: true,
-                message: 'Connected to Contentful delivery API'
+                message: 'Connected to Contentful API'
             });
         } catch (error) {
             checks.push({
-                name: 'contentful-connection',
+                name: 'contentful-api',
                 healthy: false,
-                message: `Failed to connect to Contentful: ${error instanceof Error ? error.message : 'Unknown error'}`
+                message: `Contentful API error: ${error instanceof Error ? error.message : 'Unknown error'}`
             });
         }
 
@@ -147,18 +147,29 @@ export class ContentfulService extends BaseService {
      */
     async getContent(contentType?: string, limit = 10, filters?: Record<string, any>): Promise<UniversalContent[]> {
         return this.execute('getContent', async () => {
-            const query: any = {
-                limit,
-                order: '-sys.createdAt',
-                ...filters
-            };
+            try {
+                const query: any = {
+                    limit,
+                    ...filters
+                };
 
-            if (contentType) {
-                query.content_type = contentType;
+                if (contentType) {
+                    query.content_type = contentType;
+                }
+
+                const response = await this.client.getEntries(query);
+                return response.items.map((item: any) => this.transformToUniversalContent(item));
+            } catch (error: any) {
+                // Handle rate limiting
+                if (error?.sys?.id === 'RateLimitExceeded' || error?.status === 429) {
+                    throw new Error(`Rate limit exceeded: ${error.message}`);
+                }
+                // Handle network errors
+                if (error?.code === 'NETWORK_ERROR' || error?.name === 'NetworkError') {
+                    throw new Error(`Network timeout: ${error.message}`);
+                }
+                throw error;
             }
-
-            const response = await this.client.getEntries(query);
-            return response.items.map((item: any) => this.transformToUniversalContent(item));
         });
     }
 
@@ -170,9 +181,13 @@ export class ContentfulService extends BaseService {
             try {
                 const entry = await this.client.getEntry(id);
                 return this.transformToUniversalContent(entry);
-            } catch (error) {
+            } catch (error: any) {
+                // Check for not found errors
+                if (error?.sys?.id === 'NotFound') {
+                    throw new Error(`The resource could not be found.`);
+                }
                 this.logger.warn(`Entry not found: ${id}`);
-                return null;
+                throw error;
             }
         });
     }
@@ -233,24 +248,32 @@ export class ContentfulService extends BaseService {
      */
     async createEntry(contentType: string, fields: any, progressCallback?: any): Promise<any> {
         return this.execute('createEntry', async () => {
-            progressCallback?.({
-                type: 'progress',
-                message: `Creating ${contentType} entry`,
-                progress: 25,
-                timestamp: new Date(),
-            });
+            try {
+                progressCallback?.({
+                    type: 'progress',
+                    message: 'Creating Contentful entry',
+                    progress: 25,
+                    timestamp: new Date(),
+                });
 
-            const environment = await this.getManagementEnvironment();
-            const entry = await environment.createEntry(contentType, { fields });
-            
-            progressCallback?.({
-                type: 'progress', 
-                message: `Entry created: ${entry.sys.id}`,
-                progress: 100,
-                timestamp: new Date(),
-            });
+                const environment = await this.getManagementEnvironment();
+                const entry = await environment.createEntry(contentType, { fields });
 
-            return this.mapToBusinessContext('entry', entry);
+                progressCallback?.({
+                    type: 'progress',
+                    message: `Entry created: ${entry.sys.id}`,
+                    progress: 100,
+                    timestamp: new Date(),
+                });
+
+                return this.mapToBusinessContext('entry', entry);
+            } catch (error: any) {
+                // Handle validation errors
+                if (error?.sys?.id === 'ValidationFailed') {
+                    throw new Error(error.message);
+                }
+                throw error;
+            }
         });
     }
 
@@ -295,41 +318,49 @@ export class ContentfulService extends BaseService {
         description?: string;
     }, progressCallback?: any): Promise<any> {
         return this.execute('uploadAsset', async () => {
-            progressCallback?.({
-                type: 'progress',
-                message: 'Uploading asset to Contentful',
-                progress: 25,
-                timestamp: new Date(),
-            });
+            try {
+                progressCallback?.({
+                    type: 'progress',
+                    message: 'Uploading asset to Contentful',
+                    progress: 25,
+                    timestamp: new Date(),
+                });
 
-            const environment = await this.getManagementEnvironment();
-            
-            // Create asset
-            const asset = await environment.createAsset({
-                fields: {
-                    title: { 'en-US': options.title },
-                    description: { 'en-US': options.description || '' },
-                    file: {
-                        'en-US': {
-                            fileName: options.fileName,
-                            contentType: options.contentType,
-                            upload: buffer
+                const environment = await this.getManagementEnvironment();
+
+                // Create asset
+                const asset = await environment.createAsset({
+                    fields: {
+                        title: { 'en-US': options.title },
+                        description: { 'en-US': options.description || '' },
+                        file: {
+                            'en-US': {
+                                fileName: options.fileName,
+                                contentType: options.contentType,
+                                upload: buffer
+                            }
                         }
                     }
+                });
+
+                // Process asset
+                await asset.processForAllLocales();
+
+                progressCallback?.({
+                    type: 'progress',
+                    message: `Asset uploaded: ${asset.sys.id}`,
+                    progress: 100,
+                    timestamp: new Date(),
+                });
+
+                return this.mapToBusinessContext('asset', asset);
+            } catch (error: any) {
+                // Handle validation errors
+                if (error?.sys?.id === 'ValidationFailed') {
+                    throw new Error(error.message);
                 }
-            });
-
-            // Process asset
-            await asset.processForAllLocales();
-            
-            progressCallback?.({
-                type: 'progress',
-                message: `Asset uploaded: ${asset.sys.id}`,
-                progress: 100,
-                timestamp: new Date(),
-            });
-
-            return this.mapToBusinessContext('asset', asset);
+                throw error;
+            }
         });
     }
 
@@ -338,9 +369,17 @@ export class ContentfulService extends BaseService {
      */
     async getAsset(assetId: string): Promise<any> {
         return this.execute('getAsset', async () => {
-            const environment = await this.getManagementEnvironment();
-            const asset = await environment.getAsset(assetId);
-            return this.mapToBusinessContext('asset', asset);
+            try {
+                // Use delivery client for reading assets
+                const asset = await this.client.getAsset(assetId);
+                return asset;
+            } catch (error: any) {
+                // Check for not found errors
+                if (error?.sys?.id === 'NotFound') {
+                    throw new Error(`The resource could not be found.`);
+                }
+                throw error;
+            }
         });
     }
 
@@ -550,7 +589,11 @@ export class ContentfulService extends BaseService {
         try {
             const space = await this.client.getSpace();
             this.logger.debug(`Connected to Contentful space: ${space.name}`);
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error?.sys?.id === 'AccessTokenInvalid') {
+                throw new Error('Invalid Contentful credentials');
+            }
             throw new Error(`Failed to connect to Contentful: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }

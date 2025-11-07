@@ -84,11 +84,8 @@ export class StripeService extends BaseService {
         // Test Stripe API connectivity
         await this.validateApiKey();
         this.emit('service:ready', { service: 'stripe' });
-        
-        this.logger.info('StripeService initialized', {
-            service: 'stripe',
-            apiVersion: this.stripeConfig.apiVersion,
-        });
+
+        this.logger.info('StripeService initialized');
     }
 
     protected async onShutdown(): Promise<void> {
@@ -157,70 +154,84 @@ export class StripeService extends BaseService {
         progressCallback?: LLMProgressCallback
     ): Promise<StripeCustomerResponse> {
         return this.execute('createCustomer', async () => {
-            progressCallback?.({
-                type: 'progress',
-                message: 'Creating Stripe customer',
-                progress: 25,
-                data: { email: params.email },
-                timestamp: new Date(),
-            });
+            try {
+                progressCallback?.({
+                    type: 'progress',
+                    message: 'Creating Stripe customer',
+                    progress: 25,
+                    data: { email: params.email },
+                    timestamp: new Date(),
+                });
 
-            const createParams: any = {
-                email: params.email,
-            };
+                const createParams: any = {
+                    email: params.email,
+                };
 
-            // Only add optional parameters if they are defined
-            if (params.name) {
-                createParams.name = params.name;
+                // Only add optional parameters if they are defined
+                if (params.name) {
+                    createParams.name = params.name;
+                }
+                if (params.phone) {
+                    createParams.phone = params.phone;
+                }
+                if (params.description) {
+                    createParams.description = params.description;
+                }
+                if (params.metadata) {
+                    createParams.metadata = params.metadata;
+                }
+
+                const customer = await this.stripe.customers.create(createParams);
+
+                const customerData: StripeCustomerData = {
+                    id: customer.id,
+                    email: customer.email!,
+                    name: customer.name || '',
+                    phone: customer.phone || '',
+                    created: new Date(customer.created * 1000),
+                    metadata: customer.metadata,
+                };
+
+                // Map to business context instead of Universal type
+                const businessEntity = await this.mapToBusinessContext('customer', customerData);
+
+                const response: StripeCustomerResponse = {
+                    customer: customerData,
+                    businessEntity,
+                    success: true,
+                    message: `Customer created successfully`,
+                };
+
+                this.emit('customer-created', { customer: customerData, businessEntity });
+
+                progressCallback?.({
+                    type: 'complete',
+                    message: 'Customer created and mapped to business context',
+                    progress: 100,
+                    data: response,
+                    timestamp: new Date(),
+                });
+
+                this.logger.info('Customer created successfully', {
+                    customerId: customer.id,
+                    email: customer.email,
+                    businessType: this.businessContext?.businessType,
+                });
+
+                return response;
+            } catch (error: any) {
+                // Handle Stripe-specific errors
+                if (error.type === 'StripeInvalidRequestError') {
+                    throw new Error(error.message);
+                }
+                if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+                    throw new Error(`Network timeout: ${error.message}`);
+                }
+                if (error.statusCode === 429) {
+                    throw new Error(`Rate limit exceeded: ${error.message}`);
+                }
+                throw error;
             }
-            if (params.phone) {
-                createParams.phone = params.phone;
-            }
-            if (params.description) {
-                createParams.description = params.description;
-            }
-            if (params.metadata) {
-                createParams.metadata = params.metadata;
-            }
-
-            const customer = await this.stripe.customers.create(createParams);
-
-            const customerData: StripeCustomerData = {
-                id: customer.id,
-                email: customer.email!,
-                name: customer.name || '',
-                phone: customer.phone || '',
-                created: new Date(customer.created * 1000),
-                metadata: customer.metadata,
-            };
-
-            // Map to business context instead of Universal type
-            const businessEntity = await this.mapToBusinessContext('customer', customerData);
-
-            const response: StripeCustomerResponse = {
-                customer: customerData,
-                businessEntity,
-                success: true,
-                message: `Customer created successfully`,
-            };
-
-            this.emit('customer-created', { customer: customerData, businessEntity });
-
-            progressCallback?.({
-                type: 'complete',
-                message: 'Customer created and mapped to business context',
-                progress: 100,
-                data: response,
-                timestamp: new Date(),
-            });
-
-            this.logger.info('Customer created successfully', {
-                customerId: customer.id,
-                email: customer.email,
-                businessType: this.businessContext?.businessType,
-            });
-
-            return response;
         });
     }
 
@@ -232,48 +243,56 @@ export class StripeService extends BaseService {
         progressCallback?: LLMProgressCallback
     ): Promise<StripeCustomerResponse> {
         return this.execute('getCustomer', async () => {
-            progressCallback?.({
-                type: 'progress',
-                message: 'Retrieving customer from Stripe',
-                progress: 50,
-                data: { customerId },
-                timestamp: new Date(),
-            });
+            try {
+                progressCallback?.({
+                    type: 'progress',
+                    message: 'Retrieving customer from Stripe',
+                    progress: 50,
+                    data: { customerId },
+                    timestamp: new Date(),
+                });
 
-            const customer = await this.stripe.customers.retrieve(customerId);
+                const customer = await this.stripe.customers.retrieve(customerId);
 
-            if (customer.deleted) {
-                throw new Error(`Customer ${customerId} has been deleted`);
+                if (customer.deleted) {
+                    throw new Error(`Customer ${customerId} has been deleted`);
+                }
+
+                const customerData: StripeCustomerData = {
+                    id: customer.id,
+                    email: customer.email!,
+                    name: customer.name || '',
+                    phone: customer.phone || '',
+                    created: new Date(customer.created * 1000),
+                    metadata: customer.metadata,
+                };
+
+                // Map to business context
+                const businessEntity = await this.mapToBusinessContext('customer', customerData);
+
+                const response: StripeCustomerResponse = {
+                    customer: customerData,
+                    businessEntity,
+                    success: true,
+                    message: `Customer retrieved successfully`,
+                };
+
+                progressCallback?.({
+                    type: 'complete',
+                    message: 'Customer retrieved and mapped to business context',
+                    progress: 100,
+                    data: response,
+                    timestamp: new Date(),
+                });
+
+                return response;
+            } catch (error: any) {
+                // Handle Stripe-specific errors
+                if (error.type === 'StripeInvalidRequestError' && error.code === 'resource_missing') {
+                    throw new Error(error.message);
+                }
+                throw error;
             }
-
-            const customerData: StripeCustomerData = {
-                id: customer.id,
-                email: customer.email!,
-                name: customer.name || '',
-                phone: customer.phone || '',
-                created: new Date(customer.created * 1000),
-                metadata: customer.metadata,
-            };
-
-            // Map to business context
-            const businessEntity = await this.mapToBusinessContext('customer', customerData);
-
-            const response: StripeCustomerResponse = {
-                customer: customerData,
-                businessEntity,
-                success: true,
-                message: `Customer retrieved successfully`,
-            };
-
-            progressCallback?.({
-                type: 'complete',
-                message: 'Customer retrieved and mapped to business context',
-                progress: 100,
-                data: response,
-                timestamp: new Date(),
-            });
-
-            return response;
         });
     }
 
@@ -289,71 +308,85 @@ export class StripeService extends BaseService {
         progressCallback?: LLMProgressCallback
     ): Promise<StripePaymentResponse> {
         return this.execute('createPaymentIntent', async () => {
-            progressCallback?.({
-                type: 'progress',
-                message: 'Creating payment intent',
-                progress: 25,
-                data: { amount: params.amount, currency: params.currency },
-                timestamp: new Date(),
-            });
+            try {
+                progressCallback?.({
+                    type: 'progress',
+                    message: 'Creating payment intent',
+                    progress: 25,
+                    data: { amount: params.amount, currency: params.currency },
+                    timestamp: new Date(),
+                });
 
-            const createParams: any = {
-                amount: Math.round(params.amount), // Amount should be in cents
-                currency: params.currency.toLowerCase(),
-                capture_method: params.captureMethod || 'automatic',
-                metadata: params.metadata || {},
-            };
+                const createParams: any = {
+                    amount: Math.round(params.amount), // Amount should be in cents
+                    currency: params.currency.toLowerCase(),
+                    capture_method: params.captureMethod || 'automatic',
+                    metadata: params.metadata || {},
+                };
 
-            // Only add optional parameters if they exist
-            if (params.customerId) {
-                createParams.customer = params.customerId;
+                // Only add optional parameters if they exist
+                if (params.customerId) {
+                    createParams.customer = params.customerId;
+                }
+                if (params.paymentMethodId) {
+                    createParams.payment_method = params.paymentMethodId;
+                }
+                if (params.description) {
+                    createParams.description = params.description;
+                }
+                if (params.automaticPaymentMethods) {
+                    createParams.automatic_payment_methods = { enabled: true };
+                }
+
+                const paymentIntent = await this.stripe.paymentIntents.create(createParams);
+
+                const paymentData: StripePaymentData = {
+                    id: paymentIntent.id,
+                    amount: paymentIntent.amount, // Keep in cents for consistency with Stripe API
+                    currency: paymentIntent.currency.toUpperCase(),
+                    status: paymentIntent.status,
+                    clientSecret: paymentIntent.client_secret,
+                    metadata: paymentIntent.metadata,
+                };
+
+                // Only add customerId if it exists
+                if (paymentIntent.customer) {
+                    (paymentData as any).customerId = paymentIntent.customer as string;
+                }
+
+                const businessEntity = await this.mapToBusinessContext('payment', paymentData);
+
+                const response: StripePaymentResponse = {
+                    paymentIntent: paymentData,
+                    businessEntity,
+                    success: true,
+                    message: 'Payment intent created successfully',
+                };
+
+                this.emit('payment-intent-created', { paymentIntent: paymentData, businessEntity });
+
+                progressCallback?.({
+                    type: 'complete',
+                    message: 'Payment intent created and mapped',
+                    progress: 100,
+                    data: response,
+                    timestamp: new Date(),
+                });
+
+                return response;
+            } catch (error: any) {
+                // Handle Stripe-specific errors
+                if (error.type === 'StripeCardError') {
+                    throw new Error(error.message);
+                }
+                if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+                    throw new Error(`Network timeout: ${error.message}`);
+                }
+                if (error.statusCode === 429) {
+                    throw new Error(`Rate limit exceeded: ${error.message}`);
+                }
+                throw error;
             }
-            if (params.paymentMethodId) {
-                createParams.payment_method = params.paymentMethodId;
-            }
-            if (params.description) {
-                createParams.description = params.description;
-            }
-            if (params.automaticPaymentMethods) {
-                createParams.automatic_payment_methods = { enabled: true };
-            }
-
-            const paymentIntent = await this.stripe.paymentIntents.create(createParams);
-
-            const paymentData: StripePaymentData = {
-                id: paymentIntent.id,
-                amount: paymentIntent.amount, // Keep in cents for consistency with Stripe API
-                currency: paymentIntent.currency.toUpperCase(),
-                status: paymentIntent.status,
-                clientSecret: paymentIntent.client_secret,
-                metadata: paymentIntent.metadata,
-            };
-
-            // Only add customerId if it exists
-            if (paymentIntent.customer) {
-                (paymentData as any).customerId = paymentIntent.customer as string;
-            }
-
-            const businessEntity = await this.mapToBusinessContext('payment', paymentData);
-
-            const response: StripePaymentResponse = {
-                paymentIntent: paymentData,
-                businessEntity,
-                success: true,
-                message: 'Payment intent created successfully',
-            };
-
-            this.emit('payment-intent-created', { paymentIntent: paymentData, businessEntity });
-
-            progressCallback?.({
-                type: 'complete',
-                message: 'Payment intent created and mapped',
-                progress: 100,
-                data: response,
-                timestamp: new Date(),
-            });
-
-            return response;
         });
     }
 

@@ -255,11 +255,10 @@ describe('StripeService', () => {
         });
 
         it('should handle customer creation error', async () => {
-            mockStripeCustomers.create.mockRejectedValue({
-                type: 'StripeInvalidRequestError',
-                message: 'Invalid email address provided',
-                statusCode: 400
-            });
+            const error = new Error('Invalid email address provided');
+            (error as any).type = 'StripeInvalidRequestError';
+            (error as any).statusCode = 400;
+            mockStripeCustomers.create.mockRejectedValue(error);
 
             await expect(stripeService.createCustomer({
                 email: 'invalid-email'
@@ -282,11 +281,10 @@ describe('StripeService', () => {
         });
 
         it('should handle customer not found', async () => {
-            mockStripeCustomers.retrieve.mockRejectedValue({
-                type: 'StripeInvalidRequestError',
-                message: 'No such customer: cus_nonexistent',
-                statusCode: 404
-            });
+            const error = new Error('No such customer: cus_nonexistent');
+            (error as any).type = 'StripeInvalidRequestError';
+            (error as any).statusCode = 404;
+            mockStripeCustomers.retrieve.mockRejectedValue(error);
 
             await expect(stripeService.getCustomer('cus_nonexistent')).rejects.toThrow(expect.stringContaining('No such customer'));
         });
@@ -351,11 +349,10 @@ describe('StripeService', () => {
         });
 
         it('should handle payment intent creation error', async () => {
-            mockStripePaymentIntents.create.mockRejectedValue({
-                type: 'StripeCardError',
-                message: 'Your card was declined',
-                statusCode: 402
-            });
+            const error = new Error('Your card was declined');
+            (error as any).type = 'StripeCardError';
+            (error as any).statusCode = 402;
+            mockStripePaymentIntents.create.mockRejectedValue(error);
 
             await expect(stripeService.createPaymentIntent({
                 amount: 2000,

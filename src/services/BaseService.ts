@@ -121,8 +121,11 @@ export abstract class BaseService {
 
             // Determine overall health based on checks
             const hasFailedChecks = customChecks.some(check => !check.healthy);
+            const allChecksFailed = customChecks.every(check => !check.healthy);
+
             if (hasFailedChecks && this.status === ServiceStatus.ACTIVE) {
-                health.status = ServiceStatus.DEGRADED;
+                // If ALL checks failed, mark as ERROR; otherwise DEGRADED
+                health.status = allChecksFailed ? ServiceStatus.ERROR : ServiceStatus.DEGRADED;
             }
         } catch (error) {
             health.status = ServiceStatus.ERROR;

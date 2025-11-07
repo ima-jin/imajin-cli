@@ -111,7 +111,7 @@ describe('ContentfulService', () => {
             await contentfulService.initialize();
 
             expect(contentfulService.getStatus()).toBe(ServiceStatus.ACTIVE);
-            testBase.assertEventEmitted('service:ready', { service: 'contentful' });
+            testBase.assertEventEmitted('service:initialized', { service: 'contentful' });
             testBase.assertLoggerCalled('info', 'ContentfulService initialized');
         });
 
@@ -407,8 +407,8 @@ describe('ContentfulService', () => {
         });
 
         it('should delete asset', async () => {
-            mockContentfulManagementEnvironment.createAsset.mockResolvedValue({
-                unpublish: jest.fn().mockResolvedValue({}),
+            mockContentfulManagementEnvironment.getAsset.mockResolvedValue({
+                sys: { id: 'asset-to-delete' },
                 delete: jest.fn().mockResolvedValue({})
             });
 
@@ -449,7 +449,7 @@ describe('ContentfulService', () => {
                 })
             ];
 
-            mockContentfulClient.getAssets.mockResolvedValue({
+            mockContentfulManagementEnvironment.getAssets.mockResolvedValue({
                 items: mockAssets,
                 total: 2,
                 skip: 0,
@@ -603,8 +603,8 @@ describe('ContentfulService', () => {
                 name: 'Updated Blog Post'
             });
 
-            expect(result.success).toBe(true);
-            expect(result.contentType.name).toBe('Updated Blog Post');
+            expect(result.name).toBe('Updated Blog Post');
+            expect(result.sys.id).toBe('blogPost');
         });
 
         it('should delete content type', async () => {
@@ -652,8 +652,10 @@ describe('ContentfulService', () => {
             const capabilities = contentfulService.getCapabilities();
 
             expect(capabilities).toContain('content-management');
+            expect(capabilities).toContain('content-delivery');
             expect(capabilities).toContain('asset-management');
-            expect(capabilities).toContain('content-type-management');
+            expect(capabilities).toContain('content-types');
+            expect(capabilities).toContain('business-context-mapping');
         });
     });
 

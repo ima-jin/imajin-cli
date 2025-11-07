@@ -242,12 +242,9 @@ describe('CloudinaryService', () => {
         });
 
         it('should handle upload errors gracefully', async () => {
-            mockCloudinaryUploader.upload.mockRejectedValue({
-                error: {
-                    message: 'Unsupported file format',
-                    http_code: 400
-                }
-            });
+            const error = new Error('Unsupported file format');
+            (error as any).http_code = 400;
+            mockCloudinaryUploader.upload.mockRejectedValue(error);
 
             const testBuffer = Buffer.from('invalid file data');
             const uploadOptions: UploadOptions = {
@@ -258,12 +255,9 @@ describe('CloudinaryService', () => {
         });
 
         it('should handle file size limits', async () => {
-            mockCloudinaryUploader.upload.mockRejectedValue({
-                error: {
-                    message: 'File size too large',
-                    http_code: 413
-                }
-            });
+            const error = new Error('File size too large');
+            (error as any).http_code = 413;
+            mockCloudinaryUploader.upload.mockRejectedValue(error);
 
             const testBuffer = Buffer.from('large file data');
             const uploadOptions: UploadOptions = {
@@ -318,12 +312,9 @@ describe('CloudinaryService', () => {
         });
 
         it('should handle asset not found', async () => {
-            mockCloudinaryApi.resource.mockRejectedValue({
-                error: {
-                    message: 'Resource not found',
-                    http_code: 404
-                }
-            });
+            const error = new Error('Resource not found');
+            (error as any).http_code = 404;
+            mockCloudinaryApi.resource.mockRejectedValue(error);
 
             await expect(cloudinaryService.getAsset('nonexistent')).rejects.toThrow(expect.stringContaining('not found'));
         });
@@ -352,7 +343,7 @@ describe('CloudinaryService', () => {
             expect(mockCloudinaryApi.resources).toHaveBeenCalledWith(
                 expect.objectContaining({
                     max_results: 10,
-                    prefix: 'test_folder'
+                    folder: 'test_folder'
                 })
             );
         });
@@ -463,12 +454,9 @@ describe('CloudinaryService', () => {
         });
 
         it('should handle network timeouts gracefully', async () => {
-            mockCloudinaryUploader.upload.mockRejectedValue({
-                error: {
-                    message: 'Network timeout',
-                    code: 'TIMEOUT'
-                }
-            });
+            const error = new Error('Network timeout');
+            (error as any).code = 'TIMEOUT';
+            mockCloudinaryUploader.upload.mockRejectedValue(error);
 
             const testBuffer = Buffer.from('test data');
             const uploadOptions: UploadOptions = {
@@ -479,12 +467,9 @@ describe('CloudinaryService', () => {
         });
 
         it('should handle rate limiting gracefully', async () => {
-            mockCloudinaryUploader.upload.mockRejectedValue({
-                error: {
-                    message: 'Rate limit exceeded',
-                    http_code: 429
-                }
-            });
+            const error = new Error('Rate limit exceeded');
+            (error as any).http_code = 429;
+            mockCloudinaryUploader.upload.mockRejectedValue(error);
 
             const testBuffer = Buffer.from('test data');
             const uploadOptions: UploadOptions = {
@@ -603,7 +588,9 @@ describe('CloudinaryService', () => {
 
             expect(capabilities).toContain('media-upload');
             expect(capabilities).toContain('media-transformation');
-            expect(capabilities).toContain('asset-management');
+            expect(capabilities).toContain('media-optimization');
+            expect(capabilities).toContain('media-delivery');
+            expect(capabilities).toContain('business-context-mapping');
         });
     });
 }); 

@@ -75,11 +75,22 @@ export class CloudinaryService extends BaseService {
     }
 
     protected async onInitialize(): Promise<void> {
+        // Validate credentials by testing API connectivity
+        await this.validateCredentials();
         this.emit('service:ready', { service: 'cloudinary' });
-        this.logger.info('CloudinaryService initialized', {
-            cloudName: this.cloudinaryConfig.cloudName,
-            secure: this.cloudinaryConfig.secure
-        });
+        this.logger.info('CloudinaryService initialized');
+    }
+
+    private async validateCredentials(): Promise<void> {
+        try {
+            await this.cloudinary.api.resources({ max_results: 1 });
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error?.error?.http_code === 401) {
+                throw new Error('Invalid Cloudinary credentials');
+            }
+            throw new Error(`Failed to connect to Cloudinary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 
     protected async onShutdown(): Promise<void> {
