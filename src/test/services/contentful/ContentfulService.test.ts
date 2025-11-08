@@ -317,7 +317,7 @@ describe('ContentfulService', () => {
                 details: { errors: [{ name: 'required', path: 'title' }] }
             });
 
-            await expect(contentfulService.createEntry('blogPost', {})).rejects.toThrow(expect.stringContaining('Validation failed'));
+            await expect(contentfulService.createEntry('blogPost', {})).rejects.toThrow(/Validation failed/);
         });
 
         it('should handle entry not found', async () => {
@@ -326,7 +326,7 @@ describe('ContentfulService', () => {
                 message: 'The resource could not be found.'
             });
 
-            await expect(contentfulService.getEntry('nonexistent-entry')).rejects.toThrow(expect.stringContaining('not found'));
+            await expect(contentfulService.getEntry('nonexistent-entry')).rejects.toThrow(/could not be found/);
         });
     });
 
@@ -459,8 +459,9 @@ describe('ContentfulService', () => {
             const result = await contentfulService.listAssets({ limit: 10 });
 
             expect(result.items).toHaveLength(2);
-            expect(result.items[0].fields.title).toBe('Asset 1');
-            expect(result.items[1].fields.title).toBe('Asset 2');
+            // Assets are wrapped in business context structure
+            expect(result.items[0].asset.fields.title).toBe('Asset 1');
+            expect(result.items[1].asset.fields.title).toBe('Asset 2');
         });
 
         it('should handle asset upload errors', async () => {
@@ -474,7 +475,7 @@ describe('ContentfulService', () => {
                 fileName: 'invalid.xyz',
                 contentType: 'application/octet-stream',
                 title: 'Invalid Asset'
-            })).rejects.toThrow(expect.stringContaining('Invalid file format'));
+            })).rejects.toThrow(/Invalid file format/);
         });
 
         it('should handle asset not found', async () => {
@@ -483,7 +484,7 @@ describe('ContentfulService', () => {
                 message: 'The resource could not be found.'
             });
 
-            await expect(contentfulService.getAsset('nonexistent-asset')).rejects.toThrow(expect.stringContaining('not found'));
+            await expect(contentfulService.getAsset('nonexistent-asset')).rejects.toThrow(/could not be found/);
         });
     });
 
@@ -675,7 +676,7 @@ describe('ContentfulService', () => {
                 code: 'NETWORK_ERROR'
             });
 
-            await expect(contentfulService.getContent('blogPost')).rejects.toThrow(expect.stringContaining('timeout'));
+            await expect(contentfulService.getContent('blogPost')).rejects.toThrow(/timeout/);
         });
 
         it('should handle rate limiting gracefully', async () => {
@@ -685,7 +686,7 @@ describe('ContentfulService', () => {
                 status: 429
             });
 
-            await expect(contentfulService.getContent('blogPost')).rejects.toThrow(expect.stringContaining('rate limit'));
+            await expect(contentfulService.getContent('blogPost')).rejects.toThrow(/rate limit/);
         });
 
         it('should track service metrics during operations', async () => {

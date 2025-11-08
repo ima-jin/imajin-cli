@@ -251,7 +251,7 @@ describe('CloudinaryService', () => {
                 fileName: 'invalid-file.xyz'
             };
 
-            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(expect.stringContaining('Unsupported file format'));
+            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(/Unsupported file format/);
         });
 
         it('should handle file size limits', async () => {
@@ -264,7 +264,7 @@ describe('CloudinaryService', () => {
                 fileName: 'large-file.jpg'
             };
 
-            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(expect.stringContaining('File size too large'));
+            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(/File size too large/);
         });
     });
 
@@ -316,7 +316,7 @@ describe('CloudinaryService', () => {
             (error as any).http_code = 404;
             mockCloudinaryApi.resource.mockRejectedValue(error);
 
-            await expect(cloudinaryService.getAsset('nonexistent')).rejects.toThrow(expect.stringContaining('not found'));
+            await expect(cloudinaryService.getAsset('nonexistent')).rejects.toThrow(/not found/);
         });
 
         it('should list assets with pagination', async () => {
@@ -463,7 +463,7 @@ describe('CloudinaryService', () => {
                 fileName: 'timeout-test.jpg'
             };
 
-            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(expect.stringContaining('timeout'));
+            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(/timeout/);
         });
 
         it('should handle rate limiting gracefully', async () => {
@@ -476,7 +476,7 @@ describe('CloudinaryService', () => {
                 fileName: 'rate-limit-test.jpg'
             };
 
-            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(expect.stringContaining('Rate limit exceeded'));
+            await expect(cloudinaryService.upload(testBuffer, uploadOptions)).rejects.toThrow(/Rate limit exceeded/);
         });
 
         it('should track service metrics during operations', async () => {
