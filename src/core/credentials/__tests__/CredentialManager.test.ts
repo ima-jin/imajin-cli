@@ -1,6 +1,6 @@
 /**
  * CredentialManager Tests
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  core/credentials/__tests__
  * @author      Generated
@@ -9,6 +9,34 @@
  * @version     0.1.0
  * @since       2025-06-09
  */
+
+// Mock keytar before any imports to avoid native dependency issues in CI
+// Create an in-memory store to simulate keytar behavior
+const mockKeyStore: Map<string, Map<string, string>> = new Map();
+
+jest.mock('keytar', () => ({
+    setPassword: jest.fn().mockImplementation(async (service: string, account: string, password: string) => {
+        if (!mockKeyStore.has(service)) {
+            mockKeyStore.set(service, new Map());
+        }
+        mockKeyStore.get(service)!.set(account, password);
+    }),
+    getPassword: jest.fn().mockImplementation(async (service: string, account: string) => {
+        return mockKeyStore.get(service)?.get(account) || null;
+    }),
+    deletePassword: jest.fn().mockImplementation(async (service: string, account: string) => {
+        const serviceStore = mockKeyStore.get(service);
+        if (serviceStore) {
+            return serviceStore.delete(account);
+        }
+        return false;
+    }),
+    findCredentials: jest.fn().mockImplementation(async (service: string) => {
+        const serviceStore = mockKeyStore.get(service);
+        if (!serviceStore) return [];
+        return Array.from(serviceStore.entries()).map(([account, password]) => ({ account, password }));
+    }),
+}));
 
 import { Logger } from '../../../logging/Logger.js';
 import { CredentialManager } from '../CredentialManager.js';
@@ -26,6 +54,9 @@ describe('CredentialManager', () => {
     let credentialManager: CredentialManager;
 
     beforeEach(async () => {
+        // Clear the mock keytar store
+        mockKeyStore.clear();
+
         // Clear environment variables before each test
         Object.keys(process.env)
             .filter(key => key.startsWith('IMAJIN_CLI_CRED_'))
