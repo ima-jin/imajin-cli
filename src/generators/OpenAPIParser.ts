@@ -105,15 +105,14 @@ export class DefaultOpenAPIParser implements OpenAPIParser {
         const warnings: string[] = [];
 
         // Basic validation
+        if (!spec.info?.title) {
+            errors.push('Missing info.title');
+        }
+        if (!spec.info?.version) {
+            errors.push('Missing info.version');
+        }
         if (!spec.info) {
             errors.push('Missing info section');
-        } else {
-            if (!spec.info.title) {
-                errors.push('Missing info.title');
-            }
-            if (!spec.info.version) {
-                errors.push('Missing info.version');
-            }
         }
 
         if (!spec.paths || Object.keys(spec.paths).length === 0) {
@@ -389,7 +388,7 @@ continue;
 }
 
             responseList.push({
-                statusCode: parseInt(statusCode, 10) || 200,
+                statusCode: Number.parseInt(statusCode, 10) || 200,
                 description: response.description || 'Response',
                 schema: this.extractResponseSchema(response.content)
             });
@@ -536,7 +535,7 @@ return undefined;
      */
     private camelCase(str: string): string {
         return str
-            .replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
+            .replaceAll(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
             .replace(/^[A-Z]/, c => c.toLowerCase());
     }
 

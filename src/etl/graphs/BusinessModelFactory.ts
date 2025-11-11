@@ -40,9 +40,9 @@ export interface ServiceSchemaType {
 
 export class BusinessModelFactory extends ModelFactory {
     private static businessDomains: Map<string, BusinessDomainModel> = new Map();
-    private static registeredBusinessModels: Map<string, GraphModel> = new Map();
+    private static readonly registeredBusinessModels: Map<string, GraphModel> = new Map();
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
-    private static logger: Logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
+    private static readonly logger: Logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });
 
     /**
      * Register business domain model from context
@@ -186,12 +186,12 @@ export class BusinessModelFactory extends ModelFactory {
         if (businessContext.workflows && businessContext.workflows.length > 0) {
             suggestions.push(...this.generateWorkflowsFromRecipe(businessContext, availableServices));
         }
-        
-        // Generate universal entity-based workflows
-        suggestions.push(...this.generateEntityBasedWorkflows(businessContext, availableServices));
-        
-        // Generate universal service integration workflows
-        suggestions.push(...this.generateServiceIntegrationWorkflows(businessContext, availableServices));
+
+        // Generate universal entity-based workflows and service integration workflows
+        suggestions.push(
+            ...this.generateEntityBasedWorkflows(businessContext, availableServices),
+            ...this.generateServiceIntegrationWorkflows(businessContext, availableServices)
+        );
 
         this.logger.info('Workflows suggested', {
             suggestionsCount: suggestions.length,
@@ -685,24 +685,25 @@ zodType = (zodType as z.ZodNumber).max(fieldDef.validation.max);
 
     private static generateTransformations(entityDef: any): any[] {
         const transformations: any[] = [];
-        
+
         // Add common transformations
-        transformations.push({
-            type: 'dateNormalization',
-            description: 'Normalize date fields to ISO format',
-            fields: entityDef.fields
-                .filter((f: any) => f.type === 'date')
-                .map((f: any) => f.name),
-        });
-        
-        transformations.push({
-            type: 'currencyNormalization',
-            description: 'Normalize currency amounts to cents',
-            fields: entityDef.fields
-                .filter((f: any) => f.name.toLowerCase().includes('amount') || f.name.toLowerCase().includes('price'))
-                .map((f: any) => f.name),
-        });
-        
+        transformations.push(
+            {
+                type: 'dateNormalization',
+                description: 'Normalize date fields to ISO format',
+                fields: entityDef.fields
+                    .filter((f: any) => f.type === 'date')
+                    .map((f: any) => f.name),
+            },
+            {
+                type: 'currencyNormalization',
+                description: 'Normalize currency amounts to cents',
+                fields: entityDef.fields
+                    .filter((f: any) => f.name.toLowerCase().includes('amount') || f.name.toLowerCase().includes('price'))
+                    .map((f: any) => f.name),
+            }
+        );
+
         return transformations;
     }
 
@@ -776,7 +777,7 @@ zodType = (zodType as z.ZodNumber).max(fieldDef.validation.max);
             score += fieldOverlap * 0.6;
         }
         
-        return Math.min(score, 1.0);
+        return Math.min(score, 1);
     }
 
     private static calculateSemanticSimilarity(word1: string, word2: string): number {
@@ -867,8 +868,8 @@ zodType = (zodType as z.ZodNumber).max(fieldDef.validation.max);
         // Boost confidence if we have good entity coverage
         const entityCoverage = Object.keys(mappings).length / Object.keys(context.entities).length;
         const coverageBoost = Math.min(entityCoverage * 0.2, 0.2);
-        
-        return Math.min(averageScore + coverageBoost, 1.0);
+
+        return Math.min(averageScore + coverageBoost, 1);
     }
 }
 

@@ -293,8 +293,10 @@ return;
 
         if (regressions.length > 0) {
             console.warn(`Performance regressions detected for ${result.testName}:`);
-            regressions.forEach(regression => console.warn(`  - ${regression}`));
-            
+            for (const regression of regressions) {
+                console.warn(`  - ${regression}`);
+            }
+
             // Optionally fail the test
             // throw new Error(`Performance regression detected: ${regressions.join(', ')}`);
         }

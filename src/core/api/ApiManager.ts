@@ -16,7 +16,7 @@
  */
 
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { inject, injectable } from 'tsyringe';
 import { RateLimiter } from '../ratelimit/RateLimiter.js';
 import { CircuitBreaker } from './CircuitBreaker.js';

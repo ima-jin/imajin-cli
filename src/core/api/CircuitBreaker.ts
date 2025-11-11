@@ -16,7 +16,7 @@
  * - Event system for state change notifications
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { injectable } from 'tsyringe';
 import { CIRCUIT_BREAKER_EVENTS } from '../../constants/CommonStrings.js';
 

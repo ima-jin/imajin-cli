@@ -16,7 +16,7 @@
  * - Event emission for lifecycle tracking
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { TaskEntity } from '../commands/TaskMigrationCommand.js';
 import { TaskValidationWorkflow } from './TaskValidationWorkflow.js';
 
@@ -55,7 +55,7 @@ export interface TaskLifecycleEvent {
 }
 
 export class TaskLifecycleWorkflow extends EventEmitter {
-  private validationWorkflow: TaskValidationWorkflow;
+  private readonly validationWorkflow: TaskValidationWorkflow;
   private readonly transitions: TaskStateTransition[];
 
   constructor(projectRoot?: string) {
@@ -442,7 +442,7 @@ export class TaskLifecycleWorkflow extends EventEmitter {
   private async isDependencyComplete(depId: string): Promise<boolean> {
     // In a real implementation, this would query the actual task storage
     // For now, assume completed if it's a properly formatted task ID
-    return depId.match(/^task-\d+[a-z]*$/) !== null;
+    return /^task-\d+[a-z]*$/.exec(depId) !== null;
   }
 
   /**

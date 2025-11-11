@@ -19,7 +19,7 @@ import Transport from 'winston-transport';
 import { LoggerConfig } from '../LoggerConfig.js';
 
 export class MonitoringTransport extends Transport {
-    private config: LoggerConfig;
+    private readonly config: LoggerConfig;
     private metrics: {
         logCount: number;
         errorCount: number;

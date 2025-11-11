@@ -18,12 +18,11 @@
  */
 
 import { ServiceTestBase } from '../framework/ServiceTestBase.js';
-import { ServiceConfig } from '../../services/interfaces/ServiceInterface.js';
+import { ServiceConfig, ServiceStatus } from '../../services/interfaces/ServiceInterface.js';
 import { HttpMockManager } from '../framework/HttpMockManager.js';
 import { HealthCheckTester } from '../framework/HealthCheckTester.js';
 import { ServiceLifecycleTester } from '../framework/ServiceLifecycleTester.js';
 import { BaseService } from '../../services/BaseService.js';
-import { ServiceStatus } from '../../services/interfaces/ServiceInterface.js';
 
 /**
  * Mock service implementation for testing

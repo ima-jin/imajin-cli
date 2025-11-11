@@ -183,14 +183,18 @@ return false;
 
         switch (statusCode) {
             case 401:
-                steps.push('Check your API credentials');
-                steps.push('Verify your authentication token is valid');
-                steps.push('Run: imajin auth login');
+                steps.push(
+                    'Check your API credentials',
+                    'Verify your authentication token is valid',
+                    'Run: imajin auth login'
+                );
                 break;
 
             case 403:
-                steps.push('Verify your account has the required permissions');
-                steps.push('Contact your administrator if needed');
+                steps.push(
+                    'Verify your account has the required permissions',
+                    'Contact your administrator if needed'
+                );
                 break;
 
             case 404:
@@ -201,13 +205,17 @@ return false;
                 break;
 
             case 422:
-                steps.push('Review the request data for validation errors');
-                steps.push('Check the API documentation for required fields');
+                steps.push(
+                    'Review the request data for validation errors',
+                    'Check the API documentation for required fields'
+                );
                 break;
 
             default:
-                steps.push('Review the request parameters');
-                steps.push('Check the API documentation');
+                steps.push(
+                    'Review the request parameters',
+                    'Check the API documentation'
+                );
                 break;
         }
 
@@ -231,7 +239,7 @@ return false;
             requestId: response.headers?.['x-request-id'] || response.headers?.['request-id'],
             responseBody: response.data || response.body,
             headers: response.headers,
-            ...(response.headers?.['retry-after'] && { retryAfter: parseInt(response.headers['retry-after']) })
+            ...(response.headers?.['retry-after'] && { retryAfter: Number.parseInt(response.headers['retry-after']) })
         };
 
         const message = `API request failed: ${method} ${endpoint} (${response.status})`;

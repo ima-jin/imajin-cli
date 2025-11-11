@@ -81,7 +81,13 @@ export class GeneratePluginCommand extends BaseCommand {
             this.info(`Authentication: ${plugin.authType}`);
 
             // Create plugin files
-            if (!options.dryRun) {
+            if (options.dryRun) {
+                this.info('Dry run - files not created');
+                this.info('Generated files:');
+                plugin.files.forEach(file => {
+                    this.info(`  - ${file.path} (${file.type})`);
+                });
+            } else {
                 const outputDir = options.output || 'plugins';
                 this.info(`Creating plugin files in: ${outputDir}`);
 
@@ -100,13 +106,6 @@ export class GeneratePluginCommand extends BaseCommand {
                 }
                 this.info(`3. Load the plugin: imajin plugin:load`);
                 this.info(`4. Test commands: imajin ${plugin.name}:<command>`);
-
-            } else {
-                this.info('Dry run - files not created');
-                this.info('Generated files:');
-                plugin.files.forEach(file => {
-                    this.info(`  - ${file.path} (${file.type})`);
-                });
             }
 
             return {

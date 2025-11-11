@@ -137,7 +137,7 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
                     translationMap: {},
                     lossyFields: [],
                     addedFields: [],
-                    confidence: 1.0,
+                    confidence: 1,
                     metadata: {
                         translationType: 'direct',
                         duration: Date.now() - startTime

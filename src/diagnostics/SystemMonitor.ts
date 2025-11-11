@@ -16,7 +16,7 @@
  * - Basic system diagnostics
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { HealthCheckManager, SystemHealthReport } from './HealthCheck.js';
 import { MetricsCollector, PerformanceMetrics } from './MetricsCollector.js';
 

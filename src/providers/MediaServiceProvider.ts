@@ -19,6 +19,7 @@
  * - Configuration management
  */
 
+// eslint-disable-next-line deprecation/deprecation
 import type { MediaProcessingConfig, MediaProvider } from '../types/Media.js';
 
 import { MediaUploadCommand } from '../commands/media/MediaUploadCommand.js';
@@ -97,18 +98,21 @@ export class MediaServiceProvider extends ServiceProvider {
      */
     private registerProviders(processor: MediaProcessor): void {
         // Register local provider
+        // eslint-disable-next-line deprecation/deprecation
         const localProvider = this.container.resolve<MediaProvider>('LocalMediaProvider');
         processor.registerProvider('local', localProvider);
 
         // Register Cloudinary provider if configured
         try {
+            // eslint-disable-next-line deprecation/deprecation
             const cloudinaryProvider = this.container.resolve<MediaProvider>('CloudinaryProvider');
             processor.registerProvider('cloudinary', cloudinaryProvider);
         } catch (error) {
-            // Cloudinary not configured, skip
+            // Cloudinary not configured or credentials missing - skip and log warning
             this.logger.warn('Cloudinary provider not configured, skipping', {
                 provider: 'MediaServiceProvider',
-                reason: 'Missing configuration or credentials'
+                reason: 'Missing configuration or credentials',
+                error: error instanceof Error ? error.message : String(error)
             });
         }
     }
@@ -150,7 +154,7 @@ export class MediaServiceProvider extends ServiceProvider {
             },
             optimization: {
                 autoOptimize: process.env.MEDIA_AUTO_OPTIMIZE === 'true',
-                defaultQuality: parseInt(process.env.MEDIA_DEFAULT_QUALITY || '85'),
+                defaultQuality: Number.parseInt(process.env.MEDIA_DEFAULT_QUALITY || '85'),
                 defaultFormat: (process.env.MEDIA_DEFAULT_FORMAT as any) || 'webp',
                 generateThumbnails: process.env.MEDIA_GENERATE_THUMBNAILS === 'true',
                 thumbnailSizes: [
@@ -162,10 +166,10 @@ export class MediaServiceProvider extends ServiceProvider {
                 enableAVIF: process.env.MEDIA_ENABLE_AVIF === 'true'
             },
             limits: {
-                maxFileSize: parseInt(process.env.MEDIA_MAX_FILE_SIZE || '52428800'), // 50MB
-                maxWidth: parseInt(process.env.MEDIA_MAX_WIDTH || '8192'),
-                maxHeight: parseInt(process.env.MEDIA_MAX_HEIGHT || '8192'),
-                maxDuration: parseInt(process.env.MEDIA_MAX_DURATION || '3600'), // 1 hour
+                maxFileSize: Number.parseInt(process.env.MEDIA_MAX_FILE_SIZE || '52428800'), // 50MB
+                maxWidth: Number.parseInt(process.env.MEDIA_MAX_WIDTH || '8192'),
+                maxHeight: Number.parseInt(process.env.MEDIA_MAX_HEIGHT || '8192'),
+                maxDuration: Number.parseInt(process.env.MEDIA_MAX_DURATION || '3600'), // 1 hour
                 allowedFormats: (process.env.MEDIA_ALLOWED_FORMATS || 'jpg,jpeg,png,gif,webp,mp4,mov,avi').split(','),
                 allowedMimeTypes: [
                     'image/jpeg',
@@ -180,7 +184,7 @@ export class MediaServiceProvider extends ServiceProvider {
             cdnConfig: {
                 enabled: process.env.MEDIA_CDN_ENABLED === 'true',
                 baseUrl: process.env.MEDIA_CDN_BASE_URL || '',
-                cacheTTL: parseInt(process.env.MEDIA_CDN_CACHE_TTL || '86400'), // 24 hours
+                cacheTTL: Number.parseInt(process.env.MEDIA_CDN_CACHE_TTL || '86400'), // 24 hours
                 compressionEnabled: process.env.MEDIA_CDN_COMPRESSION !== 'false'
             }
         };
@@ -194,7 +198,7 @@ export class MediaServiceProvider extends ServiceProvider {
             storagePath: process.env.MEDIA_LOCAL_STORAGE_PATH || './storage/media',
             publicPath: process.env.MEDIA_LOCAL_PUBLIC_PATH || './public/media',
             baseUrl: process.env.MEDIA_LOCAL_BASE_URL || 'http://localhost:3000/media',
-            maxFileSize: parseInt(process.env.MEDIA_MAX_FILE_SIZE || '52428800')
+            maxFileSize: Number.parseInt(process.env.MEDIA_MAX_FILE_SIZE || '52428800')
         };
     }
 

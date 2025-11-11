@@ -219,19 +219,7 @@ zodType = z.record(z.string(), z.any());
 export async function initializeBusinessTypeSystem(config?: BusinessConfiguration): Promise<void> {
     console.log('🚀 Initializing business type system...');
     
-    if (!config) {
-        // Try to load from BusinessContextManager
-        try {
-            const { BusinessContextManager } = await import('../context/BusinessContextManager.js');
-            const manager = new BusinessContextManager();
-            const businessConfig = await manager.getCurrentConfiguration();
-            const domainModel = await manager.toDomainModel();
-            BusinessTypeRegistry.registerBusinessDomain(domainModel);
-        } catch (error) {
-            console.warn('⚠️ No business context found. Business types will be registered when context is created.');
-            return;
-        }
-    } else {
+    if (config) {
         // Convert config to domain model and register
         const domainModel: BusinessDomainModel = {
             businessType: config.business.type,
@@ -243,6 +231,19 @@ export async function initializeBusinessTypeSystem(config?: BusinessConfiguratio
             commands: [],
         };
         BusinessTypeRegistry.registerBusinessDomain(domainModel);
+    } else {
+        // Try to load from BusinessContextManager
+        try {
+            const { BusinessContextManager } = await import('../context/BusinessContextManager.js');
+            const manager = new BusinessContextManager();
+            const businessConfig = await manager.getCurrentConfiguration();
+            const domainModel = await manager.toDomainModel();
+            BusinessTypeRegistry.registerBusinessDomain(domainModel);
+        } catch (error) {
+            // No business context found yet - types will be registered when context is created
+            console.warn('⚠️ No business context found. Business types will be registered when context is created.');
+            return;
+        }
     }
     
     console.log('✅ Business type system initialized');
@@ -476,7 +477,7 @@ export class UniversalEntityFactory {
      */
     private static generateId(): string {
         return `${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`;
     }
 }

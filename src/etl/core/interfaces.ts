@@ -16,7 +16,7 @@
  * - Error handling for pipeline failures
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 
 /**

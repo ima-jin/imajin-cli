@@ -61,8 +61,8 @@ export class PaymentCommands {
                         captureMethod: options.captureMethod
                     });
 
-                    const amount = parseInt(options.amount);
-                    if (isNaN(amount) || amount <= 0) {
+                    const amount = Number.parseInt(options.amount);
+                    if (Number.isNaN(amount) || amount <= 0) {
                         throw new Error('Amount must be a positive number');
                     }
 
@@ -191,7 +191,7 @@ export class PaymentCommands {
                     } : undefined;
 
                     const result = await this.stripeService.listPaymentIntents({
-                        limit: parseInt(options.limit),
+                        limit: Number.parseInt(options.limit),
                         customer: options.customer,
                         created: Object.keys(createdFilter).length > 0 ? createdFilter : undefined,
                     }, progressCallback);
@@ -200,8 +200,9 @@ export class PaymentCommands {
                         console.log(JSON.stringify(result, null, 2));
                     } else {
                         console.log(chalk.green(`💳 Retrieved ${result.payments.length} payment intents`));
-                        
-                        result.payments.forEach((paymentResponse: any, index: number) => {
+
+                        for (let index = 0; index < result.payments.length; index++) {
+                            const paymentResponse = result.payments[index];
                             const payment = paymentResponse.paymentIntent;
                             console.log(chalk.cyan(`\n${index + 1}. ${payment.id}`));
                             console.log(`   Amount: ${payment.amount} ${payment.currency.toUpperCase()}`);
@@ -209,7 +210,7 @@ export class PaymentCommands {
                             if (payment.customerId) {
                                 console.log(`   Customer: ${payment.customerId}`);
                             }
-                        });
+                        }
 
                         if (result.hasMore) {
                             console.log(chalk.yellow('\n📄 More payment intents available. Use --limit to retrieve more.'));

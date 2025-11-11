@@ -17,9 +17,10 @@
  * - Transformation pipeline
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { v4 as uuidv4 } from 'uuid';
 
+// eslint-disable-next-line deprecation/deprecation
 import type {
     BatchOperation,
     MediaAsset,
@@ -36,6 +37,7 @@ import { ValidationError } from '../exceptions/ValidationError.js';
 
 export class MediaProcessor extends EventEmitter {
     private config: MediaProcessingConfig;
+    // eslint-disable-next-line deprecation/deprecation
     private providers: Map<string, MediaProvider> = new Map();
 
     constructor(config: MediaProcessingConfig) {
@@ -46,6 +48,7 @@ export class MediaProcessor extends EventEmitter {
     /**
      * Register a media provider
      */
+    // eslint-disable-next-line deprecation/deprecation
     public registerProvider(name: string, provider: MediaProvider): void {
         this.providers.set(name, provider);
     }
@@ -53,6 +56,7 @@ export class MediaProcessor extends EventEmitter {
     /**
      * Get a provider by name
      */
+    // eslint-disable-next-line deprecation/deprecation
     public getProvider(name?: string): MediaProvider {
         const providerName = name || this.config.defaultProvider;
         const provider = this.providers.get(providerName);

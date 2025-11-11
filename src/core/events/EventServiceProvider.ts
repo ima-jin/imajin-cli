@@ -36,8 +36,8 @@ export interface EventServiceProviderConfig extends EventManagerConfig {
  */
 export class EventServiceProvider extends ServiceProvider {
     private eventManager: EventManager | null = null;
-    private config: EventServiceProviderConfig;
-    private logger: Logger;
+    private readonly config: EventServiceProviderConfig;
+    private readonly logger: Logger;
 
     constructor(
         container: Container,

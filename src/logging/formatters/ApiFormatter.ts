@@ -135,11 +135,11 @@ export class ApiFormatter {
             const urlObj = new URL(url);
             // Remove sensitive query parameters
             const sensitiveParams = ['api_key', 'token', 'secret', 'password', 'auth'];
-            sensitiveParams.forEach(param => {
+            for (const param of sensitiveParams) {
                 if (urlObj.searchParams.has(param)) {
                     urlObj.searchParams.set(param, '[REDACTED]');
                 }
-            });
+            }
             return urlObj.toString();
         } catch {
             return url;
@@ -153,13 +153,13 @@ return {};
         
         const sanitized = { ...headers };
         const sensitiveHeaders = ['authorization', 'x-api-key', 'cookie', 'set-cookie'];
-        
-        sensitiveHeaders.forEach(header => {
+
+        for (const header of sensitiveHeaders) {
             const key = Object.keys(sanitized).find(k => k.toLowerCase() === header);
             if (key) {
                 sanitized[key] = '[REDACTED]';
             }
-        });
+        }
         
         return sanitized;
     }

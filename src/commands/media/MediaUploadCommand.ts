@@ -19,9 +19,9 @@
  */
 
 import { Command } from 'commander';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import { glob } from 'glob';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
@@ -47,9 +47,9 @@ export interface MediaUploadOptions {
 }
 
 export class MediaUploadCommand {
-    private container: Container;
-    private mediaProcessor: MediaProcessor;
-    private logger: Logger | null = null;
+    private readonly container: Container;
+    private readonly mediaProcessor: MediaProcessor;
+    private readonly logger: Logger | null = null;
 
     constructor(container: Container) {
         this.container = container;
@@ -57,7 +57,7 @@ export class MediaUploadCommand {
         try {
             this.logger = container.resolve('logger');
         } catch (error) {
-            // Logger not available
+            // Logger not available - intentionally ignored during initialization
         }
     }
 
@@ -75,7 +75,7 @@ export class MediaUploadCommand {
             .option('--optimize', 'Automatically optimize uploaded files')
             .option('--resize <dimensions>', 'Resize images (e.g., 1920x1080)')
             .addOption(CommonOptions.format())
-            .option('-q, --quality <quality>', 'Set quality (1-100)', parseInt)
+            .option('-q, --quality <quality>', 'Set quality (1-100)', Number.parseInt)
             .option('--public', 'Make files publicly accessible')
             .option('--overwrite', 'Overwrite existing files')
             .option('--batch', 'Process files in batch mode')

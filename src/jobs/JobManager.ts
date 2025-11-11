@@ -20,7 +20,7 @@
  */
 
 import Bull, { Job, JobOptions, Queue } from 'bull';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { Logger } from '../logging/Logger.js';
 import type { JobProgress, JobStatus } from '../types/Jobs.js';
 
@@ -40,7 +40,7 @@ export class JobManager extends EventEmitter {
         this.logger = logger;
         this.redisConfig = redisConfig || {
             host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379'),
+            port: Number.parseInt(process.env.REDIS_PORT || '6379'),
             ...(process.env.REDIS_PASSWORD && { password: process.env.REDIS_PASSWORD }),
         };
     }

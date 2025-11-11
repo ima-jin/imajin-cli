@@ -18,10 +18,10 @@
  * - BaseService compliance with health checks and metrics
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../../container/Container.js';
 import { BaseService } from '../BaseService.js';
 import type { ServiceConfig } from '../interfaces/ServiceInterface.js';
@@ -349,7 +349,11 @@ export class LocalFileService extends BaseService {
                         assets.push(asset);
                     }
                 } catch (error) {
-                    // Skip files that can't be read
+                    // Skip files that can't be read - may be permissions or corrupted files
+                    this.logger?.debug('Skipping file that cannot be read', {
+                        file: entry.name,
+                        error: error instanceof Error ? error.message : String(error)
+                    });
                     continue;
                 }
             }
@@ -414,7 +418,11 @@ export class LocalFileService extends BaseService {
                 }
             }
         } catch (error) {
-            // Directory doesn't exist or can't be read
+            // Directory doesn't exist or can't be read - return empty array
+            this.logger?.debug('Cannot read directory', {
+                dir,
+                error: error instanceof Error ? error.message : String(error)
+            });
         }
         
         return files;
@@ -434,12 +442,12 @@ export class LocalFileService extends BaseService {
 
     private generateUrlFromPath(filePath: string): string {
         const relativePath = path.relative(this.localFileConfig.storagePath, filePath);
-        return `${this.localFileConfig.baseUrl}/${relativePath.replace(/\\/g, '/')}`;
+        return `${this.localFileConfig.baseUrl}/${relativePath.replaceAll(/\\/g, '/')}`;
     }
 
     private extractAssetIdFromFileName(fileName: string): string | null {
         // Extract UUID-like ID from filename (assumes format: name_XXXXXXXX.ext)
-        const match = fileName.match(/_([a-f0-9]{8})\./);
+        const match = /_([a-f0-9]{8})\./.exec(fileName);
         return match ? (match[1] ?? null) : null;
     }
 } 

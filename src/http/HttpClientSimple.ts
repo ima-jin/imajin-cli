@@ -18,7 +18,7 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { Logger } from '../logging/Logger.js';
 
 export interface SimpleHttpClientConfig {
@@ -31,7 +31,7 @@ export interface SimpleHttpClientConfig {
 
 export class HttpClientSimple extends EventEmitter {
     private client: AxiosInstance;
-    private maxRetries: number;
+    private readonly maxRetries: number;
     private retryDelay: number;
     private logger: Logger | null;
 

@@ -261,7 +261,7 @@ export async function runQuickBenchmark(
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
             ]);
         } catch (error) {
-            // Ignore warmup errors
+            // Intentionally ignore warmup errors - they are expected and not relevant to benchmark
         }
     }
 
@@ -278,7 +278,7 @@ export async function runQuickBenchmark(
             ]);
             successCount++;
         } catch (error) {
-            // Count as failure but continue
+            // Count as failure but continue - benchmark tracks success rate
         }
         const endTime = process.hrtime.bigint();
         const durationMs = Number(endTime - startTime) / 1_000_000;

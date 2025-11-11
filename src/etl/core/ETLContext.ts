@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { ETLContext as IETLContext } from './interfaces.js';
 
 export class ETLContext implements IETLContext {

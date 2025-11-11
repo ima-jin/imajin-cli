@@ -18,7 +18,7 @@
  * - BusinessTypeRegistry for dynamic business entity support
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../container/Container.js';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';

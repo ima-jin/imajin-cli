@@ -34,7 +34,7 @@ export function createRecipeCommands(): Command {
             logger = container.resolve('logger') as Logger;
         }
     } catch (error) {
-        // Logger not available
+        // Logger not available - intentionally ignored during initialization
     }
 
     // List available recipes

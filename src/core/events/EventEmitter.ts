@@ -17,7 +17,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import { EventEmitter as NodeEventEmitter } from 'events';
+import { EventEmitter as NodeEventEmitter } from 'node:events';
 import type { EventMetadata, IEvent, IEventListener } from './Event.js';
 import { EventPriority } from './Event.js';
 import { Logger } from '../../logging/Logger.js';
@@ -57,7 +57,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
     private metrics: EventMetrics = new EventMetrics();
     private maxListeners: number = 100;
     private defaultTimeout: number = 30000; // 30 seconds
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor() {
         super();
@@ -292,7 +292,7 @@ export class ImajinEventEmitter extends NodeEventEmitter {
      */
     private generateEventId(eventType: string): string {
         const b = randomBytes(6);
-        const randomPart = b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+        const randomPart = b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
         return `${eventType}_${Date.now()}_${randomPart}`;
     }
 }

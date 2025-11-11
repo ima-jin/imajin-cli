@@ -16,7 +16,7 @@
  * - Integration with existing service monitoring
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import {
     PerformanceTestResult,
     PerformanceThresholds,
@@ -52,9 +52,9 @@ export interface PerformanceMonitorConfig {
  * Real-time performance monitoring system
  */
 export class PerformanceMonitor extends EventEmitter {
-    private config: PerformanceMonitorConfig;
+    private readonly config: PerformanceMonitorConfig;
     private benchmarks: PerformanceBenchmarks;
-    private metricsCollector: PerformanceMetricsCollector;
+    private readonly metricsCollector: PerformanceMetricsCollector;
     private performanceHistory: Map<string, PerformanceTestResult[]> = new Map();
     private activeAlerts: Map<string, PerformanceAlert> = new Map();
     private monitoringTimer: NodeJS.Timeout | undefined = undefined;
@@ -301,7 +301,7 @@ export class PerformanceMonitor extends EventEmitter {
         const testHistory = Array.from(this.performanceHistory.entries())
             .filter(([_testName, results]) => results.length > 0)
             .map(([testName, results]) => {
-                const latestResult = results[results.length - 1];
+                const latestResult = results.at(-1);
                 if (!latestResult) {
                     throw new Error('Expected latestResult to exist after length check');
                 }
@@ -579,27 +579,35 @@ return 0;
         switch (regression.metric) {
             case 'averageResponseTime':
             case 'maxResponseTime':
-                recommendations.push('Profile the application to identify slow operations');
-                recommendations.push('Check for database query performance issues');
-                recommendations.push('Review network latency and external API calls');
+                recommendations.push(
+                    'Profile the application to identify slow operations',
+                    'Check for database query performance issues',
+                    'Review network latency and external API calls'
+                );
                 break;
-                
+
             case 'throughput':
-                recommendations.push('Analyze system bottlenecks');
-                recommendations.push('Consider horizontal scaling');
-                recommendations.push('Review resource allocation and limits');
+                recommendations.push(
+                    'Analyze system bottlenecks',
+                    'Consider horizontal scaling',
+                    'Review resource allocation and limits'
+                );
                 break;
-                
+
             case 'errorRate':
-                recommendations.push('Investigate error logs for root causes');
-                recommendations.push('Check service dependencies and external integrations');
-                recommendations.push('Review error handling and retry logic');
+                recommendations.push(
+                    'Investigate error logs for root causes',
+                    'Check service dependencies and external integrations',
+                    'Review error handling and retry logic'
+                );
                 break;
-                
+
             case 'memoryUsage':
-                recommendations.push('Check for memory leaks');
-                recommendations.push('Optimize memory allocation patterns');
-                recommendations.push('Review garbage collection performance');
+                recommendations.push(
+                    'Check for memory leaks',
+                    'Optimize memory allocation patterns',
+                    'Review garbage collection performance'
+                );
                 break;
         }
         

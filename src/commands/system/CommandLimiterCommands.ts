@@ -42,9 +42,9 @@ export function createCommandLimiterCommands(logger: Logger): Command {
                         console.log(chalk.red('  No git commands are currently allowed'));
                         console.log(chalk.yellow('  Add patterns to .ai.gitallowed file to enable commands'));
                     } else {
-                        patterns.forEach((pattern, index) => {
-                            console.log(`  ${index + 1}. ${chalk.green(pattern)}`);
-                        });
+                        for (let index = 0; index < patterns.length; index++) {
+                            console.log(`  ${index + 1}. ${chalk.green(patterns[index])}`);
+                        }
                     }
 
                     console.log(chalk.gray('\nPatterns are loaded from .ai.gitallowed file'));
@@ -169,9 +169,9 @@ export function createCommandLimiterCommands(logger: Logger): Command {
                 // Show the created patterns
                 const patterns = await limiter.getAllowedPatterns();
                 console.log(chalk.cyan(`\nDefault patterns (${patterns.length}):`));
-                patterns.forEach((pattern, index) => {
-                    console.log(`  ${index + 1}. ${chalk.green(pattern)}`);
-                });
+                for (let index = 0; index < patterns.length; index++) {
+                    console.log(`  ${index + 1}. ${chalk.green(patterns[index])}`);
+                }
 
                 logger?.info('Command limiter config initialized', { patternCount: patterns.length });
 

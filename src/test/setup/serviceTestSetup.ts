@@ -17,7 +17,7 @@
  */
 
 import { Container } from '../../container/Container.js';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 
 // Global test timeout for async operations
 jest.setTimeout(30000);
@@ -47,11 +47,11 @@ beforeEach(() => {
     
     // Clear all mocks
     jest.clearAllMocks();
-    
+
     // Store references for cleanup
-    (global as any).testContainer = globalContainer;
-    (global as any).mockLogger = mockLogger;
-    (global as any).mockEventEmitter = mockEventEmitter;
+    (globalThis as any).testContainer = globalContainer;
+    (globalThis as any).mockLogger = mockLogger;
+    (globalThis as any).mockEventEmitter = mockEventEmitter;
 });
 
 /**
@@ -72,11 +72,11 @@ afterEach(async () => {
     
     // Restore all mocks
     jest.restoreAllMocks();
-    
+
     // Clear global references
-    (global as any).testContainer = null;
-    (global as any).mockLogger = null;
-    (global as any).mockEventEmitter = null;
+    (globalThis as any).testContainer = null;
+    (globalThis as any).mockLogger = null;
+    (globalThis as any).mockEventEmitter = null;
 });
 
 /**
@@ -187,9 +187,9 @@ declare global {
 
 // Make utilities available globally
 if (globalContainer) {
-    (global as any).testContainer = globalContainer;
+    (globalThis as any).testContainer = globalContainer;
 }
-(global as any).flushPromises = flushPromises;
+(globalThis as any).flushPromises = flushPromises;
 
 /**
  * Enhanced custom Jest matchers for service testing

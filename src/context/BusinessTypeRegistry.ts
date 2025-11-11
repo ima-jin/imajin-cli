@@ -26,7 +26,7 @@ import type { Logger } from '../logging/Logger.js';
  */
 export class BusinessTypeRegistry {
     private static businessContext: BusinessDomainModel | null = null;
-    private static generatedSchemas: Map<string, z.ZodType<any>> = new Map();
+    private static readonly generatedSchemas: Map<string, z.ZodType<any>> = new Map();
     private static logger: Logger | null = null;
 
     /**

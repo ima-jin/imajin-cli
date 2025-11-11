@@ -93,7 +93,7 @@ export abstract class BaseEvent<T = any> implements IEvent<T> {
      */
     private generateId(): string {
         return `${this.type}_${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`;
     }
 

@@ -17,7 +17,7 @@
  * - Schema compatibility checking and migration
  */
 
-import { basename, extname } from 'path';
+import { basename, extname } from 'node:path';
 import { SchemaLoader } from './SchemaLoader.js';
 import { SchemaValidator } from './SchemaValidator.js';
 import { TypeGenerator } from './TypeGenerator.js';
@@ -293,16 +293,18 @@ export class SchemaRegistry {
         
         // Example automatic transforms:
         if (fromVersion === '1.0.0' && toVersion === '1.1.0') {
-            transforms.push({
-                type: 'add_default',
-                path: 'Contact.company',
-                defaultValue: null
-            });
-            transforms.push({
-                type: 'add_default',
-                path: 'Contact.title',
-                defaultValue: null
-            });
+            transforms.push(
+                {
+                    type: 'add_default',
+                    path: 'Contact.company',
+                    defaultValue: null
+                },
+                {
+                    type: 'add_default',
+                    path: 'Contact.title',
+                    defaultValue: null
+                }
+            );
         }
         
         return transforms;

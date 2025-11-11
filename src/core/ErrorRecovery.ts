@@ -15,7 +15,7 @@
  * - Command execution recovery
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { ApiError } from '../exceptions/ApiError.js';
 import { AuthenticationError } from '../exceptions/AuthenticationError.js';
 import { BaseException } from '../exceptions/BaseException.js';
@@ -45,7 +45,7 @@ export interface RecoveryResult {
 export class ErrorRecovery extends EventEmitter {
     private recoveryHistory: Map<string, RecoveryResult[]> = new Map();
     private readonly maxHistoryPerError = 10;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor() {
         super();
@@ -382,7 +382,7 @@ return 0;
                 successful,
                 successRate: total > 0 ? successful / total : 0,
                 methods,
-                lastAttempt: history[history.length - 1]?.message
+                lastAttempt: history.at(-1)?.message
             };
         });
 

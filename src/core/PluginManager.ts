@@ -168,7 +168,7 @@ export class PluginManager {
                         await fs.access(indexPath);
                         pluginDirs.push(pluginPath);
                     } catch {
-                        // Skip directories without index.js
+                        // Skip directories without index.js - not a valid plugin
                     }
                 }
             }

@@ -17,8 +17,8 @@
  * - Graceful error handling
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import type { Logger } from '../logging/Logger.js';
 
 export interface CommandValidationResult {
@@ -106,8 +106,8 @@ export class CommandLimiter {
         // Convert pattern to regex
         // Replace * with .* for wildcard matching
         const regexPattern = pattern
-            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
-            .replace(/\\\*/g, '.*'); // Convert \* back to .*
+            .replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
+            .replaceAll(/\\\*/g, '.*'); // Convert \* back to .*
         
         const regex = new RegExp(`^${regexPattern}$`, 'i');
         return regex.test(command);
@@ -219,9 +219,7 @@ let globalCommandLimiter: CommandLimiter | null = null;
  * Get global command limiter instance
  */
 export function getCommandLimiter(logger?: Logger): CommandLimiter {
-    if (!globalCommandLimiter) {
-        globalCommandLimiter = new CommandLimiter(logger);
-    }
+    globalCommandLimiter ??= new CommandLimiter(logger);
     return globalCommandLimiter;
 }
 

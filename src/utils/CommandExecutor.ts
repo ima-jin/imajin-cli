@@ -16,7 +16,7 @@
  * - Logging of all command executions
  */
 
-import { spawn, type SpawnOptions } from 'child_process';
+import { spawn, type SpawnOptions } from 'node:child_process';
 import type { Logger } from '../logging/Logger.js';
 import { getCommandLimiter } from './CommandLimiter.js';
 
@@ -240,9 +240,7 @@ let globalExecutor: CommandExecutor | null = null;
  * Get global command executor instance
  */
 export function getCommandExecutor(options?: CommandExecutorOptions): CommandExecutor {
-    if (!globalExecutor) {
-        globalExecutor = new CommandExecutor(options);
-    }
+    globalExecutor ??= new CommandExecutor(options);
     return globalExecutor;
 }
 

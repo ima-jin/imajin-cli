@@ -22,6 +22,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { v2 as cloudinary } from 'cloudinary';
 
+// eslint-disable-next-line deprecation/deprecation
 import type {
     ListOptions,
     MediaAsset,
@@ -41,6 +42,7 @@ export interface CloudinaryConfig {
     uploadPreset?: string;
 }
 
+// eslint-disable-next-line deprecation/deprecation
 export class CloudinaryProvider implements MediaProvider {
     public readonly name = 'cloudinary';
     private config: CloudinaryConfig;
@@ -407,7 +409,7 @@ metadata.codec = result.video.codec;
     private generatePublicId(fileName: string): string {
         // Remove extension and special characters
         const baseName = fileName.replace(/\.[^/.]+$/, '');
-        const cleanName = baseName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const cleanName = baseName.replaceAll(/[^a-zA-Z0-9_-]/g, '_');
         return `${cleanName}_${Date.now()}`;
     }
 } 

@@ -21,7 +21,7 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import figlet from 'figlet';
 import inquirer from 'inquirer';
 import { Container } from '../container/Container.js';
@@ -39,16 +39,16 @@ export class Application {
   public static readonly VERSION = '0.1.0';
   public static readonly NAME = 'Imajin CLI';
 
-  private container: Container;
-  private program: Command;
-  private logger: Logger;
-  private config: ImajinConfig;
+  private readonly container: Container;
+  private readonly program: Command;
+  private readonly logger: Logger;
+  private readonly config: ImajinConfig;
   private providers: ServiceProvider[] = [];
   private isBooted: boolean = false;
   private commandsRegistered: boolean = false;
-  private errorHandler: ErrorHandler;
-  private errorRecovery: ErrorRecovery;
-  private businessValidator: BusinessContextValidator;
+  private readonly errorHandler: ErrorHandler;
+  private readonly errorRecovery: ErrorRecovery;
+  private readonly businessValidator: BusinessContextValidator;
 
   constructor(config?: Partial<ImajinConfig>) {
     // Initialize container and core services
@@ -343,14 +343,14 @@ export class Application {
         console.log(chalk.gray('  No services registered yet'));
         console.log(chalk.gray('\n💡 Services will be loaded via ServiceProvider system'));
       } else {
-        services.forEach(service => {
+        for (const service of services) {
           console.log(chalk.green(`  ✓ ${service.name} (v${service.version})`));
           if (options.describe && service.capabilities.length > 0) {
-            service.capabilities.forEach(s => {
+            for (const s of service.capabilities) {
               console.log(chalk.gray(`    - ${s}`));
-            });
+            }
           }
-        });
+        }
       }
     }
   }
@@ -419,9 +419,9 @@ export class Application {
       console.log(chalk.gray(`Real-time Support: ${introspection.realTimeSupported ? 'Yes' : 'No'}`));
       if (introspection.capabilities.length > 0) {
         console.log(chalk.gray('Capabilities:'));
-        introspection.capabilities.forEach(cap => {
+        for (const cap of introspection.capabilities) {
           console.log(chalk.gray(`  - ${cap}`));
-        });
+        }
       }
       if (introspection.authentication?.required) {
         console.log(chalk.yellow(`Authentication: Required (${introspection.authentication.type || 'unknown'})`));

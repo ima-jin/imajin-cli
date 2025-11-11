@@ -16,7 +16,7 @@
  * - Event-driven system mocking
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { Container } from '../../container/Container.js';
 import { BaseService } from '../../services/BaseService.js';
 import { ServiceStatus, ServiceConfig } from '../../services/interfaces/ServiceInterface.js';

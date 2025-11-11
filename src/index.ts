@@ -23,9 +23,8 @@ import 'reflect-metadata';
 import { Application } from './core/Application.js';
 import { ExceptionUtils, SystemError } from './exceptions/index.js';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import path, { dirname } from 'node:path';
 
 // Load environment variables
 config();
@@ -56,7 +55,7 @@ function isNpmLinkMode(): boolean {
     
     return isSymlinked || (hasPackageJson && isInNodeModulesBin);
   } catch (error) {
-    // If we can't determine, default to false
+    // If we can't determine, default to false - filesystem error or permissions issue
     return false;
   }
 }

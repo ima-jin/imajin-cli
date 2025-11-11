@@ -16,7 +16,7 @@
  * - Basic system performance monitoring
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 
 export type MetricType = 'counter' | 'gauge' | 'histogram';
 

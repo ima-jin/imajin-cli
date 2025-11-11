@@ -69,7 +69,7 @@ active = false;
 }
 
                     const listOptions: any = {
-                        limit: parseInt(options.limit),
+                        limit: Number.parseInt(options.limit),
                     };
                     if (active !== undefined) {
                         listOptions.active = active;
@@ -81,15 +81,16 @@ active = false;
                         console.log(JSON.stringify(result, null, 2));
                     } else {
                         console.log(chalk.green(`📦 Retrieved ${result.products.length} products`));
-                        
-                        result.products.forEach((product: any, index: number) => {
+
+                        for (let index = 0; index < result.products.length; index++) {
+                            const product = result.products[index];
                             console.log(chalk.cyan(`\n${index + 1}. ${product.id}`));
                             console.log(`   Name: ${product.name}`);
                             console.log(`   Active: ${product.active ? '✅' : '❌'}`);
                             if (Object.keys(product.metadata).length > 0) {
                                 console.log(`   Metadata: ${Object.keys(product.metadata).length} items`);
                             }
-                        });
+                        }
 
                         if (result.hasMore) {
                             console.log(chalk.yellow('\n📄 More products available. Use --limit to retrieve more.'));
@@ -140,7 +141,7 @@ active = false;
 }
 
                     const priceOptions: any = {
-                        limit: parseInt(options.limit),
+                        limit: Number.parseInt(options.limit),
                     };
                     if (options.product) {
                         priceOptions.product = options.product;
@@ -155,13 +156,14 @@ active = false;
                         console.log(JSON.stringify(result, null, 2));
                     } else {
                         console.log(chalk.green(`💰 Retrieved ${result.prices.length} prices`));
-                        
-                        result.prices.forEach((price: any, index: number) => {
+
+                        for (let index = 0; index < result.prices.length; index++) {
+                            const price = result.prices[index];
                             console.log(chalk.cyan(`\n${index + 1}. ${price.id}`));
                             console.log(`   Product: ${price.productId}`);
                             console.log(`   Amount: ${price.unitAmount} ${price.currency.toUpperCase()}`);
                             console.log(`   Type: ${price.type}`);
-                        });
+                        }
 
                         if (result.hasMore) {
                             console.log(chalk.yellow('\n📄 More prices available. Use --limit to retrieve more.'));

@@ -380,6 +380,7 @@ return undefined;
             });
             return Promise.resolve(true);
         } catch (error) {
+            // Validation failed - return false
             return Promise.resolve(false);
         }
     }

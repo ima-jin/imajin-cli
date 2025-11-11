@@ -125,11 +125,13 @@ export class TypeGenerator {
      */
     private generateSingleInterface(entityName: string, entityDef: EntityDefinition, _schema: SchemaDefinition): string {
         const lines: string[] = [];
-        
+
         // Add JSDoc comment
-        lines.push(`/**`);
-        lines.push(` * ${entityDef.description || `${entityName} entity`}`);
-        lines.push(` */`);
+        lines.push(
+            `/**`,
+            ` * ${entityDef.description || `${entityName} entity`}`,
+            ` */`
+        );
         
         // Interface declaration
         const extendsClause = entityDef.extends ? ` extends ${entityDef.extends}` : '';
@@ -161,11 +163,11 @@ export class TypeGenerator {
             lines.push(`    ${fieldLine}`);
         }
         
-        lines.push('});');
-        
-        // Type inference
-        lines.push('');
-        lines.push(`export type ${entityName} = z.infer<typeof ${entityName}Schema>;`);
+        lines.push(
+            '});',
+            '',
+            `export type ${entityName} = z.infer<typeof ${entityName}Schema>;`
+        );
         
         return lines.join('\n');
     }
@@ -267,11 +269,13 @@ export class TypeGenerator {
      */
     private generateSchemaSection(schemaName: string, schema: SchemaDefinition): string {
         const lines: string[] = [];
-        
-        lines.push(`// =============================================================================`);
-        lines.push(`// ${schemaName.toUpperCase()} SCHEMA (${schema.namespace})`);
-        lines.push(`// ${schema.description}`);
-        lines.push(`// =============================================================================`);
+
+        lines.push(
+            `// =============================================================================`,
+            `// ${schemaName.toUpperCase()} SCHEMA (${schema.namespace})`,
+            `// ${schema.description}`,
+            `// =============================================================================`
+        );
         
         // Generate interfaces
         const interfaces = this.generateInterface(schema);
@@ -291,17 +295,21 @@ export class TypeGenerator {
      */
     private generateExports(schemas: Map<string, SchemaDefinition>): string {
         const lines: string[] = [];
-        
-        lines.push('// =============================================================================');
-        lines.push('// EXPORTS');
-        lines.push('// =============================================================================');
+
+        lines.push(
+            '// =============================================================================',
+            '// EXPORTS',
+            '// ============================================================================='
+        );
         
         const exportLines: string[] = [];
 
         for (const [_schemaName, schema] of schemas.entries()) {
             for (const entityName of Object.keys(schema.entities)) {
-                exportLines.push(`export type { ${entityName} };`);
-                exportLines.push(`export { ${entityName}Schema };`);
+                exportLines.push(
+                    `export type { ${entityName} };`,
+                    `export { ${entityName}Schema };`
+                );
             }
         }
         
@@ -315,68 +323,77 @@ export class TypeGenerator {
      */
     private generateSingleAdapter(entityName: string, entityDef: EntityDefinition, serviceName: string): string {
         const lines: string[] = [];
-        
-        lines.push(`/**`);
-        lines.push(` * ${serviceName} ${entityName} Adapter`);
-        lines.push(` */`);
-        lines.push(`export class ${serviceName}${entityName}Adapter implements ServiceAdapter<${serviceName}${entityName}, Universal${entityName}> {`);
+
+        lines.push(
+            `/**`,
+            ` * ${serviceName} ${entityName} Adapter`,
+            ` */`,
+            `export class ${serviceName}${entityName}Adapter implements ServiceAdapter<${serviceName}${entityName}, Universal${entityName}> {`
+        );
         
         // toUniversal method
-        lines.push(`    toUniversal(serviceEntity: ${serviceName}${entityName}): Universal${entityName} {`);
-        lines.push(`        return {`);
-        lines.push(`            // Map common universal fields`);
-        lines.push(`            id: serviceEntity.id,`);
-        lines.push(`            createdAt: new Date(serviceEntity.created || Date.now()),`);
-        lines.push(`            updatedAt: new Date(),`);
-        lines.push(`            metadata: {},`);
-        lines.push(`            serviceData: { ${serviceName.toLowerCase()}: serviceEntity },`);
-        lines.push(`            sourceService: '${serviceName.toLowerCase()}',`);
-        lines.push(`            // Map entity-specific fields from ${serviceName} format`);
-        lines.push(`            ...this.mapEntitySpecificFields(serviceEntity),`);
-        lines.push(`        } as Universal${entityName};`);
-        lines.push(`    }`);
+        lines.push(
+            `    toUniversal(serviceEntity: ${serviceName}${entityName}): Universal${entityName} {`,
+            `        return {`,
+            `            // Map common universal fields`,
+            `            id: serviceEntity.id,`,
+            `            createdAt: new Date(serviceEntity.created || Date.now()),`,
+            `            updatedAt: new Date(),`,
+            `            metadata: {},`,
+            `            serviceData: { ${serviceName.toLowerCase()}: serviceEntity },`,
+            `            sourceService: '${serviceName.toLowerCase()}',`,
+            `            // Map entity-specific fields from ${serviceName} format`,
+            `            ...this.mapEntitySpecificFields(serviceEntity),`,
+            `        } as Universal${entityName};`,
+            `    }`
+        );
         
         lines.push('');
         
         // fromUniversal method
-        lines.push(`    fromUniversal(universalEntity: Universal${entityName}): ${serviceName}${entityName} {`);
-        lines.push(`        // Extract ${serviceName}-specific data if available`);
-        lines.push(`        const serviceData = universalEntity.serviceData.${serviceName.toLowerCase()} || {};`);
-        lines.push(`        return {`);
-        lines.push(`            // Use original service data when available`);
-        lines.push(`            ...serviceData,`);
-        lines.push(`            // Ensure universal fields are mapped back`);
-        lines.push(`            id: universalEntity.id,`);
-        lines.push(`            // Map entity-specific fields to ${serviceName} format`);
-        lines.push(`            ...this.mapFromUniversalFields(universalEntity),`);
-        lines.push(`        } as ${serviceName}${entityName};`);
-        lines.push(`    }`);
+        lines.push(
+            `    fromUniversal(universalEntity: Universal${entityName}): ${serviceName}${entityName} {`,
+            `        // Extract ${serviceName}-specific data if available`,
+            `        const serviceData = universalEntity.serviceData.${serviceName.toLowerCase()} || {};`,
+            `        return {`,
+            `            // Use original service data when available`,
+            `            ...serviceData,`,
+            `            // Ensure universal fields are mapped back`,
+            `            id: universalEntity.id,`,
+            `            // Map entity-specific fields to ${serviceName} format`,
+            `            ...this.mapFromUniversalFields(universalEntity),`,
+            `        } as ${serviceName}${entityName};`,
+            `    }`
+        );
         
         lines.push('');
         
         // validate method
-        lines.push(`    validate(entity: unknown): entity is ${serviceName}${entityName} {`);
-        lines.push(`        // Implement comprehensive validation`);
-        lines.push(`        try {`);
-        lines.push(`            if (!entity || typeof entity !== 'object') return false;`);
-        lines.push(`            const obj = entity as Record<string, any>;`);
-        lines.push(`            // Validate required ID field`);
-        lines.push(`            if (!obj.id || typeof obj.id !== 'string') return false;`);
-        lines.push(`            // Add additional ${serviceName}-specific validation here`);
-        lines.push(`            return true;`);
-        lines.push(`        } catch {`);
-        lines.push(`            return false;`);
-        lines.push(`        }`);
-        lines.push(`    }`);
+        lines.push(
+            `    validate(entity: unknown): entity is ${serviceName}${entityName} {`,
+            `        // Implement comprehensive validation`,
+            `        try {`,
+            `            if (!entity || typeof entity !== 'object') return false;`,
+            `            const obj = entity as Record<string, any>;`,
+            `            // Validate required ID field`,
+            `            if (!obj.id || typeof obj.id !== 'string') return false;`,
+            `            // Add additional ${serviceName}-specific validation here`,
+            `            return true;`,
+            `        } catch {`,
+            `            return false;`,
+            `        }`,
+            `    }`
+        );
         
         lines.push('');
         
         // getNamespace method
-        lines.push(`    getNamespace(): ServiceNamespace {`);
-        lines.push(`        return '${serviceName.toLowerCase()}';`);
-        lines.push(`    }`);
-        
-        lines.push('}');
+        lines.push(
+            `    getNamespace(): ServiceNamespace {`,
+            `        return '${serviceName.toLowerCase()}';`,
+            `    }`,
+            '}'
+        );
         
         return lines.join('\n');
     }

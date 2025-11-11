@@ -71,7 +71,7 @@ export class BridgeCommand extends BaseCommand {
         }
     ];
 
-    private registry: DefaultBridgeRegistry;
+    private readonly registry: DefaultBridgeRegistry;
 
     constructor(logger?: Logger, eventManager?: EventManager) {
         super(logger, eventManager);
@@ -90,7 +90,7 @@ export class BridgeCommand extends BaseCommand {
             const parsedBridges = JSON.parse(bridges) as Bridge[];
             parsedBridges.forEach(bridge => this.registry.register(bridge));
         } catch (error) {
-            // No bridges loaded yet
+            // No bridges loaded yet - first time initialization or bridges file doesn't exist
         }
     }
 
@@ -184,8 +184,8 @@ export class BridgeCommand extends BaseCommand {
             mappings: JSON.parse(options.mappings),
             transformations: JSON.parse(options.transformations),
             metadata: {
-                efficiency: 1.0,
-                confidence: 1.0,
+                efficiency: 1,
+                confidence: 1,
                 lastUpdated: new Date()
             }
         };

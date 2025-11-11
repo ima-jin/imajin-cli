@@ -28,10 +28,10 @@ import { CommonOptions } from '../utils/commonOptions.js';
 import { generateTaskId } from '../utils/secureRandom.js';
 
 export class TaskManagementCommands {
-  private contextManager: BusinessContextManager;
-  private lifecycleWorkflow: TaskLifecycleWorkflow;
-  private validationWorkflow: TaskValidationWorkflow;
-  private logger: Logger;
+  private readonly contextManager: BusinessContextManager;
+  private readonly lifecycleWorkflow: TaskLifecycleWorkflow;
+  private readonly validationWorkflow: TaskValidationWorkflow;
+  private readonly logger: Logger;
 
   constructor() {
     this.contextManager = new BusinessContextManager();
@@ -202,7 +202,9 @@ export class TaskManagementCommands {
       if (!result.success) {
         this.logger.error('Task creation workflow failed', undefined, { taskId, errors: result.errors });
         console.error(chalk.red('❌ Task creation failed:'));
-        result.errors?.forEach(error => console.error(chalk.red(`  • ${error}`)));
+        for (const error of result.errors ?? []) {
+          console.error(chalk.red(`  • ${error}`));
+        }
         process.exit(1);
       }
 
@@ -264,16 +266,16 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
         // Table format
         console.log(chalk.blue(`\n📋 Tasks (${filteredTasks.length} found):`));
         console.log('');
-        
-        filteredTasks.forEach(task => {
+
+        for (const task of filteredTasks) {
           const statusColor = this.getStatusColor(task.status);
           const priorityColor = this.getPriorityColor(task.priority);
-          
+
           console.log(`${statusColor(task.status.padEnd(12))} ${priorityColor(task.priority.padEnd(8))} ${task.id.padEnd(15)} ${task.title}`);
           if (task.assignee) {
             console.log(`${' '.padEnd(12)} ${' '.padEnd(8)} ${' '.padEnd(15)} → ${chalk.gray('Assignee:')} ${task.assignee}`);
           }
-        });
+        }
       }
 
     } catch (error) {
@@ -310,7 +312,9 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
       if (!result.success) {
         this.logger?.error('Status transition workflow failed', undefined, { taskId, oldStatus, newStatus, errors: result.errors });
         console.error(chalk.red('❌ Status transition failed:'));
-        result.errors?.forEach(error => console.error(chalk.red(`  • ${error}`)));
+        for (const error of result.errors ?? []) {
+          console.error(chalk.red(`  • ${error}`));
+        }
         process.exit(1);
       }
 
@@ -356,27 +360,27 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
 
       if (validation.errors.length > 0) {
         console.log(chalk.red('\n❌ Errors:'));
-        validation.errors.forEach(error => {
+        for (const error of validation.errors) {
           console.log(chalk.red(`  • [${error.severity}] ${error.message}`));
-        });
+        }
       }
 
       if (validation.warnings.length > 0) {
         console.log(chalk.yellow('\n⚠️  Warnings:'));
-        validation.warnings.forEach(warning => {
+        for (const warning of validation.warnings) {
           console.log(chalk.yellow(`  • ${warning.message}`));
           if (warning.suggestion) {
             console.log(chalk.gray(`    Suggestion: ${warning.suggestion}`));
           }
-        });
+        }
       }
 
       if (validation.suggestions.length > 0) {
         console.log(chalk.blue('\n💡 Enhancement Suggestions:'));
-        validation.suggestions.forEach(suggestion => {
+        for (const suggestion of validation.suggestions) {
           console.log(chalk.blue(`  • [${suggestion.type}] ${suggestion.description}`));
           console.log(chalk.gray(`    Impact: ${suggestion.impact}, Effort: ${suggestion.effort}`));
-        });
+        }
       }
 
       // Update validation status
@@ -422,9 +426,9 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
       
       if (enhanced.enhancementSuggestions && enhanced.enhancementSuggestions.length > 0) {
         console.log(chalk.blue('\n💡 Applied enhancements:'));
-        enhanced.enhancementSuggestions.forEach(suggestion => {
+        for (const suggestion of enhanced.enhancementSuggestions) {
           console.log(chalk.blue(`  • ${suggestion}`));
-        });
+        }
       }
 
     } catch (error) {
@@ -519,7 +523,9 @@ updates.assignee = options.assignee;
       if (!result.success) {
         this.logger?.error('Task update workflow failed', undefined, { taskId, errors: result.errors });
         console.error(chalk.red('❌ Task update failed:'));
-        result.errors?.forEach(error => console.error(chalk.red(`  • ${error}`)));
+        for (const error of result.errors ?? []) {
+          console.error(chalk.red(`  • ${error}`));
+        }
         process.exit(1);
       }
 
@@ -561,17 +567,17 @@ updates.assignee = options.assignee;
       } else {
         // Table format
         console.log('\n📊 Validation Summary:');
-        Object.entries(results).forEach(([taskId, result]) => {
+        for (const [taskId, result] of Object.entries(results)) {
           const statusIcon = result.valid ? chalk.green('✅') : chalk.red('❌');
           const task = tasks.find(t => t.id === taskId);
           console.log(`${statusIcon} ${taskId.padEnd(15)} ${task?.title || 'Unknown'}`);
-          
+
           if (!result.valid && result.errors.length > 0) {
-            result.errors.slice(0, 2).forEach(error => {
+            for (const error of result.errors.slice(0, 2)) {
               console.log(`   ${chalk.red('↳')} ${error.message}`);
-            });
+            }
           }
-        });
+        }
       }
 
     } catch (error) {

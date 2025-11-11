@@ -128,7 +128,7 @@ export class CustomerCommands {
                     } : undefined;
 
                     const result = await this.stripeService.listCustomers({
-                        limit: parseInt(options.limit),
+                        limit: Number.parseInt(options.limit),
                         email: options.email,
                         created: Object.keys(createdFilter).length > 0 ? createdFilter : undefined,
                     }, progressCallback);
@@ -137,8 +137,9 @@ export class CustomerCommands {
                         console.log(JSON.stringify(result, null, 2));
                     } else {
                         console.log(chalk.green(`📋 Retrieved ${result.customers.length} customers`));
-                        
-                        result.customers.forEach((customerResponse: any, index: number) => {
+
+                        for (let index = 0; index < result.customers.length; index++) {
+                            const customerResponse = result.customers[index];
                             const customer = customerResponse.customer;
                             console.log(chalk.cyan(`\n${index + 1}. ${customer.id}`));
                             console.log(`   Email: ${customer.email}`);
@@ -149,7 +150,7 @@ console.log(`   Name: ${customer.name}`);
 console.log(`   Phone: ${customer.phone}`);
 }
                             console.log(`   Created: ${customer.created.toISOString()}`);
-                        });
+                        }
 
                         if (result.hasMore) {
                             console.log(chalk.yellow('\n📄 More customers available. Use --limit to retrieve more.'));
@@ -208,9 +209,9 @@ console.log(chalk.cyan(`Phone: ${customer.phone}`));
 
                         if (customer.metadata && Object.keys(customer.metadata).length > 0) {
                             console.log(chalk.yellow('\n🏷️  Metadata:'));
-                            Object.entries(customer.metadata).forEach(([key, value]: [string, any]) => {
+                            for (const [key, value] of Object.entries(customer.metadata)) {
                                 console.log(`   ${key}: ${value}`);
-                            });
+                            }
                         }
                     }
 

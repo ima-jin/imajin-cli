@@ -10,11 +10,11 @@
  * @since       2025-06-13
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { Bridge, BridgeRegistry } from './index.js';
 
 export class DefaultBridgeRegistry extends EventEmitter implements BridgeRegistry {
-    private bridges = new Map<string, Bridge>();
+    private readonly bridges: Map<string, Bridge> = new Map();
 
     constructor() {
         super();

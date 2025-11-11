@@ -34,7 +34,7 @@ export function generateSecureRandomString(length: number = 9): string {
     // Convert to base36 (0-9, a-z) and take required length
     return bytes
         .toString('base64')
-        .replace(/[^a-z0-9]/gi, '')
+        .replaceAll(/[^a-z0-9]/gi, '')
         .toLowerCase()
         .substring(0, length);
 }

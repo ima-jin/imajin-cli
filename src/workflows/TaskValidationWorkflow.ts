@@ -16,8 +16,8 @@
  * - Integrate with task lifecycle management
  */
 
-import { readFile, readdir } from 'fs/promises';
-import { join } from 'path';
+import { readFile, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { TaskEntity } from '../commands/TaskMigrationCommand.js';
 
 export interface TaskValidationResult {
@@ -74,9 +74,7 @@ export class TaskValidationWorkflow {
     };
 
     // Ensure we have codebase analysis
-    if (!this.codebaseAnalysis) {
-      this.codebaseAnalysis = await this.analyzeCodebase();
-    }
+    this.codebaseAnalysis ??= await this.analyzeCodebase();
 
     // Validate dependencies
     await this.validateDependencies(task, result);
@@ -388,9 +386,9 @@ export class TaskValidationWorkflow {
     ];
 
     for (const pattern of assumptionPatterns) {
-      const matches = description.match(pattern);
-      if (matches) {
-        assumptions.push(...matches.map(match => match.trim()));
+      let match;
+      while ((match = pattern.exec(description)) !== null) {
+        assumptions.push(match[0].trim());
       }
     }
 
@@ -414,7 +412,7 @@ export class TaskValidationWorkflow {
   private async checkDependencyExists(depId: string): Promise<boolean> {
     // In a real implementation, this would check the actual task storage
     // For now, return true for known task patterns
-    return depId.match(/^task-\d+[a-z]*$/) !== null;
+    return /^task-\d+[a-z]*$/.exec(depId) !== null;
   }
 
   private async checkCircularDependency(taskId: string, depId: string): Promise<boolean> {

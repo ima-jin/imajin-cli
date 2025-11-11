@@ -35,7 +35,7 @@ export interface LogContext {
 
 export class Logger {
     private logger!: winston.Logger; // Using definite assignment assertion
-    private config: LoggerConfig;
+    private readonly config: LoggerConfig;
     private correlationId: string;
 
     constructor(config: Partial<LoggerConfig> = {}) {
@@ -48,7 +48,7 @@ export class Logger {
         const transports: winston.transport[] = [];
 
         // Add configured transports
-        this.config.transports.forEach(transportConfig => {
+        for (const transportConfig of this.config.transports) {
             switch (transportConfig.type) {
                 case 'console':
                     transports.push(new winston.transports.Console({
@@ -87,7 +87,7 @@ export class Logger {
                     }
                     break;
             }
-        });
+        }
 
         // Add monitoring transport if enabled
         if (this.config.monitoring?.enabled) {

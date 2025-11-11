@@ -72,7 +72,7 @@ export class BusinessContextProcessor {
     private readonly businessPatterns: Map<string, BusinessPattern> = new Map();
     private readonly entityPatterns: Map<string, EntityPattern> = new Map();
     private readonly workflowPatterns: Map<string, WorkflowPattern> = new Map();
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(logger?: Logger) {
         this.recipeManager = new RecipeManager();
@@ -662,7 +662,7 @@ export class BusinessContextProcessor {
 
     private generateWorkflowCommandForEntity(entityName: string, workflow: any, domain: BusinessDomainModel): CommandDefinition | null {
         // Generate commands based on workflow steps that involve this entity
-        const workflowName = workflow.name.toLowerCase().replace(/\s+/g, '-');
+        const workflowName = workflow.name.toLowerCase().replaceAll(/\s+/g, '-');
         const entityFields = domain.entities[entityName]?.fields || [];
         
         // Create workflow command for this entity

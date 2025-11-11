@@ -16,7 +16,7 @@
  * - Service provider error handling
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { BaseException } from '../exceptions/BaseException.js';
 import { SystemError } from '../exceptions/SystemError.js';
 import { ValidationError } from '../exceptions/ValidationError.js';
@@ -47,7 +47,7 @@ export class ErrorHandler extends EventEmitter {
     private options: ErrorHandlerOptions;
     private errorHistory: ErrorReport[] = [];
     private readonly maxHistorySize = 100;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(options: Partial<ErrorHandlerOptions> = {}) {
         super();
@@ -157,7 +157,7 @@ export class ErrorHandler extends EventEmitter {
  * Extract file path from error message
  */
     private extractPathFromError(message: string): string {
-        const match = message.match(/ENOENT: no such file or directory, open '([^']+)'/);
+        const match = /ENOENT: no such file or directory, open '([^']+)'/.exec(message);
         return match?.[1] ?? 'unknown file';
     }
 
@@ -290,7 +290,13 @@ export class ErrorHandler extends EventEmitter {
                 console.log('✅ Operation succeeded on retry');
                 return true;
             } catch (retryError) {
-                this.logger.warn('Retry attempt failed', { attempt, maxAttempts, errorCode: error.code });
+                // Retry attempt failed - log and continue if attempts remain
+                this.logger.warn('Retry attempt failed', {
+                    attempt,
+                    maxAttempts,
+                    errorCode: error.code,
+                    retryError: retryError instanceof Error ? retryError.message : String(retryError)
+                });
                 if (attempt === maxAttempts) {
                     this.logger.error('All retry attempts failed', error);
                     console.log('❌ All retry attempts failed');

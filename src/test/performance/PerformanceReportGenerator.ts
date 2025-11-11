@@ -39,7 +39,7 @@ export interface ReportGenerationConfig {
  */
 export class PerformanceReportGenerator {
     private benchmarks: PerformanceBenchmarks;
-    private config: ReportGenerationConfig;
+    private readonly config: ReportGenerationConfig;
 
     constructor(benchmarks: PerformanceBenchmarks, config: ReportGenerationConfig) {
         this.benchmarks = benchmarks;
@@ -685,7 +685,7 @@ return true;
     private formatTimestamp(timestamp: string): string {
         return new Date(timestamp)
             .toISOString()
-            .replace(/[:.]/g, '-')
+            .replaceAll(/[:.]/g, '-')
             .replace('T', '_')
             .split('.')[0] || '';
     }

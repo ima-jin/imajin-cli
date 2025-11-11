@@ -17,9 +17,9 @@
  */
 
 import { Command } from 'commander';
-import { readFile, readdir, writeFile, mkdir } from 'fs/promises';
-import { join, basename, extname } from 'path';
-import { homedir } from 'os';
+import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
+import { join, basename, extname } from 'node:path';
+import { homedir } from 'node:os';
 import * as yaml from 'js-yaml';
 import chalk from 'chalk';
 import type { Logger } from '../logging/Logger.js';
@@ -65,7 +65,7 @@ export interface MigrationResult {
 export class TaskMigrationCommand {
   private readonly contextDir: string;
   private readonly projectManagementDir: string;
-  private logger: Logger | null = null;
+  private readonly logger: Logger | null = null;
 
   constructor() {
     this.contextDir = join(homedir(), '.imajin', 'contexts');
@@ -78,7 +78,7 @@ export class TaskMigrationCommand {
         this.logger = container.resolve('logger') as Logger;
       }
     } catch (error) {
-      // Logger not available yet
+      // Logger not available yet - intentionally ignored during initialization
     }
   }
 
@@ -398,7 +398,8 @@ export class TaskMigrationCommand {
       const matches = body.match(pattern);
       if (matches) {
         dependencies.push(...matches.map(match => {
-          const taskId = match.match(/(\d+[a-z]{0,5})/i)?.[1];
+          const taskIdMatch = /(\d+[a-z]{0,5})/i.exec(match);
+          const taskId = taskIdMatch?.[1];
           return taskId ? `task-${taskId.toLowerCase()}` : match;
         }));
       }
@@ -495,13 +496,13 @@ continue;
       // Extract text after the keyword (up to next newline or 100 chars)
       const startPos = index + term.length;
       const endOfLine = body.indexOf('\n', startPos);
-      const endPos = endOfLine !== -1 ? Math.min(endOfLine, startPos + 100) : startPos + 100;
+      const endPos = endOfLine > -1 ? Math.min(endOfLine, startPos + 100) : startPos + 100;
       const candidate = body.slice(startPos, endPos).trim();
 
       if (candidate.length > 0 && candidate.length < 100) {
         // Extract up to first sentence/period
         const periodIndex = candidate.indexOf('.');
-        const effort = periodIndex !== -1 ? candidate.slice(0, periodIndex) : candidate;
+        const effort = periodIndex > -1 ? candidate.slice(0, periodIndex) : candidate;
         return effort.trim();
       }
     }
@@ -519,12 +520,12 @@ continue;
 
       // Simple number extraction (no regex at all)
       const tokens = beforeUnit.trim().split(' ').filter(t => t.length > 0);
-      const lastToken = tokens[tokens.length - 1];
+      const lastToken = tokens.at(-1);
 
       // Check if last token is a number (integer or decimal) without regex
       if (lastToken) {
-        const parsed = parseFloat(lastToken);
-        if (!isNaN(parsed) && parsed > 0 && parsed < 10000) {
+        const parsed = Number.parseFloat(lastToken);
+        if (!Number.isNaN(parsed) && parsed > 0 && parsed < 10000) {
           return `${lastToken} ${unit}`;
         }
       }
@@ -575,9 +576,9 @@ continue;
     ];
 
     for (const pattern of tagPatterns) {
-      const matches = body.match(pattern);
-      if (matches) {
-        tags.push(...matches);
+      let match;
+      while ((match = pattern.exec(body)) !== null) {
+        tags.push(match[0]);
       }
     }
 
@@ -587,7 +588,7 @@ continue;
   private extractIdFromFilename(filePath: string): string {
     const filename = basename(filePath, extname(filePath));
     // Use bounded quantifier to avoid ReDoS vulnerability
-    const match = filename.match(/task-(.{1,100})/);
+    const match = /task-(.{1,100})/.exec(filename);
     return match ? `task-${match[1]}` : filename;
   }
 
@@ -609,7 +610,7 @@ errors.push('Task title is required');
     // Dependency validation (basic - could be enhanced)
     // Use bounded quantifier to avoid ReDoS vulnerability
     for (const depId of task.dependencies) {
-      if (!depId.match(/^task-\d+[a-z]{0,5}$/)) {
+      if (!/^task-\d+[a-z]{0,5}$/.exec(depId)) {
         warnings.push(`Dependency ID format may be invalid: ${depId}`);
       }
     }
@@ -650,18 +651,18 @@ errors.push('Task title is required');
     const failed = result.results.filter(r => r.status !== 'success');
     if (failed.length > 0) {
       console.log(chalk.red('\n❌ Failed Tasks:'));
-      failed.forEach(task => {
+      for (const task of failed) {
         console.log(chalk.red(`  • ${task.taskId}: ${task.error || task.errors?.join(', ')}`));
-      });
+      }
     }
 
     // Show warnings
     const withWarnings = result.results.filter(r => r.warnings && r.warnings.length > 0);
     if (withWarnings.length > 0) {
       console.log(chalk.yellow('\n⚠️  Warnings:'));
-      withWarnings.forEach(task => {
+      for (const task of withWarnings) {
         console.log(chalk.yellow(`  • ${task.taskId}: ${task.warnings?.join(', ')}`));
-      });
+      }
     }
   }
 
@@ -872,7 +873,7 @@ updateData.updateNotes = options.notes;
       'deferred': '⏸️'
     };
     
-    Object.entries(statusCounts).forEach(([status, count]) => {
+    for (const [status, count] of Object.entries(statusCounts)) {
       const emoji = statusEmojis[status as keyof typeof statusEmojis] || '❓';
       const taskList = allTasks
         .filter(task => task.status === status)
@@ -880,9 +881,9 @@ updateData.updateNotes = options.notes;
         .map(task => task.id.toUpperCase())
         .join(', ');
       const truncated = count > 3 ? '...' : '';
-      
+
       console.log(`│ ${emoji} ${status.padEnd(10)} │ ${count.toString().padEnd(5)} │ ${(taskList + truncated).padEnd(34)} │`);
-    });
+    }
     
     console.log('└─────────────┴───────┴────────────────────────────────────┘');
     
@@ -905,8 +906,8 @@ updateData.updateNotes = options.notes;
   private displayTaskTable(tasks: TaskEntity[]): void {
     console.log('\nTask ID'.padEnd(15) + 'Status'.padEnd(12) + 'Priority'.padEnd(10) + 'Title');
     console.log('─'.repeat(80));
-    
-    tasks.forEach(task => {
+
+    for (const task of tasks) {
       const statusEmoji = {
         'completed': '✅',
         'in_progress': '🔄',
@@ -914,14 +915,14 @@ updateData.updateNotes = options.notes;
         'blocked': '🚫',
         'deferred': '⏸️'
       }[task.status] || '❓';
-      
+
       console.log(
-        task.id.toUpperCase().padEnd(15) + 
-        `${statusEmoji} ${task.status}`.padEnd(12) + 
-        task.priority.padEnd(10) + 
+        task.id.toUpperCase().padEnd(15) +
+        `${statusEmoji} ${task.status}`.padEnd(12) +
+        task.priority.padEnd(10) +
         task.title.substring(0, 40)
       );
-    });
+    }
   }
 
   private async findTaskFile(sourcePath: string, taskId: string): Promise<string | null> {

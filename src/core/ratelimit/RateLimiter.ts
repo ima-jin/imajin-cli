@@ -15,7 +15,7 @@
  * - API manager for request coordination
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { injectable } from 'tsyringe';
 import { FixedWindowStrategy } from './strategies/FixedWindowStrategy.js';
 import { RateLimitStrategy } from './strategies/RateLimitStrategy.js';

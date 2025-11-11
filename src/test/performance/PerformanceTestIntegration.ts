@@ -282,9 +282,9 @@ export class PerformanceTestUtils {
      */
     static setupJestEnvironment(_config?: PerformanceTestSuiteConfig): void {
         // Global Jest setup
-        const originalDescribe = global.describe;
-        
-        (global.describe as any) = function(name: string, fn: () => void) {
+        const originalDescribe = globalThis.describe;
+
+        (globalThis.describe as any) = function(name: string, fn: () => void) {
             return originalDescribe(`${name} [Performance]`, fn);
         };
 

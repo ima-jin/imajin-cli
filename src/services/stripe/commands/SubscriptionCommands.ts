@@ -171,7 +171,7 @@ export class SubscriptionCommands {
                     } : undefined;
 
                     const result = await this.stripeService.listSubscriptions({
-                        limit: parseInt(options.limit),
+                        limit: Number.parseInt(options.limit),
                         customer: options.customer,
                         status: options.status as 'active' | 'canceled' | 'incomplete' | 'past_due' | 'trialing' | 'unpaid',
                     }, progressCallback);
@@ -180,14 +180,15 @@ export class SubscriptionCommands {
                         console.log(JSON.stringify(result, null, 2));
                     } else {
                         console.log(chalk.green(`📱 Retrieved ${result.subscriptions.length} subscriptions`));
-                        
-                        result.subscriptions.forEach((subscriptionResponse: any, index: number) => {
+
+                        for (let index = 0; index < result.subscriptions.length; index++) {
+                            const subscriptionResponse = result.subscriptions[index];
                             const subscription = subscriptionResponse.subscription;
                             console.log(chalk.cyan(`\n${index + 1}. ${subscription.id}`));
                             console.log(`   Customer: ${subscription.customerId}`);
                             console.log(`   Status: ${subscription.status}`);
                             console.log(`   Period: ${subscription.currentPeriodStart.toISOString()} - ${subscription.currentPeriodEnd.toISOString()}`);
-                        });
+                        }
 
                         if (result.hasMore) {
                             console.log(chalk.yellow('\n📄 More subscriptions available. Use --limit to retrieve more.'));

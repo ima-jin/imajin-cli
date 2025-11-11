@@ -129,7 +129,7 @@ export class EnvironmentProvider extends BaseCredentialProvider {
 
             return credentialKeys
                 .map(key => key.replace(`${this.envPrefix}_`, '').toLowerCase())
-                .map(service => service.replace(/_/g, '-'));
+                .map(service => service.replaceAll(/_/g, '-'));
         } catch (error) {
             this.logger.debug(`Failed to list credentials from environment: ${error}`);
             return [];
