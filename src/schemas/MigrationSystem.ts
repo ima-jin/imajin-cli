@@ -292,7 +292,6 @@ return;
 
         const pathParts = transform.path.split('.');
         const fieldName = pathParts.at(-1);
-
         if (fieldName && fieldName in data) {
             delete data[fieldName];
         }
