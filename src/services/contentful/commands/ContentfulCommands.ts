@@ -77,7 +77,7 @@ export function createContentfulCommands(): Command {
     try {
         const container = globalThis.imajinApp?.container || new Container();
         logger = container.resolve('logger') as Logger;
-    } catch (error) {
+    } catch {
         // Logger not available yet - intentionally ignored during initialization, commands will handle gracefully
     }
 

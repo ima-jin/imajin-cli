@@ -207,7 +207,7 @@ export class WebhookTestCommand extends BaseCommand {
             try {
                 const customHeaders = JSON.parse(options.headers);
                 Object.assign(headers, customHeaders);
-            } catch (error) {
+            } catch {
                 // Invalid JSON headers provided - log warning and use defaults
                 this.warn('Invalid JSON headers provided, using defaults');
             }
@@ -324,7 +324,7 @@ export class WebhookTestCommand extends BaseCommand {
 
         if (result.testResults.length > 0) {
             console.log('Handler Results:');
-            result.testResults.forEach((testResult: any, index: number) => {
+            for (const [index, testResult] of (result.testResults as any[]).entries()) {
                 const status = testResult.status === 'success' ? '✅' : '❌';
                 console.log(`  ${index + 1}. ${status} ${testResult.status.toUpperCase()}`);
                 if (testResult.handler) {
@@ -334,7 +334,7 @@ export class WebhookTestCommand extends BaseCommand {
                     console.log(`     Error: ${testResult.error}`);
                 }
                 console.log(`     Time: ${testResult.timestamp}`);
-            });
+            }
         } else {
             console.log('No handler results recorded.');
         }

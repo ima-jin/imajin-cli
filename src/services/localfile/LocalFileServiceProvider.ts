@@ -27,7 +27,7 @@ import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class LocalFileServiceProvider extends ServiceProvider {
     private localFileService?: LocalFileService;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(container: Container, program: Command) {
         super(container, program);

@@ -43,7 +43,7 @@ export interface RecoveryResult {
  * Error recovery system that attempts to automatically recover from failures
  */
 export class ErrorRecovery extends EventEmitter {
-    private recoveryHistory: Map<string, RecoveryResult[]> = new Map();
+    private readonly recoveryHistory: Map<string, RecoveryResult[]> = new Map();
     private readonly maxHistoryPerError = 10;
     private readonly logger: Logger;
 
@@ -372,7 +372,7 @@ return 0;
     public getStatistics(): Record<string, any> {
         const stats: Record<string, any> = {};
 
-        this.recoveryHistory.forEach((history, errorCode) => {
+        for (const [errorCode, history] of this.recoveryHistory) {
             const total = history.length;
             const successful = history.filter(r => r.success).length;
             const methods = [...new Set(history.map(r => r.method))];
@@ -384,7 +384,7 @@ return 0;
                 methods,
                 lastAttempt: history.at(-1)?.message
             };
-        });
+        }
 
         return stats;
     }

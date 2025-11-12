@@ -53,10 +53,10 @@ export interface PerformanceMonitorConfig {
  */
 export class PerformanceMonitor extends EventEmitter {
     private readonly config: PerformanceMonitorConfig;
-    private benchmarks: PerformanceBenchmarks;
+    private readonly benchmarks: PerformanceBenchmarks;
     private readonly metricsCollector: PerformanceMetricsCollector;
-    private performanceHistory: Map<string, PerformanceTestResult[]> = new Map();
-    private activeAlerts: Map<string, PerformanceAlert> = new Map();
+    private readonly performanceHistory: Map<string, PerformanceTestResult[]> = new Map();
+    private readonly activeAlerts: Map<string, PerformanceAlert> = new Map();
     private monitoringTimer: NodeJS.Timeout | undefined = undefined;
     private isMonitoring: boolean = false;
 

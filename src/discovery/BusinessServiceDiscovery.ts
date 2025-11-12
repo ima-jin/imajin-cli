@@ -553,7 +553,7 @@ export class BusinessServiceDiscovery {
         return workflows;
     }
 
-    private determineIntegrationComplexity(service: ServiceCapability, businessContext: BusinessDomainModel): 'simple' | 'moderate' | 'complex' {
+    private determineIntegrationComplexity(service: ServiceCapability, _businessContext: BusinessDomainModel): 'simple' | 'moderate' | 'complex' {
         let complexityScore = 0;
         
         // Authentication complexity

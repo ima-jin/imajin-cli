@@ -28,8 +28,8 @@ export class GeneratePluginCommand extends BaseCommand {
     public readonly description = 'Generate a plugin from an OpenAPI specification';
 
     constructor(
-        private generator: PluginGenerator,
-        private credentialManager: CredentialManager,
+        private readonly generator: PluginGenerator,
+        private readonly credentialManager: CredentialManager,
         logger?: Logger
     ) {
         super(logger);
@@ -84,9 +84,9 @@ export class GeneratePluginCommand extends BaseCommand {
             if (options.dryRun) {
                 this.info('Dry run - files not created');
                 this.info('Generated files:');
-                plugin.files.forEach(file => {
+                for (const file of plugin.files) {
                     this.info(`  - ${file.path} (${file.type})`);
-                });
+                }
             } else {
                 const outputDir = options.output || 'plugins';
                 this.info(`Creating plugin files in: ${outputDir}`);
@@ -94,9 +94,9 @@ export class GeneratePluginCommand extends BaseCommand {
                 const createdFiles = await this.generator.createPluginFiles(plugin);
 
                 this.info(`Created ${createdFiles.length} files:`);
-                createdFiles.forEach(file => {
+                for (const file of createdFiles) {
                     this.info(`  - ${file}`);
-                });
+                }
 
                 // Provide setup instructions
                 this.info('\n📋 Next steps:');

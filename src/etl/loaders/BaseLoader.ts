@@ -211,7 +211,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
             }
 
             return true;
-        } catch (error) {
+        } catch {
             // Validation failed - connection or auth error
             return false;
         }

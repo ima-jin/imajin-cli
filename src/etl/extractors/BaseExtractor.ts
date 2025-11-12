@@ -159,8 +159,8 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
         options: AxiosRequestConfig = {},
         _context: ETLContext
     ): Promise<T> {
-        return new Promise((resolve, reject) => {
-            this.requestQueue.push(async () => {
+        return new Promise<T>((resolve, reject) => {
+            void this.requestQueue.push(async () => {
                 try {
                     const response = await this.httpClient.request<T>({
                         url,

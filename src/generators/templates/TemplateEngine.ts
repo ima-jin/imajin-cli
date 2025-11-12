@@ -20,7 +20,7 @@ import Handlebars from 'handlebars';
 import type { TemplateContext } from '../types.js';
 
 export class TemplateEngine {
-    private handlebars: typeof Handlebars;
+    private readonly handlebars: typeof Handlebars;
 
     constructor() {
         this.handlebars = Handlebars.create();

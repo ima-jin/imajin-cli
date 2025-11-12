@@ -50,7 +50,7 @@ export interface SecurityConfig {
 }
 
 export class SecurityMiddleware {
-    private logger: Logger | null;
+    private readonly logger: Logger | null;
 
     constructor(logger?: Logger) {
         this.logger = logger || null;

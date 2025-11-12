@@ -110,10 +110,10 @@ export class ExceptionUtils {
     static groupByCategory(errors: BaseException[]): Record<ErrorCategory, BaseException[]> {
         const groups: Partial<Record<ErrorCategory, BaseException[]>> = {};
 
-        errors.forEach(error => {
+        for (const error of errors) {
             groups[error.category] ??= [];
             groups[error.category]!.push(error);
-        });
+        }
 
         return groups as Record<ErrorCategory, BaseException[]>;
     }

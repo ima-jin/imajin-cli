@@ -38,13 +38,13 @@ export interface LoadedPlugin {
 }
 
 export class PluginManager {
-    private plugins: Map<string, LoadedPlugin> = new Map();
-    private pluginsDirectory: string;
+    private readonly plugins: Map<string, LoadedPlugin> = new Map();
+    private readonly pluginsDirectory: string;
 
     constructor(
-        private commandManager: CommandManager,
-        private container: Container,
-        private logger?: Logger,
+        private readonly commandManager: CommandManager,
+        private readonly container: Container,
+        private readonly logger?: Logger,
         pluginsDir?: string
     ) {
         this.pluginsDirectory = pluginsDir || join(process.cwd(), 'plugins');
@@ -172,7 +172,7 @@ export class PluginManager {
                     }
                 }
             }
-        } catch (error) {
+        } catch {
             this.logger?.warn(`Plugins directory not found: ${this.pluginsDirectory}`);
         }
 

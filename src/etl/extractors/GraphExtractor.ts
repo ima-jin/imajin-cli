@@ -55,7 +55,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
         metadata: z.record(z.string(), z.any())
     }) as z.ZodType<GraphModel>;
 
-    private modelDetectionRules = new Map<string, (data: any) => boolean>();
+    private readonly modelDetectionRules = new Map<string, (data: any) => boolean>();
     private readonly logger: Logger;
 
     constructor() {
@@ -166,7 +166,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
             // Default fallback
             return 'social-commerce';
 
-        } catch (error) {
+        } catch {
             // If detection fails, return default model type
             return 'social-commerce';
         }
@@ -191,7 +191,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
                 translatableTo: ['social-commerce', 'creative-portfolio', 'professional-network', 'community-hub']
             };
 
-        } catch (error) {
+        } catch {
             // Return conservative compatibility on error - no translation available
             return {
                 directCompatible: [],

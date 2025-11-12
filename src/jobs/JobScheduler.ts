@@ -202,8 +202,8 @@ export class JobScheduler extends EventEmitter {
     private checkInterval = 1000; // Check every second
 
     constructor(
-        private defaultQueue?: JobQueue,
-        private eventBus?: EventEmitter
+        private readonly defaultQueue?: JobQueue,
+        private readonly eventBus?: EventEmitter
     ) {
         super();
     }

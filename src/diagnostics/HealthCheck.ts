@@ -72,7 +72,9 @@ export class HealthCheckManager {
      * Register multiple health checks
      */
     public registerChecks(checks: HealthCheck[]): void {
-        checks.forEach(check => this.registerCheck(check));
+        for (const check of checks) {
+            this.registerCheck(check);
+        }
     }
 
     /**
@@ -210,11 +212,7 @@ export class HealthCheckManager {
                 return check?.critical === true;
             });
 
-            if (hasCriticalFailure) {
-                return 'unhealthy';
-            } else {
-                return 'degraded';
-            }
+            return hasCriticalFailure ? 'unhealthy' : 'degraded';
         }
 
         if (statuses.some(status => status === 'degraded')) {

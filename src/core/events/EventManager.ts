@@ -50,7 +50,7 @@ export interface ListenerRegistration {
  */
 export class EventManager {
     private readonly emitter: ImajinEventEmitter;
-    private registrations: Map<string, ListenerRegistration> = new Map();
+    private readonly registrations: Map<string, ListenerRegistration> = new Map();
     private readonly config: Required<EventManagerConfig>;
     private isInitialized: boolean = false;
     private shutdownPromise: Promise<void> | null = null;
@@ -182,7 +182,9 @@ export class EventManager {
             }
         }
 
-        removed.forEach(id => this.registrations.delete(id));
+        for (const id of removed) {
+            this.registrations.delete(id);
+        }
         return removed.length;
     }
 
@@ -358,7 +360,9 @@ export class EventManager {
 
         // Unregister all listeners
         const registrationIds = Array.from(this.registrations.keys());
-        registrationIds.forEach(id => this.unregisterListener(id));
+        for (const id of registrationIds) {
+            this.unregisterListener(id);
+        }
 
         // Remove all event emitter listeners
         this.emitter.removeAllListeners();

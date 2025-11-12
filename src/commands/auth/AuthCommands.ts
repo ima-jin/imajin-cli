@@ -27,8 +27,8 @@ import { Logger } from '../../logging/Logger.js';
 import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class AuthCommands {
-    private credentialManager: CredentialManager;
-    private logger: Logger;
+    private readonly credentialManager: CredentialManager;
+    private readonly logger: Logger;
 
     constructor(credentialManager: CredentialManager, logger: Logger) {
         this.credentialManager = credentialManager;

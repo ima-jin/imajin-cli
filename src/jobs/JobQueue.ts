@@ -126,9 +126,9 @@ export class JobQueue extends EventEmitter {
     private retryTimer?: NodeJS.Timeout | undefined;
     private rateLimitTokens: number;
     private lastTokenRefill: number;
-    private startTime: Date;
+    private readonly startTime: Date;
 
-    private stats = {
+    private readonly stats = {
         totalProcessed: 0,
         totalProcessingTime: 0
     };

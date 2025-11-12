@@ -286,7 +286,7 @@ export class TypeGenerator {
         
         // Generate Zod schemas
         const zodSchemas = this.generateZodSchema(schema);
-        lines.push(zodSchemas);
+        lines.push('', zodSchemas);
         
         return lines.join('\n');
     }
@@ -306,14 +306,14 @@ export class TypeGenerator {
         const exportLines: string[] = [];
 
         for (const [_schemaName, schema] of schemas.entries()) {
-            for (const entityName of Object.keys(schema.entities)) {
-                exportLines.push(
+            exportLines.push(
+                ...Object.keys(schema.entities).flatMap(entityName => [
                     `export type { ${entityName} };`,
                     `export { ${entityName}Schema };`
-                );
-            }
+                ])
+            );
         }
-        
+
         lines.push(...exportLines);
         
         return lines.join('\n');
@@ -346,13 +346,9 @@ export class TypeGenerator {
             `            // Map entity-specific fields from ${serviceName} format`,
             `            ...this.mapEntitySpecificFields(serviceEntity),`,
             `        } as Universal${entityName};`,
-            `    }`
-        );
-        
-        lines.push('');
-        
-        // fromUniversal method
-        lines.push(
+            `    }`,
+            '',
+            // fromUniversal method
             `    fromUniversal(universalEntity: Universal${entityName}): ${serviceName}${entityName} {`,
             `        // Extract ${serviceName}-specific data if available`,
             `        const serviceData = universalEntity.serviceData.${serviceName.toLowerCase()} || {};`,
@@ -364,13 +360,9 @@ export class TypeGenerator {
             `            // Map entity-specific fields to ${serviceName} format`,
             `            ...this.mapFromUniversalFields(universalEntity),`,
             `        } as ${serviceName}${entityName};`,
-            `    }`
-        );
-        
-        lines.push('');
-        
-        // validate method
-        lines.push(
+            `    }`,
+            '',
+            // validate method
             `    validate(entity: unknown): entity is ${serviceName}${entityName} {`,
             `        // Implement comprehensive validation`,
             `        try {`,
@@ -383,13 +375,9 @@ export class TypeGenerator {
             `        } catch {`,
             `            return false;`,
             `        }`,
-            `    }`
-        );
-        
-        lines.push('');
-        
-        // getNamespace method
-        lines.push(
+            `    }`,
+            '',
+            // getNamespace method
             `    getNamespace(): ServiceNamespace {`,
             `        return '${serviceName.toLowerCase()}';`,
             `    }`,

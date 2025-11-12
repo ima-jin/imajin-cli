@@ -33,7 +33,7 @@ export class MediaCommand {
         this.container = container;
         try {
             this.logger = container.resolve('logger');
-        } catch (error) {
+        } catch {
             // Logger not available - intentionally ignored during initialization
         }
     }
@@ -194,9 +194,9 @@ Examples:
             ];
 
             console.log('\n📁 Assets:');
-            assets.forEach((asset, index) => {
+            for (const [index, asset] of assets.entries()) {
                 console.log(`   ${index + 1}. ${asset.name} (${asset.size}) - ${asset.uploaded}`);
-            });
+            }
 
             console.log(`\n📊 Total: ${assets.length} assets`);
 

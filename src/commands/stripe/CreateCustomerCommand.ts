@@ -38,8 +38,8 @@ export interface CreateCustomerOptions {
 
 export class CreateCustomerCommand {
     constructor(
-        private stripeService: StripeService,
-        private logger: Logger
+        private readonly stripeService: StripeService,
+        private readonly logger: Logger
     ) { }
 
     public register(program: Command): void {
@@ -91,11 +91,11 @@ export class CreateCustomerCommand {
             };
 
             // Remove undefined fields
-            Object.keys(customerData).forEach(key => {
+            for (const key of Object.keys(customerData)) {
                 if (customerData[key] === undefined) {
                     delete customerData[key];
                 }
-            });
+            }
 
             this.logger.info('Creating Stripe customer', { customerData });
 

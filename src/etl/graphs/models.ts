@@ -18,10 +18,8 @@
  */
 
 import { z } from 'zod';
-import type { GraphModel, GraphSchema, CompatibilityMatrix } from '../core/interfaces.js';
-
 // Re-export interfaces needed by other modules
-export type { GraphModel, GraphSchema, CompatibilityMatrix };
+export type { GraphModel, GraphSchema, CompatibilityMatrix } from '../core/interfaces.js';
 
 // Define TranslationMapping interface for business context integration
 export interface TranslationMapping {
@@ -295,8 +293,8 @@ export interface ModelDefinition {
 
 export class ModelRegistry {
     private static instance: ModelRegistry;
-    private models: Map<string, ModelDefinition> = new Map();
-    private versionMap: Map<string, Set<string>> = new Map(); // name -> Set of versions
+    private readonly models: Map<string, ModelDefinition> = new Map();
+    private readonly versionMap: Map<string, Set<string>> = new Map(); // name -> Set of versions
 
     private constructor() {}
 
@@ -336,10 +334,10 @@ return undefined;
 }
 
         const sortedVersions = Array.from(versions).sort();
-        const latestVersion = sortedVersions[sortedVersions.length - 1];
-        if (!latestVersion) {
+        if (sortedVersions.length === 0) {
             return undefined;
         }
+        const latestVersion = sortedVersions[sortedVersions.length - 1]!;
         return this.models.get(`${name}@${latestVersion}`);
     }
 
@@ -379,11 +377,11 @@ return undefined;
 
         // Default validation using schema
         try {
-            Object.entries(model.schema.entities).forEach(([key, schema]) => {
+            for (const [key, schema] of Object.entries(model.schema.entities)) {
                 schema.parse(data[key]);
-            });
+            }
             return Promise.resolve(true);
-        } catch (error) {
+        } catch {
             // Validation failed - return false
             return Promise.resolve(false);
         }
@@ -409,7 +407,7 @@ return undefined;
 
 // Model Factory
 export class ModelFactory {
-    private static registry = ModelRegistry.getInstance();
+    private static readonly registry = ModelRegistry.getInstance();
 
     public static async createModel<T extends GraphModel>(
         type: string,

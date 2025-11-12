@@ -61,7 +61,7 @@ export interface PipelineExecutionState {
  */
 export class Pipeline {
     private readonly events: EventEmitter;
-    private executionStates: Map<string, PipelineExecutionState> = new Map();
+    private readonly executionStates: Map<string, PipelineExecutionState> = new Map();
     private readonly logger: Logger;
 
     constructor() {
@@ -173,10 +173,8 @@ export class Pipeline {
                         if (stepResult.data) {
                             currentData = Array.isArray(stepResult.data) ? stepResult.data : [stepResult.data];
                         }
-                    } else {
-                        if (options.stopOnError !== false) {
-                            throw new Error(`Step '${step.name}' failed: ${stepResult.error?.message}`);
-                        }
+                    } else if (options.stopOnError !== false) {
+                        throw new Error(`Step '${step.name}' failed: ${stepResult.error?.message}`);
                     }
 
                     // Save intermediate results if requested

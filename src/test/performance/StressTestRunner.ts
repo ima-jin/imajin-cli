@@ -54,10 +54,10 @@ export interface ResourceExhaustionConfig {
  * Advanced stress testing capabilities
  */
 export class StressTestRunner {
-    private service: BaseService;
+    private readonly service: BaseService;
     private readonly metricsCollector: PerformanceMetricsCollector;
     private isRunning: boolean = false;
-    private activeTests: Set<string> = new Set();
+    private readonly activeTests: Set<string> = new Set();
 
     constructor(service: BaseService, metricsCollector: PerformanceMetricsCollector) {
         this.service = service;

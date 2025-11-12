@@ -54,7 +54,7 @@ function isNpmLinkMode(): boolean {
     const isInNodeModulesBin = currentPath.includes('node_modules') && currentPath.includes('.bin');
     
     return isSymlinked || (hasPackageJson && isInNodeModulesBin);
-  } catch (error) {
+  } catch {
     // If we can't determine, default to false - filesystem error or permissions issue
     return false;
   }

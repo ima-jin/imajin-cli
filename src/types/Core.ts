@@ -32,8 +32,8 @@ import type { BusinessConfiguration } from '../context/BusinessContextManager.js
  * Registry for dynamically generated business types
  */
 export class BusinessTypeRegistry {
-    private static registeredTypes: Map<string, z.ZodType<any>> = new Map();
-    private static businessDomains: Map<string, BusinessDomainModel> = new Map();
+    private static readonly registeredTypes: Map<string, z.ZodType<any>> = new Map();
+    private static readonly businessDomains: Map<string, BusinessDomainModel> = new Map();
 
     /**
      * Register business domain types from business context
@@ -244,7 +244,7 @@ export async function initializeBusinessTypeSystem(config?: BusinessConfiguratio
             const businessConfig = await manager.getCurrentConfiguration();
             const domainModel = await manager.toDomainModel();
             BusinessTypeRegistry.registerBusinessDomain(domainModel);
-        } catch (error) {
+        } catch {
             // No business context found yet - types will be registered when context is created
             console.warn('⚠️ No business context found. Business types will be registered when context is created.');
             return;
@@ -496,7 +496,7 @@ const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"
  * Schema version manager
  */
 export class SchemaVersionManager {
-    private static currentVersion = '1.0.0';
+    private static readonly currentVersion = '1.0.0';
 
     /**
      * Get current schema version

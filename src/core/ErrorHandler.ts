@@ -344,9 +344,9 @@ export class ErrorHandler extends EventEmitter {
         }
 
         console.log('\n💡 To fix this issue:');
-        error.recoveryStrategy.manualSteps.forEach((step, index) => {
+        for (const [index, step] of error.recoveryStrategy.manualSteps.entries()) {
             console.log(`   ${index + 1}. ${step}`);
-        });
+        }
         console.log('');
     }
 

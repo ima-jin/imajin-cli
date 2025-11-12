@@ -43,7 +43,7 @@ export interface CloudinaryConfig extends ServiceConfig {
 
 export class CloudinaryService extends BaseService {
     private cloudinary: any;
-    private cloudinaryConfig: CloudinaryConfig;
+    private readonly cloudinaryConfig: CloudinaryConfig;
 
     constructor(
         container: Container,

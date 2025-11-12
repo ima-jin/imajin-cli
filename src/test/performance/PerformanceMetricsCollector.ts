@@ -32,7 +32,7 @@ export class PerformanceMetricsCollector {
     private startTime?: number;
     private testName?: string;
     
-    private config: PerformanceMonitoringConfig = {
+    private readonly config: PerformanceMonitoringConfig = {
         collectSystemMetrics: true,
         collectMemoryMetrics: true,
         collectCustomMetrics: true,
@@ -272,7 +272,7 @@ return;
         try {
             // Node.js os.loadavg() returns load averages for 1, 5, and 15 minutes
             return os.loadavg ? os.loadavg() : [0, 0, 0];
-        } catch (error) {
+        } catch {
             // Load average not available on this platform - return zeros
             return [0, 0, 0];
         }

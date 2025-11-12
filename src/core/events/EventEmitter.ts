@@ -51,12 +51,12 @@ export interface ListenerOptions {
  * Enhanced event emitter with type safety and middleware support
  */
 export class ImajinEventEmitter extends NodeEventEmitter {
-    private middleware: EventMiddleware[] = [];
-    private eventListeners: Map<string, Set<IEventListener>> = new Map();
-    private deadLetterQueue: IEvent[] = [];
-    private metrics: EventMetrics = new EventMetrics();
+    private readonly middleware: EventMiddleware[] = [];
+    private readonly eventListeners: Map<string, Set<IEventListener>> = new Map();
+    private readonly deadLetterQueue: IEvent[] = [];
+    private readonly metrics: EventMetrics = new EventMetrics();
     private maxListeners: number = 100;
-    private defaultTimeout: number = 30000; // 30 seconds
+    private readonly defaultTimeout: number = 30000; // 30 seconds
     private readonly logger: Logger;
 
     constructor() {
@@ -301,11 +301,11 @@ export class ImajinEventEmitter extends NodeEventEmitter {
  * Event metrics tracking
  */
 export class EventMetrics {
-    private emissions: Map<string, number> = new Map();
+    private readonly emissions: Map<string, number> = new Map();
     private totalEmissions: number = 0;
     private totalExecutionTime: number = 0;
     private errors: number = 0;
-    private startTime: Date = new Date();
+    private readonly startTime: Date = new Date();
 
     /**
      * Record an event emission

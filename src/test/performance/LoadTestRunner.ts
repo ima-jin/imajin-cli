@@ -30,9 +30,9 @@ import {
  * Executes load and stress tests with concurrent operations
  */
 export class LoadTestRunner {
-    private service: BaseService;
+    private readonly service: BaseService;
     private readonly metricsCollector: PerformanceMetricsCollector;
-    private activeTests: Map<string, boolean> = new Map();
+    private readonly activeTests: Map<string, boolean> = new Map();
 
     constructor(service: BaseService, metricsCollector: PerformanceMetricsCollector) {
         this.service = service;

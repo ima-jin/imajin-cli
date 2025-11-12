@@ -46,7 +46,7 @@ export class StatusCommand {
             if (container) {
                 this.logger = container.resolve('logger') as Logger;
             }
-        } catch (error) {
+        } catch {
             // Logger not available yet - intentionally ignored during initialization
         }
     }
@@ -179,7 +179,7 @@ export class StatusCommand {
                 style: { head: ['cyan'] }
             });
 
-            Object.entries(status.health.checks).forEach(([name, check]: [string, any]) => {
+            for (const [name, check] of Object.entries(status.health.checks) as [string, any][]) {
                 const statusIcon = this.getStatusIcon(check.status);
                 const statusColor = this.getStatusColor(check.status);
                 const details = check.details?.message ?? check.details?.error ?? 'OK';
@@ -196,7 +196,7 @@ export class StatusCommand {
                     `${statusIcon} ${statusColor(check.status)}`,
                     displayDetails
                 ]);
-            });
+            }
 
             console.log(chalk.bold('🔍 Health Checks:'));
             console.log(healthTable.toString());
@@ -218,11 +218,11 @@ export class StatusCommand {
         if (status.alerts && status.alerts.length > 0) {
             console.log(chalk.bold('🚨 Active Alerts:'));
 
-            status.alerts.forEach((alert: any) => {
+            for (const alert of status.alerts as any[]) {
                 const severityColor = this.getSeverityColor(alert.severity);
                 const severityLabel = severityColor(`[${alert.severity.toUpperCase()}]`);
                 console.log(`${severityLabel} ${alert.message}`);
-            });
+            }
             console.log();
         }
 

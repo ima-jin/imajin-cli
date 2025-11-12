@@ -88,14 +88,14 @@ export interface ApiManagerEvents {
  */
 @injectable()
 export class ApiManager extends EventEmitter {
-    private connections = new Map<string, any>();
-    private requestQueues = new Map<string, any[]>();
-    private activeRequests = new Map<string, Set<string>>();
+    private readonly connections = new Map<string, any>();
+    private readonly requestQueues = new Map<string, any[]>();
+    private readonly activeRequests = new Map<string, Set<string>>();
     private requestCounter = 0;
 
     constructor(
-        @inject('RateLimiter') private rateLimiter: RateLimiter,
-        @inject('CircuitBreaker') private circuitBreaker: CircuitBreaker
+        @inject('RateLimiter') private readonly rateLimiter: RateLimiter,
+        @inject('CircuitBreaker') private readonly circuitBreaker: CircuitBreaker
     ) {
         super();
         this.setupHealthChecks();

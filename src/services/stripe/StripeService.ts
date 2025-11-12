@@ -51,7 +51,7 @@ export interface StripeServiceConfig extends ServiceConfig {
 export class StripeService extends BaseService {
     private stripe!: Stripe;
     private businessContext?: BusinessDomainModel;
-    private stripeConfig: StripeServiceConfig;
+    private readonly stripeConfig: StripeServiceConfig;
 
     constructor(
         container: Container,

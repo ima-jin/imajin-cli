@@ -1,13 +1,13 @@
 import { ETLProgress as IETLProgress } from './interfaces.js';
 
 export class ETLProgress implements IETLProgress {
-    readonly stage: 'extract' | 'transform' | 'load';
     readonly step: string;
     readonly processed: number;
     readonly total?: number;
     readonly percentage?: number;
     readonly message?: string;
     readonly data?: any;
+    readonly stage: 'extract' | 'transform' | 'load';
 
     constructor(params: {
         stage: 'extract' | 'transform' | 'load';

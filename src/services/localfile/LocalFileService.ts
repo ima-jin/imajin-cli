@@ -41,7 +41,7 @@ export interface LocalFileConfig extends ServiceConfig {
 }
 
 export class LocalFileService extends BaseService {
-    private localFileConfig: LocalFileConfig;
+    private readonly localFileConfig: LocalFileConfig;
 
     constructor(
         container: Container,

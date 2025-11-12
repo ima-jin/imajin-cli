@@ -34,7 +34,7 @@ export interface BridgeRegistry {
 }
 
 export class DefaultBridgeRegistry implements BridgeRegistry {
-    private bridges: Map<string, Bridge> = new Map();
+    private readonly bridges: Map<string, Bridge> = new Map();
 
     private getBridgeKey(source: string, target: string): string {
         return `${source}:${target}`;

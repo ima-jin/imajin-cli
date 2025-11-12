@@ -274,7 +274,9 @@ export class WebhookManager extends EventEmitter {
         const toKeep = events.slice(-5000);
 
         this.processedEvents.clear();
-        toKeep.forEach(eventId => this.processedEvents.add(eventId));
+        for (const eventId of toKeep) {
+            this.processedEvents.add(eventId);
+        }
 
         this.logger.debug(`Cleaned up processed events`, {
             removed: events.length - toKeep.length,

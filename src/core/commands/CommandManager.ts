@@ -27,7 +27,7 @@ export interface ICommand {
 }
 
 export class CommandManager {
-    private commands: Map<string, ICommand> = new Map();
+    private readonly commands: Map<string, ICommand> = new Map();
     private readonly program: Command;
     private readonly container: Container;
     private readonly logger: Logger;

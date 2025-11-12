@@ -45,7 +45,7 @@ export interface CloudinaryConfig {
 // eslint-disable-next-line deprecation/deprecation
 export class CloudinaryProvider implements MediaProvider {
     public readonly name = 'cloudinary';
-    private config: CloudinaryConfig;
+    private readonly config: CloudinaryConfig;
 
     constructor(config: CloudinaryConfig) {
         this.config = config;

@@ -32,8 +32,8 @@ export interface SimpleHttpClientConfig {
 export class HttpClientSimple extends EventEmitter {
     private client: AxiosInstance;
     private readonly maxRetries: number;
-    private retryDelay: number;
-    private logger: Logger | null;
+    private readonly retryDelay: number;
+    private readonly logger: Logger | null;
 
     constructor(config: SimpleHttpClientConfig = {}, logger?: Logger) {
         super();

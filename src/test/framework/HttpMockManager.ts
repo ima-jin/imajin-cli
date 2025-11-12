@@ -54,8 +54,8 @@ export interface RequestMatcher {
  */
 export class HttpMockManager {
     private requestHistory: HttpRequest[] = [];
-    private mockResponses: Map<string, MockResponse> = new Map();
-    private mockErrors: Map<string, MockError> = new Map();
+    private readonly mockResponses: Map<string, MockResponse> = new Map();
+    private readonly mockErrors: Map<string, MockError> = new Map();
     private interceptors: number[] = [];
     private originalAxios: any;
     private cleanupRegistered: boolean = false;
@@ -153,7 +153,7 @@ export class HttpMockManager {
             if (axios.interceptors?.request) {
                 try {
                     axios.interceptors.request.eject(id);
-                } catch (e) {
+                } catch {
                     // Intentionally ignore errors during cleanup - interceptor may already be ejected
                 }
             }

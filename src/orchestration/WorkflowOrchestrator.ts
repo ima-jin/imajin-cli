@@ -85,10 +85,10 @@ export interface StepResult {
 export type WorkflowStatus = 'running' | 'completed' | 'failed' | 'cancelled';
 
 export class WorkflowOrchestrator extends EventEmitter {
-    private workflows: Map<string, Workflow> = new Map();
-    private executions: Map<string, WorkflowExecution> = new Map();
-    private logger: Logger;
-    private stepProcessors: Map<string, (step: WorkflowStep, context: WorkflowContext) => Promise<StepResult>> = new Map();
+    private readonly workflows: Map<string, Workflow> = new Map();
+    private readonly executions: Map<string, WorkflowExecution> = new Map();
+    private readonly logger: Logger;
+    private readonly stepProcessors: Map<string, (step: WorkflowStep, context: WorkflowContext) => Promise<StepResult>> = new Map();
 
     constructor(logger: Logger) {
         super();

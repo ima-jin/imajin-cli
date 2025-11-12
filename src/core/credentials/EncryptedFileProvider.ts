@@ -324,7 +324,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
             decrypted += decipher.final('utf8');
 
             return decrypted;
-        } catch (error) {
+        } catch {
             // Decryption failed - rethrow with clear message
             throw new Error('Failed to decrypt data. Invalid password or corrupted file.');
         }

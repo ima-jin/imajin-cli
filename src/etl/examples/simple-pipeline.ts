@@ -209,13 +209,13 @@ export async function runSimplePipeline(): Promise<void> {
 
         // Display step details
         console.log('\n📝 Step Details:');
-        result.results.forEach((stepResult, index) => {
+        for (const [index, stepResult] of result.results.entries()) {
             const status = stepResult.success ? '✅' : '❌';
             console.log(`   ${index + 1}. ${status} Processed ${stepResult.processed} items in ${stepResult.duration}ms`);
             if (stepResult.error) {
                 console.log(`      Error: ${stepResult.error.message}`);
             }
-        });
+        }
 
     } catch (error) {
         console.error('\n❌ Pipeline execution failed:', error);

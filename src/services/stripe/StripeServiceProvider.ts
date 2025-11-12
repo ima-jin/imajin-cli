@@ -36,7 +36,7 @@ export class StripeServiceProvider extends ServiceProvider {
     private paymentCommands?: PaymentCommands;
     private subscriptionCommands?: SubscriptionCommands;
     private catalogCommands?: CatalogCommands;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(container: Container, program: Command) {
         super(container, program);

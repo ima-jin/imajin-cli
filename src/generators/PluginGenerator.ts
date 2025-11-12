@@ -36,8 +36,8 @@ import type {
 } from './types.js';
 
 export class DefaultPluginGenerator implements IPluginGenerator {
-    private parser: DefaultOpenAPIParser;
-    private templateEngine: TemplateEngine;
+    private readonly parser: DefaultOpenAPIParser;
+    private readonly templateEngine: TemplateEngine;
 
     constructor(parser?: DefaultOpenAPIParser, templateEngine?: TemplateEngine) {
         this.parser = parser || new DefaultOpenAPIParser();

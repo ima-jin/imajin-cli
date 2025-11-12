@@ -88,8 +88,10 @@ export class BridgeCommand extends BaseCommand {
             const bridgesDir = this.getBridgesDir();
             const bridges = readFileSync(join(bridgesDir, 'bridges.json'), 'utf-8');
             const parsedBridges = JSON.parse(bridges) as Bridge[];
-            parsedBridges.forEach(bridge => this.registry.register(bridge));
-        } catch (error) {
+            for (const bridge of parsedBridges) {
+                this.registry.register(bridge);
+            }
+        } catch {
             // No bridges loaded yet - first time initialization or bridges file doesn't exist
         }
     }

@@ -118,12 +118,12 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
                             // eslint-disable-next-line no-console
                             console.log('  No plugins loaded');
                         } else {
-                            plugins.forEach(plugin => {
+                            for (const plugin of plugins) {
                                 // eslint-disable-next-line no-console
                                 console.log(`  - ${plugin.name} v${plugin.version}: ${plugin.description}`);
                                 // eslint-disable-next-line no-console
                                 console.log(`    Commands: ${plugin.commands.length}`);
-                            });
+                            }
                         }
                     }
                 });

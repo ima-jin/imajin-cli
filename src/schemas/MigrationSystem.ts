@@ -69,7 +69,7 @@ export class MigrationSystem {
                     console.warn(`Failed to load migration file ${file}:`, error);
                 }
             }
-        } catch (error) {
+        } catch {
             // Migrations directory might not exist - that's okay, use built-in migrations
             console.log('No migrations directory found, using built-in migrations');
         }

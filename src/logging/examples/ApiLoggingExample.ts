@@ -20,7 +20,7 @@ import { ApiLogger, LoggerConfig } from '../index.js';
 import { randomBytes } from 'node:crypto';
 
 export class ApiLoggingExample {
-    private logger: ApiLogger;
+    private readonly logger: ApiLogger;
 
     constructor() {
         // Configure logger for API operations

@@ -26,7 +26,7 @@ import { CloudinaryService, type CloudinaryConfig } from './CloudinaryService.js
 
 export class CloudinaryServiceProvider extends ServiceProvider {
     private cloudinaryService?: CloudinaryService;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(container: Container, program: Command) {
         super(container, program);

@@ -38,7 +38,7 @@ export class CreatePaymentCommand {
             if (container) {
                 this.logger = container.resolve('logger') as Logger;
             }
-        } catch (error) {
+        } catch {
             // Logger not available - intentionally ignored during initialization
         }
     }

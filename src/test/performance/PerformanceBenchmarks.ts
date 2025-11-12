@@ -27,7 +27,7 @@ import {
  * Manages performance benchmarks and regression detection
  */
 export class PerformanceBenchmarks {
-    private benchmarks: Map<string, PerformanceBenchmark> = new Map();
+    private readonly benchmarks: Map<string, PerformanceBenchmark> = new Map();
     private readonly thresholds: PerformanceThresholds;
 
     constructor(thresholds?: PerformanceThresholds) {

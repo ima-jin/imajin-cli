@@ -33,7 +33,7 @@ import { WindowsCredentialProvider } from './WindowsCredentialProvider.js';
 export class CredentialManager implements ICredentialManager {
     private providers: CredentialProvider[] = [];
     private activeProvider?: CredentialProvider;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     // Constants for commonly used strings
     private static readonly NO_PROVIDER_MSG = 'No credential provider available';

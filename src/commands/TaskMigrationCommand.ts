@@ -77,7 +77,7 @@ export class TaskMigrationCommand {
       if (container) {
         this.logger = container.resolve('logger') as Logger;
       }
-    } catch (error) {
+    } catch {
       // Logger not available yet - intentionally ignored during initialization
     }
   }
@@ -174,11 +174,11 @@ export class TaskMigrationCommand {
 
       this.displayMigrationResults(result);
 
-      if (!options.dryRun) {
+      if (options.dryRun) {
+        this.logger?.debug('Dry run completed', { totalTasks: result.totalTasks, successful: result.successful, failed: result.failed });
+      } else {
         this.logger?.info('Migration completed', { totalTasks: result.totalTasks, successful: result.successful, failed: result.failed });
         console.log(chalk.green(`✅ Migration completed: ${result.successful}/${result.totalTasks} tasks migrated successfully`));
-      } else {
-        this.logger?.debug('Dry run completed', { totalTasks: result.totalTasks, successful: result.successful, failed: result.failed });
       }
 
     } catch (error) {

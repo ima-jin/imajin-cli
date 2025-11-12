@@ -38,7 +38,7 @@ export interface ReportGenerationConfig {
  * Generates comprehensive performance test reports
  */
 export class PerformanceReportGenerator {
-    private benchmarks: PerformanceBenchmarks;
+    private readonly benchmarks: PerformanceBenchmarks;
     private readonly config: ReportGenerationConfig;
 
     constructor(benchmarks: PerformanceBenchmarks, config: ReportGenerationConfig) {

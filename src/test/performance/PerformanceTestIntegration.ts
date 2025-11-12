@@ -47,8 +47,8 @@ export class PerformanceTestIntegration {
     private benchmarks?: PerformanceBenchmarks;
     private reportGenerator?: PerformanceReportGenerator;
     private stressTestRunner?: StressTestRunner;
-    private results: PerformanceTestResult[] = [];
-    private options: PerformanceTestSuiteOptions;
+    private readonly results: PerformanceTestResult[] = [];
+    private readonly options: PerformanceTestSuiteOptions;
 
     constructor(options: PerformanceTestSuiteOptions) {
         this.options = {

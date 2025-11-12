@@ -168,9 +168,9 @@ export async function runEventSystemExample(): Promise<void> {
     // 7. Show registrations
     console.log('\n--- Registered Listeners ---');
     const registrations = eventManager.getRegistrations();
-    registrations.forEach(reg => {
+    for (const reg of registrations) {
         console.log(`- ${reg.listener.name} (${reg.eventType})`);
-    });
+    }
 
     // 8. Cleanup
     await eventManager.shutdown();

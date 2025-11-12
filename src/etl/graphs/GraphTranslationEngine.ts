@@ -24,7 +24,7 @@ import { ModelFactory } from './models.js';
  * Main graph translation engine
  */
 export class GraphTranslationEngine extends EventEmitter {
-    private translators = new Map<string, GraphTranslator>();
+    private readonly translators = new Map<string, GraphTranslator>();
 
     constructor() {
         super();

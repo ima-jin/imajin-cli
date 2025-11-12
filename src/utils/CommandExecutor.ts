@@ -40,8 +40,8 @@ export interface CommandResult {
 }
 
 export class CommandExecutor {
-    private logger: Logger | undefined;
-    private validateGitCommands: boolean;
+    private readonly logger: Logger | undefined;
+    private readonly validateGitCommands: boolean;
 
     constructor(options: CommandExecutorOptions = {}) {
         this.logger = options.logger;

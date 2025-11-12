@@ -39,7 +39,7 @@ export interface ServiceSchemaType {
 // =============================================================================
 
 export class BusinessModelFactory extends ModelFactory {
-    private static businessDomains: Map<string, BusinessDomainModel> = new Map();
+    private static readonly businessDomains: Map<string, BusinessDomainModel> = new Map();
     private static readonly registeredBusinessModels: Map<string, GraphModel> = new Map();
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
     private static readonly logger: Logger = new (require('../../logging/Logger.js').Logger)({ level: 'debug' });

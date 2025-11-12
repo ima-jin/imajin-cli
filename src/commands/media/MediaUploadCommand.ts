@@ -56,7 +56,7 @@ export class MediaUploadCommand {
         this.mediaProcessor = container.resolve('MediaProcessor');
         try {
             this.logger = container.resolve('logger');
-        } catch (error) {
+        } catch {
             // Logger not available - intentionally ignored during initialization
         }
     }

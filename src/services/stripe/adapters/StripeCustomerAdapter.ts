@@ -34,7 +34,7 @@ export interface StripeCustomer {
  * Adapter for converting between Stripe Customer and Business Context Customer
  */
 export class StripeCustomerAdapter implements ServiceAdapter<StripeCustomer, any> {
-    constructor(private businessContext: BusinessDomainModel) {}
+    constructor(private readonly businessContext: BusinessDomainModel) {}
     
     /**
      * Validate service entity against its schema

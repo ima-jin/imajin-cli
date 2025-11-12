@@ -158,16 +158,16 @@ export class BusinessTypeRegistry {
 
         // Apply validation rules
         if (field.validation) {
-            if (field.validation.min !== undefined && zodType instanceof z.ZodString) {
-                zodType = zodType.min(field.validation.min);
-            } else if (field.validation.min !== undefined && zodType instanceof z.ZodNumber) {
-                zodType = zodType.min(field.validation.min);
+            if (field.validation.min !== undefined) {
+                if (zodType instanceof z.ZodString || zodType instanceof z.ZodNumber) {
+                    zodType = zodType.min(field.validation.min);
+                }
             }
 
-            if (field.validation.max !== undefined && zodType instanceof z.ZodString) {
-                zodType = zodType.max(field.validation.max);
-            } else if (field.validation.max !== undefined && zodType instanceof z.ZodNumber) {
-                zodType = zodType.max(field.validation.max);
+            if (field.validation.max !== undefined) {
+                if (zodType instanceof z.ZodString || zodType instanceof z.ZodNumber) {
+                    zodType = zodType.max(field.validation.max);
+                }
             }
 
             if (field.validation.pattern && zodType instanceof z.ZodString) {

@@ -26,7 +26,7 @@ export interface PromptDefinition {
 
 export class PromptRegistry {
     private static instance: PromptRegistry;
-    private prompts: Map<string, PromptDefinition> = new Map();
+    private readonly prompts: Map<string, PromptDefinition> = new Map();
 
     private constructor() {}
 

@@ -71,7 +71,7 @@ export class GraphTransformer extends BaseTransformer<GraphModel, GraphModel> im
         metadata: z.record(z.string(), z.any())
     });
 
-    private translationEngine: GraphTranslationEngine;
+    private readonly translationEngine: GraphTranslationEngine;
 
     constructor() {
         super();

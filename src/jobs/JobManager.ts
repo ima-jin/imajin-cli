@@ -31,9 +31,9 @@ interface RedisOptions {
 }
 
 export class JobManager extends EventEmitter {
-    private queues: Map<string, Queue> = new Map();
-    private logger: Logger;
-    private redisConfig: RedisOptions;
+    private readonly queues: Map<string, Queue> = new Map();
+    private readonly logger: Logger;
+    private readonly redisConfig: RedisOptions;
 
     constructor(logger: Logger, redisConfig?: RedisOptions) {
         super();
@@ -100,12 +100,12 @@ export class JobManager extends EventEmitter {
     public process<T = any, R = any>(
         queueName: string,
         jobName: string,
-        concurrency: number = 1,
+        concurrency = 1,
         processor: (job: Job<T>) => Promise<R>
     ): void {
         const queue = this.getQueue(queueName);
 
-        void queue.process(jobName, concurrency, async (job: Job<T>) => {
+        void queue.process(jobName, concurrency, async (job: Job<T>): Promise<R> => {
             this.logger.info(`Processing job ${jobName}`, {
                 jobId: job.id,
                 queueName,

@@ -109,14 +109,14 @@ export class WebhookListCommand extends BaseCommand {
         console.log('│ Source          │ Handlers │ Validator   │ Event Types                       │');
         console.log('├─────────────────┼──────────┼─────────────┼───────────────────────────────────┤');
 
-        result.webhooks.forEach((webhook: any) => {
+        for (const webhook of result.webhooks as any[]) {
             const source = webhook.source.padEnd(15).substring(0, 15);
             const handlers = webhook.handlers.toString().padEnd(8);
             const hasValidator = (webhook.hasValidator ? 'Yes' : 'No').padEnd(11);
             const eventTypes = webhook.eventTypes.join(', ').padEnd(35).substring(0, 35);
 
             console.log(`│ ${source} │ ${handlers} │ ${hasValidator} │ ${eventTypes} │`);
-        });
+        }
 
         console.log('└─────────────────┴──────────┴─────────────┴───────────────────────────────────┘');
         console.log('');

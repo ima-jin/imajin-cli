@@ -29,10 +29,10 @@ export interface CommandValidationResult {
 
 export class CommandLimiter {
     private allowedPatterns: string[] = [];
-    private logger: Logger | undefined;
-    private allowedFilePath: string;
+    private readonly logger: Logger | undefined;
+    private readonly allowedFilePath: string;
     private lastLoadTime: number = 0;
-    private cacheTimeMs: number = 5000; // 5 seconds cache
+    private readonly cacheTimeMs: number = 5000; // 5 seconds cache
 
     constructor(logger?: Logger) {
         this.logger = logger;
@@ -106,8 +106,8 @@ export class CommandLimiter {
         // Convert pattern to regex
         // Replace * with .* for wildcard matching
         const regexPattern = pattern
-            .replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
-            .replaceAll('\\*', '.*'); // Convert \* back to .*
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
+            .replace(/\\\*/g, '.*'); // Convert \* back to .*
 
         const regex = new RegExp(`^${regexPattern}$`, 'i');
         return regex.test(command);

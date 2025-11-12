@@ -72,9 +72,9 @@ export interface RateLimiterEvents {
  */
 @injectable()
 export class RateLimiter extends EventEmitter {
-    private strategies = new Map<string, RateLimitStrategy>();
-    private configs = new Map<string, RateLimitConfig>();
-    private violations = new Map<string, RateLimitViolation[]>();
+    private readonly strategies = new Map<string, RateLimitStrategy>();
+    private readonly configs = new Map<string, RateLimitConfig>();
+    private readonly violations = new Map<string, RateLimitViolation[]>();
 
     constructor() {
         super();

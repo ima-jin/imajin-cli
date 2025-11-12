@@ -42,7 +42,7 @@ export function createBusinessContextCommands(): Command {
         if (container) {
             logger = container.resolve('logger') as Logger;
         }
-    } catch (error) {
+    } catch {
         // Logger not available yet - intentionally ignored during initialization
     }
 
@@ -649,7 +649,7 @@ export async function ensureBusinessContext(): Promise<void> {
         if (container) {
             logger = container.resolve('logger') as Logger;
         }
-    } catch (error) {
+    } catch {
         // Logger not available yet - intentionally ignored during initialization
     }
 

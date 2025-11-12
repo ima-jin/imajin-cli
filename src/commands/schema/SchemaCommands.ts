@@ -41,7 +41,7 @@ export function registerSchemaCommands(program: Command): void {
         if (container) {
             logger = container.resolve('logger') as Logger;
         }
-    } catch (error) {
+    } catch {
         // Logger not available yet - intentionally ignored during initialization
     }
 

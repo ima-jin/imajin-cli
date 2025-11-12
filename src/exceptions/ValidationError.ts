@@ -96,7 +96,7 @@ return 'Input validation failed';
             return ['Check input validation requirements'];
         }
 
-        details.forEach(detail => {
+        for (const detail of details) {
             if (detail.allowedValues && detail.allowedValues.length > 0) {
                 steps.push(`Set '${detail.field}' to one of: ${detail.allowedValues.join(', ')}`);
             } else if (detail.expectedType) {
@@ -106,7 +106,7 @@ return 'Input validation failed';
             } else {
                 steps.push(`Check the value for '${detail.field}'`);
             }
-        });
+        }
 
         return steps;
     }

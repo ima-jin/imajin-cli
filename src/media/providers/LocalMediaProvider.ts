@@ -47,7 +47,7 @@ export interface LocalProviderConfig {
 // eslint-disable-next-line deprecation/deprecation
 export class LocalMediaProvider implements MediaProvider {
     public readonly name = 'local';
-    private config: LocalProviderConfig;
+    private readonly config: LocalProviderConfig;
 
     constructor(config: LocalProviderConfig) {
         this.config = config;
@@ -482,7 +482,7 @@ throw error;
                     }
                 }
             }
-        } catch (error) {
+        } catch {
             // Directory might not exist or be accessible - return accumulated files
         }
 

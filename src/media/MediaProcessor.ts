@@ -36,9 +36,9 @@ import { ExceptionUtils } from '../exceptions/index.js';
 import { ValidationError } from '../exceptions/ValidationError.js';
 
 export class MediaProcessor extends EventEmitter {
-    private config: MediaProcessingConfig;
+    private readonly config: MediaProcessingConfig;
     // eslint-disable-next-line deprecation/deprecation
-    private providers: Map<string, MediaProvider> = new Map();
+    private readonly providers: Map<string, MediaProvider> = new Map();
 
     constructor(config: MediaProcessingConfig) {
         super();

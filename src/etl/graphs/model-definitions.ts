@@ -16,7 +16,7 @@ import { ModelFactory } from './models.js';
 import { GraphSchema } from '../core/interfaces.js';
 
 // Base Entity Schemas - Common to all models
-const BaseEntitySchema = {
+const BaseEntitySchema = z.object({
     id: z.string(),
     name: z.string(),
     description: z.string().optional(),
@@ -24,22 +24,21 @@ const BaseEntitySchema = {
     metadata: z.record(z.string(), z.any()).optional(),
     created: z.date(),
     updated: z.date().optional()
-};
+});
 
-const BaseRelationshipSchema = {
+const BaseRelationshipSchema = z.object({
     sourceId: z.string(),
     targetId: z.string(),
     type: z.string(),
     metadata: z.record(z.string(), z.any()).optional(),
     created: z.date()
-};
+});
 
 // Content Model - For managing various types of content
 const contentModelSchema: GraphSchema = {
     version: '1.0.0',
     entities: {
-        content: z.object({
-            ...BaseEntitySchema,
+        content: BaseEntitySchema.extend({
             type: z.enum(['article', 'post', 'page', 'document', 'media']),
             status: z.enum(['draft', 'published', 'archived']),
             visibility: z.enum(['public', 'private', 'restricted']),
@@ -50,28 +49,23 @@ const contentModelSchema: GraphSchema = {
             language: z.string().default('en'),
             version: z.number().default(1)
         }),
-        category: z.object({
-            ...BaseEntitySchema,
+        category: BaseEntitySchema.extend({
             parentId: z.string().optional(),
             level: z.number().default(0),
             path: z.array(z.string()).default([])
         }),
-        tag: z.object({
-            ...BaseEntitySchema,
+        tag: BaseEntitySchema.extend({
             usageCount: z.number().default(0)
         })
     },
     relationships: {
-        contentCategories: z.object({
-            ...BaseRelationshipSchema,
+        contentCategories: BaseRelationshipSchema.extend({
             type: z.literal('belongs_to')
         }),
-        contentTags: z.object({
-            ...BaseRelationshipSchema,
+        contentTags: BaseRelationshipSchema.extend({
             type: z.literal('tagged_with')
         }),
-        contentVersions: z.object({
-            ...BaseRelationshipSchema,
+        contentVersions: BaseRelationshipSchema.extend({
             type: z.literal('version_of'),
             version: z.number()
         })
@@ -87,23 +81,20 @@ const contentModelSchema: GraphSchema = {
 const interactionModelSchema: GraphSchema = {
     version: '1.0.0',
     entities: {
-        user: z.object({
-            ...BaseEntitySchema,
+        user: BaseEntitySchema.extend({
             email: z.string().email(),
             status: z.enum(['active', 'inactive', 'suspended']),
             preferences: z.record(z.string(), z.any()).optional(),
             lastActive: z.date().optional()
         }),
-        interaction: z.object({
-            ...BaseEntitySchema,
+        interaction: BaseEntitySchema.extend({
             type: z.enum(['like', 'comment', 'share', 'follow', 'view']),
             sourceId: z.string(),
             targetId: z.string(),
             targetType: z.string(),
             value: z.any().optional()
         }),
-        session: z.object({
-            ...BaseEntitySchema,
+        session: BaseEntitySchema.extend({
             userId: z.string(),
             device: z.string().optional(),
             ip: z.string().optional(),
@@ -111,16 +102,13 @@ const interactionModelSchema: GraphSchema = {
         })
     },
     relationships: {
-        userInteractions: z.object({
-            ...BaseRelationshipSchema,
+        userInteractions: BaseRelationshipSchema.extend({
             type: z.literal('performed')
         }),
-        userSessions: z.object({
-            ...BaseRelationshipSchema,
+        userSessions: BaseRelationshipSchema.extend({
             type: z.literal('has_session')
         }),
-        userRelationships: z.object({
-            ...BaseRelationshipSchema,
+        userRelationships: BaseRelationshipSchema.extend({
             type: z.literal('related_to'),
             relationshipType: z.string()
         })
@@ -135,8 +123,7 @@ const interactionModelSchema: GraphSchema = {
 const assetModelSchema: GraphSchema = {
     version: '1.0.0',
     entities: {
-        asset: z.object({
-            ...BaseEntitySchema,
+        asset: BaseEntitySchema.extend({
             type: z.enum(['image', 'video', 'audio', 'document', 'other']),
             mimeType: z.string(),
             size: z.number(),
@@ -152,20 +139,17 @@ const assetModelSchema: GraphSchema = {
                 duration: z.number().optional()
             }).optional()
         }),
-        collection: z.object({
-            ...BaseEntitySchema,
+        collection: BaseEntitySchema.extend({
             type: z.string(),
             ownerId: z.string(),
             visibility: z.enum(['public', 'private', 'restricted'])
         })
     },
     relationships: {
-        assetCollections: z.object({
-            ...BaseRelationshipSchema,
+        assetCollections: BaseRelationshipSchema.extend({
             type: z.literal('belongs_to')
         }),
-        assetVersions: z.object({
-            ...BaseRelationshipSchema,
+        assetVersions: BaseRelationshipSchema.extend({
             type: z.literal('version_of'),
             version: z.number()
         })
@@ -235,8 +219,7 @@ const socialCommerceSchema: GraphSchema = {
     version: '1.0.0',
     entities: {
         // Extends content model for products
-        product: z.object({
-            ...BaseEntitySchema,
+        product: BaseEntitySchema.extend({
             type: z.literal('product'),
             price: z.number(),
             currency: z.string().default('USD'),
@@ -253,8 +236,7 @@ const socialCommerceSchema: GraphSchema = {
             })).optional()
         }),
         // Extends content model for services
-        service: z.object({
-            ...BaseEntitySchema,
+        service: BaseEntitySchema.extend({
             type: z.literal('service'),
             pricing: z.object({
                 type: z.enum(['hourly', 'fixed', 'subscription']),
@@ -268,8 +250,7 @@ const socialCommerceSchema: GraphSchema = {
             })
         }),
         // Extends interaction model for transactions
-        transaction: z.object({
-            ...BaseEntitySchema,
+        transaction: BaseEntitySchema.extend({
             type: z.literal('transaction'),
             amount: z.number(),
             currency: z.string().default('USD'),
@@ -285,16 +266,13 @@ const socialCommerceSchema: GraphSchema = {
     },
     relationships: {
         // Extends base relationships
-        productCategories: z.object({
-            ...BaseRelationshipSchema,
+        productCategories: BaseRelationshipSchema.extend({
             type: z.literal('categorized_as')
         }),
-        serviceCategories: z.object({
-            ...BaseRelationshipSchema,
+        serviceCategories: BaseRelationshipSchema.extend({
             type: z.literal('categorized_as')
         }),
-        userTransactions: z.object({
-            ...BaseRelationshipSchema,
+        userTransactions: BaseRelationshipSchema.extend({
             type: z.literal('purchased'),
             role: z.enum(['buyer', 'seller'])
         })

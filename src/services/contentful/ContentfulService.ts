@@ -59,7 +59,7 @@ export class ContentfulService extends BaseService {
     private client: any;
     private previewClient?: any;
     private managementClient?: any;
-    private contentfulConfig: ContentfulConfig;
+    private readonly contentfulConfig: ContentfulConfig;
 
     constructor(
         container: Container,

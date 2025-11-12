@@ -52,7 +52,7 @@ export class GraphLoader extends BaseLoader<GraphModel> implements IGraphLoader 
         metadata: z.record(z.string(), z.any())
     });
 
-    private conflictResolutionStrategies = new Map<string, (existing: any, incoming: any) => any>();
+    private readonly conflictResolutionStrategies = new Map<string, (existing: any, incoming: any) => any>();
 
     constructor() {
         super();
@@ -273,13 +273,11 @@ export class GraphLoader extends BaseLoader<GraphModel> implements IGraphLoader 
 
                 if (result.success && result.data) {
                     results.push(...result.data);
-                } else {
+                } else if (config.conflictResolution === 'error') {
                     // Handle loading failure based on conflict resolution
-                    if (config.conflictResolution === 'error') {
-                        throw new Error(`Failed to load graph ${i}: ${result.error?.message}`);
-                    }
-                    // Skip failed loads for 'skip' strategy, continue for 'overwrite'
+                    throw new Error(`Failed to load graph ${i}: ${result.error?.message}`);
                 }
+                // Skip failed loads for 'skip' strategy, continue for 'overwrite'
             }
 
             return {
