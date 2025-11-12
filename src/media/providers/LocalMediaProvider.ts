@@ -20,10 +20,11 @@
  * - URL generation for local serving
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 
+// eslint-disable-next-line deprecation/deprecation
 import type {
     ListOptions,
     MediaAsset,
@@ -43,6 +44,7 @@ export interface LocalProviderConfig {
     maxFileSize: number;
 }
 
+// eslint-disable-next-line deprecation/deprecation
 export class LocalMediaProvider implements MediaProvider {
     public readonly name = 'local';
     private config: LocalProviderConfig;
@@ -317,7 +319,7 @@ throw error;
                     const stats = await fs.stat(filePath);
 
                     // Extract asset ID from filename (assuming format: name_id.ext)
-                    const match = fileName.match(/_([a-f0-9]{8})\./);
+                    const match = /_([a-f0-9]{8})\./.exec(fileName);
                     const assetId = match ? match[1] : fileName;
 
                     const relativePath = path.relative(this.config.storagePath, filePath);
@@ -471,7 +473,7 @@ throw error;
                 }
             }
         } catch (error) {
-            // Directory might not exist or be accessible
+            // Directory might not exist or be accessible - return accumulated files
         }
 
         return files;

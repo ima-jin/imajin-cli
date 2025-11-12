@@ -62,7 +62,7 @@ export abstract class BaseCredentialProvider implements CredentialProvider {
      * Normalize service name for consistent storage
      */
     protected normalizeServiceName(service: string): string {
-        return service.toLowerCase().replace(/[^a-z0-9-_]/g, '_');
+        return service.toLowerCase().replaceAll(/[^a-z0-9-_]/g, '_');
     }
 
     /**

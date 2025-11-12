@@ -126,10 +126,8 @@ export class PerformanceMetricsCollector {
         if (!this.config.collectCustomMetrics) {
 return;
 }
-        
-        if (!this.customMetrics[name]) {
-            this.customMetrics[name] = [];
-        }
+
+        this.customMetrics[name] ??= [];
         
         this.customMetrics[name].push(value);
         
@@ -275,6 +273,7 @@ return;
             // Node.js os.loadavg() returns load averages for 1, 5, and 15 minutes
             return os.loadavg ? os.loadavg() : [0, 0, 0];
         } catch (error) {
+            // Load average not available on this platform - return zeros
             return [0, 0, 0];
         }
     }

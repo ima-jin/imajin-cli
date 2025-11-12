@@ -38,7 +38,7 @@ return '';
 }
             // Handle camelCase, kebab-case, snake_case, and space-separated words
             return str
-                .replace(/([a-z])([A-Z])/g, '$1 $2') // Split camelCase
+                .replaceAll(/([a-z])([A-Z])/g, '$1 $2') // Split camelCase
                 .split(/[-_\s]+/) // Split on separators
                 .filter(word => word.length > 0) // Remove empty strings
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -61,9 +61,9 @@ return '';
 return '';
 }
             return str
-                .replace(/([a-z])([A-Z])/g, '$1-$2')
+                .replaceAll(/([a-z])([A-Z])/g, '$1-$2')
                 .toLowerCase()
-                .replace(/[_\s]+/g, '-');
+                .replaceAll(/[_\s]+/g, '-');
         });
 
         this.handlebars.registerHelper('snakeCase', (str: string) => {
@@ -71,9 +71,9 @@ return '';
 return '';
 }
             return str
-                .replace(/([a-z])([A-Z])/g, '$1_$2')
+                .replaceAll(/([a-z])([A-Z])/g, '$1_$2')
                 .toLowerCase()
-                .replace(/[-\s]+/g, '_');
+                .replaceAll(/[-\s]+/g, '_');
         });
 
         this.handlebars.registerHelper('upperCase', (str: string) => {
@@ -169,7 +169,7 @@ return '';
 }
                         // Handle camelCase, kebab-case, snake_case, and space-separated words
                         return str
-                            .replace(/([a-z])([A-Z])/g, '$1 $2') // Split camelCase
+                            .replaceAll(/([a-z])([A-Z])/g, '$1 $2') // Split camelCase
                             .split(/[-_\s]+/) // Split on separators
                             .filter(word => word.length > 0) // Remove empty strings
                             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -190,18 +190,18 @@ return '';
 return '';
 }
                         return str
-                            .replace(/([a-z])([A-Z])/g, '$1-$2')
+                            .replaceAll(/([a-z])([A-Z])/g, '$1-$2')
                             .toLowerCase()
-                            .replace(/[_\s]+/g, '-');
+                            .replaceAll(/[_\s]+/g, '-');
                     },
                     snakeCase: (str: string) => {
                         if (!str) {
 return '';
 }
                         return str
-                            .replace(/([a-z])([A-Z])/g, '$1_$2')
+                            .replaceAll(/([a-z])([A-Z])/g, '$1_$2')
                             .toLowerCase()
-                            .replace(/[-\s]+/g, '_');
+                            .replaceAll(/[-\s]+/g, '_');
                     },
                     upperCase: (str: string) => str ? str.toUpperCase() : '',
                     lowerCase: (str: string) => str ? str.toLowerCase() : '',

@@ -20,7 +20,7 @@
  */
 
 import Stripe from 'stripe';
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../../container/Container.js';
 import { BaseService } from '../BaseService.js';
 import type { ServiceConfig } from '../interfaces/ServiceInterface.js';

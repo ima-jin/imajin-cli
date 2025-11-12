@@ -24,9 +24,9 @@ import { RecipeManager } from '../context/RecipeManager.js';
 import type { Logger } from '../logging/Logger.js';
 
 export class ContextCommands {
-  private contextManager: BusinessContextManager;
-  private recipeManager: RecipeManager;
-  private logger: Logger | null = null;
+  private readonly contextManager: BusinessContextManager;
+  private readonly recipeManager: RecipeManager;
+  private readonly logger: Logger | null = null;
 
   constructor() {
     this.contextManager = new BusinessContextManager();
@@ -39,7 +39,7 @@ export class ContextCommands {
         this.logger = container.resolve('logger') as Logger;
       }
     } catch (error) {
-      // Logger not available yet
+      // Logger not available yet - intentionally ignored during initialization
     }
   }
 
@@ -183,7 +183,9 @@ export class ContextCommands {
         console.error(chalk.red(`❌ Recipe "${recipeName}" not found`));
         console.log(chalk.gray('Available recipes:'));
         const recipes = await this.recipeManager.listRecipes();
-        recipes.forEach(r => console.log(chalk.gray(`  • ${r.businessType}: ${r.description}`)));
+        for (const r of recipes) {
+          console.log(chalk.gray(`  • ${r.businessType}: ${r.description}`));
+        }
         process.exit(1);
       }
 
@@ -320,10 +322,10 @@ export class ContextCommands {
           if (entities.length === 0) {
             console.log(chalk.gray('  No entities found'));
           } else {
-            entities.forEach((entity: any) => {
+            for (const entity of entities) {
               const title = entity.title || entity.name || entity.id || 'Untitled';
               console.log(chalk.white(`  • ${entity.id}: ${title}`));
-            });
+            }
           }
         }
         this.logger?.info('context entities command completed', { contextName, entityTypes: typesToShow, totalEntities });
@@ -354,7 +356,7 @@ export class ContextCommands {
         console.log(chalk.blue(`\n📚 Available Recipes (${recipes.length} found):`));
         console.log('');
 
-        recipes.forEach(recipe => {
+        for (const recipe of recipes) {
           const emoji = recipe.display?.emoji || '📋';
           const subCode = recipe.display?.subCode || recipe.businessType;
 
@@ -366,7 +368,7 @@ export class ContextCommands {
             console.log(chalk.gray(`   Entities: ${recipe.context.primaryEntities.join(', ')}`));
           }
           console.log('');
-        });
+        }
       }
 
     } catch (error) {

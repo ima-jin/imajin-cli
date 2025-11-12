@@ -344,7 +344,7 @@ export class CredentialManager implements ICredentialManager {
         // Validate expiration date if present
         if (credentials.expiresAt) {
             const expiresAt = new Date(credentials.expiresAt);
-            if (isNaN(expiresAt.getTime())) {
+            if (Number.isNaN(expiresAt.getTime())) {
                 throw new Error('expiresAt must be a valid date');
             }
         }

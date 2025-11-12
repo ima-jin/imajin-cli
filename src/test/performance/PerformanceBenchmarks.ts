@@ -28,7 +28,7 @@ import {
  */
 export class PerformanceBenchmarks {
     private benchmarks: Map<string, PerformanceBenchmark> = new Map();
-    private thresholds: PerformanceThresholds;
+    private readonly thresholds: PerformanceThresholds;
 
     constructor(thresholds?: PerformanceThresholds) {
         this.thresholds = thresholds || this.getDefaultThresholds();
@@ -87,25 +87,25 @@ return [];
 
         const regressions: RegressionAnalysis[] = [];
 
-        // Check average response time
-        regressions.push(this.analyzeMetric(
-            result.testName,
-            'averageResponseTime',
-            result.statistics.average,
-            benchmark.averageResponseTime,
-            this.thresholds.responseTime.warning,
-            this.thresholds.responseTime.critical
-        ));
-
-        // Check max response time
-        regressions.push(this.analyzeMetric(
-            result.testName,
-            'maxResponseTime',
-            result.statistics.max,
-            benchmark.maxResponseTime,
-            this.thresholds.responseTime.warning * 1.5,
-            this.thresholds.responseTime.critical * 1.5
-        ));
+        // Check average response time and max response time
+        regressions.push(
+            this.analyzeMetric(
+                result.testName,
+                'averageResponseTime',
+                result.statistics.average,
+                benchmark.averageResponseTime,
+                this.thresholds.responseTime.warning,
+                this.thresholds.responseTime.critical
+            ),
+            this.analyzeMetric(
+                result.testName,
+                'maxResponseTime',
+                result.statistics.max,
+                benchmark.maxResponseTime,
+                this.thresholds.responseTime.warning * 1.5,
+                this.thresholds.responseTime.critical * 1.5
+            )
+        );
 
         // Check throughput (lower is worse)
         if (result.systemMetrics?.throughput && benchmark.throughput > 0) {
@@ -241,9 +241,9 @@ return false;
             : 0;
 
         // Better if error rate is lower
-        const errorRateImprovement = result.systemMetrics?.errorRate !== undefined
-            ? (benchmark.errorRate - result.systemMetrics.errorRate) / Math.max(benchmark.errorRate, 0.001)
-            : 0;
+        const errorRateImprovement = result.systemMetrics?.errorRate === undefined
+            ? 0
+            : (benchmark.errorRate - result.systemMetrics.errorRate) / Math.max(benchmark.errorRate, 0.001);
 
         // Consider it better if we have significant improvement in any area
         return responseTimeImprovement > 0.1 || // 10% faster

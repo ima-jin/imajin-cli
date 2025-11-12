@@ -42,7 +42,7 @@ export function registerSchemaCommands(program: Command): void {
             logger = container.resolve('logger') as Logger;
         }
     } catch (error) {
-        // Logger not available yet
+        // Logger not available yet - intentionally ignored during initialization
     }
 
     const schemaCmd = program

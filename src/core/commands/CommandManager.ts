@@ -28,9 +28,9 @@ export interface ICommand {
 
 export class CommandManager {
     private commands: Map<string, ICommand> = new Map();
-    private program: Command;
-    private container: Container;
-    private logger: Logger;
+    private readonly program: Command;
+    private readonly container: Container;
+    private readonly logger: Logger;
 
     constructor(program: Command, container: Container) {
         this.program = program;
@@ -50,7 +50,7 @@ export class CommandManager {
             .description(command.description)
             .action(async (...args) => {
                 try {
-                    await command.execute(args.slice(0, -1), args[args.length - 1]);
+                    await command.execute(args.slice(0, -1), args.at(-1));
                 } catch (error) {
                     this.logger.error('Command failed', error instanceof Error ? error : new Error(String(error)), { commandName: command.name });
                     process.exit(1);

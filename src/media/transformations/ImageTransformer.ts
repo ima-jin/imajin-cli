@@ -262,11 +262,11 @@ export class ImageTransformer {
                 'webp': 0.7,  // WebP is typically 30% smaller
                 'avif': 0.5,  // AVIF is typically 50% smaller
                 'jpeg': 0.8,  // JPEG compression
-                'png': 1.0,   // PNG is lossless, size may vary
+                'png': 1,   // PNG is lossless, size may vary
                 'gif': 0.9    // GIF has limited colors
             };
 
-            const ratio = compressionRatios[params.format] || 1.0;
+            const ratio = compressionRatios[params.format] || 1;
             transformedAsset.size = Math.round(asset.size * ratio);
         }
 

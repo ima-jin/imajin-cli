@@ -75,6 +75,8 @@ export class CreateCustomerCommand {
                 try {
                     metadata = JSON.parse(options.metadata);
                 } catch (error) {
+                    // JSON parsing failed - rethrow with clear error message
+                    this.logger.warn('Failed to parse metadata JSON', { metadata: options.metadata, error: error instanceof Error ? error.message : String(error) });
                     throw new Error('Invalid metadata JSON format');
                 }
             }

@@ -11,7 +11,7 @@
  * @updated      2025-07-03
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import {
     ETLContext,
     GraphModel,
@@ -60,7 +60,7 @@ export class GraphTranslationEngine extends EventEmitter {
                     translationMap: {},
                     lossyFields: [],
                     addedFields: [],
-                    confidence: 1.0,
+                    confidence: 1,
                     metadata: {
                         translationType: 'direct',
                         duration: Date.now() - startTime
@@ -188,14 +188,14 @@ export class GraphTranslationEngine extends EventEmitter {
      */
     getEfficiency(sourceModel: string, targetModel: string): number {
         if (sourceModel === targetModel) {
-return 1.0;
+return 1;
 }
 
         const translatorKey = `${sourceModel}->${targetModel}`;
         const translator = this.translators.get(translatorKey);
 
         if (!translator) {
-            return 0.0;
+            return 0;
         }
 
         return translator.getEfficiencyScore(sourceModel, targetModel);

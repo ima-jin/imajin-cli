@@ -17,7 +17,7 @@
  * - Retry mechanisms with exponential backoff
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { randomBytes } from 'node:crypto';
 import { BaseEvent, EventMetadata } from '../core/events/Event.js';
 
@@ -185,7 +185,7 @@ export abstract class BaseJob extends EventEmitter implements Job {
      */
     private generateId(): string {
         return `${this.type}_${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`;
     }
 

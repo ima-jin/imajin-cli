@@ -18,7 +18,7 @@
  * - Distributed processing capabilities
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { EventPriority } from '../core/events/Event.js';
 import { Job, JobCompletedEvent, JobExecutionResult, JobFailedEvent, JobProgressEvent, JobStartedEvent } from './Job.js';
 import { JobQueue } from './JobQueue.js';

@@ -315,11 +315,11 @@ export class ServiceLayerProvider extends ServiceProvider {
                 }, null, 2));
             } else {
                 console.log(`\n📋 Registered Services (${services.length}):\n`);
-                services.forEach(service => {
+                for (const service of services) {
                     const status = service.getStatus();
                     const statusIcon = this.getStatusIcon(status);
                     console.log(`  ${statusIcon} ${service.getName()} (v${service.getVersion()}) - ${status}`);
-                });
+                }
             }
         } catch (error) {
             console.error('❌ Failed to list services:', error);
@@ -354,9 +354,9 @@ export class ServiceLayerProvider extends ServiceProvider {
                     console.log(JSON.stringify({ success: true, data: healthReport }, null, 2));
                 } else {
                     console.log('\n🏥 Service Health Report:\n');
-                    Object.values(healthReport).forEach(health => {
+                    for (const health of Object.values(healthReport)) {
                         this.displayServiceHealth(health);
-                    });
+                    }
                 }
             }
         } catch (error) {
@@ -433,12 +433,12 @@ export class ServiceLayerProvider extends ServiceProvider {
             }, null, 2));
         } else {
             console.log(`\n🏭 Available Service Types (${filteredDefinitions.length}):\n`);
-            filteredDefinitions.forEach(def => {
+            for (const def of filteredDefinitions) {
                 console.log(`  📦 ${def.name} - ${def.description || 'No description'}`);
                 if (def.category) {
                     console.log(`      Category: ${def.category}`);
                 }
-            });
+            }
         }
     }
 
@@ -461,9 +461,9 @@ export class ServiceLayerProvider extends ServiceProvider {
             }, null, 2));
         } else {
             console.log(`\n🎯 Registered Strategies (${strategies.length}):\n`);
-            strategies.forEach(strategy => {
+            for (const strategy of strategies) {
                 console.log(`  🔥 ${strategy.getName()} (Priority: ${strategy.getPriority()})`);
-            });
+            }
         }
     }
 
@@ -486,10 +486,10 @@ export class ServiceLayerProvider extends ServiceProvider {
         console.log(`   Operations: ${health.metrics.operationsCount}`);
         console.log(`   Errors: ${health.metrics.errorsCount}`);
         if (health.checks.length > 0) {
-            health.checks.forEach((check: any) => {
+            for (const check of health.checks) {
                 const checkIcon = check.healthy ? '✅' : '❌';
                 console.log(`   ${checkIcon} ${check.name}: ${check.message || 'OK'}`);
-            });
+            }
         }
         console.log('');
     }

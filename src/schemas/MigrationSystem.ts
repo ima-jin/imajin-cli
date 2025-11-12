@@ -70,7 +70,7 @@ export class MigrationSystem {
                 }
             }
         } catch (error) {
-            // Migrations directory might not exist - that's okay
+            // Migrations directory might not exist - that's okay, use built-in migrations
             console.log('No migrations directory found, using built-in migrations');
         }
 
@@ -90,8 +90,8 @@ export class MigrationSystem {
             // For .js/.ts files, we would use dynamic import
             // For now, provide a fallback structure
             const fileName = path.basename(filePath, path.extname(filePath));
-            const versionMatch = fileName.match(/(\d+\.\d+\.\d+)_to_(\d+\.\d+\.\d+)/);
-            
+            const versionMatch = /(\d+\.\d+\.\d+)_to_(\d+\.\d+\.\d+)/.exec(fileName);
+
             if (versionMatch && versionMatch[1] && versionMatch[2]) {
                 return {
                     id: fileName,
@@ -218,9 +218,9 @@ export class MigrationSystem {
         if (!data || typeof data !== 'object') {
 return data;
 }
-        
+
         const pathParts = transform.path.split('.');
-        const fieldName = pathParts[pathParts.length - 1];
+        const fieldName = pathParts.at(-1);
         
         if (transform.oldValue && transform.newValue && fieldName && fieldName in data) {
             data[transform.newValue] = data[transform.oldValue];
@@ -237,9 +237,9 @@ return data;
         if (!data || typeof data !== 'object') {
 return data;
 }
-        
+
         const pathParts = transform.path.split('.');
-        const fieldName = pathParts[pathParts.length - 1];
+        const fieldName = pathParts.at(-1);
         
         if (fieldName && fieldName in data && transform.newValue) {
             // Perform type conversion based on new type
@@ -269,9 +269,9 @@ return data;
         if (!data || typeof data !== 'object') {
 return data;
 }
-        
+
         const pathParts = transform.path.split('.');
-        const fieldName = pathParts[pathParts.length - 1];
+        const fieldName = pathParts.at(-1);
         
         if (fieldName && !(fieldName in data)) {
             data[fieldName] = transform.defaultValue;
@@ -287,9 +287,9 @@ return data;
         if (!data || typeof data !== 'object') {
 return data;
 }
-        
+
         const pathParts = transform.path.split('.');
-        const fieldName = pathParts[pathParts.length - 1];
+        const fieldName = pathParts.at(-1);
         
         if (fieldName && fieldName in data) {
             delete data[fieldName];

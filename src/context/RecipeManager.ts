@@ -17,8 +17,8 @@
  * - Template fallback system for reliability
  */
 
-import { readFile, readdir } from 'fs/promises';
-import { join } from 'path';
+import { readFile, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { BusinessDomainModel } from './BusinessContextProcessor.js';
 import type { Logger } from '../logging/Logger.js';
 
@@ -57,7 +57,7 @@ export interface ContextView {
 
 export class RecipeManager {
     private readonly recipesDir: string;
-    private logger: Logger | undefined;
+    private readonly logger: Logger | undefined;
 
     constructor(logger?: Logger) {
         // Use absolute path resolution to avoid import.meta.url issues
@@ -87,7 +87,8 @@ recipes.push(recipe);
         } catch (error) {
             // No recipes directory found - return empty array
             this.logger?.warn('No recipes directory found', {
-                recipesDir: this.recipesDir
+                recipesDir: this.recipesDir,
+                error: error instanceof Error ? error.message : String(error)
             });
             return [];
         }
@@ -103,6 +104,10 @@ recipes.push(recipe);
             return JSON.parse(content);
         } catch (error) {
             // No recipe file found - return null
+            this.logger?.debug('Recipe file not found', {
+                businessType,
+                error: error instanceof Error ? error.message : String(error)
+            });
             return null;
         }
     }

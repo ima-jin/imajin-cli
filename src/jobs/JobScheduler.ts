@@ -18,7 +18,7 @@
  * - Cron-like scheduling expressions
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { BaseEvent, EventMetadata, EventPriority } from '../core/events/Event.js';
 import { Job, JobMetadata } from './Job.js';
 import { JobQueue } from './JobQueue.js';
@@ -144,14 +144,14 @@ class CronParser {
         }
 
         if (field.includes(',')) {
-            return field.split(',').map(f => parseInt(f.trim(), 10));
+            return field.split(',').map(f => Number.parseInt(f.trim(), 10));
         }
 
         if (field.includes('/')) {
             const parts = field.split('/');
             const range = parts[0] || '*';
             const stepStr = parts[1] || '1';
-            const stepNum = parseInt(stepStr, 10);
+            const stepNum = Number.parseInt(stepStr, 10);
             const values = [];
 
             if (range === '*') {
@@ -167,12 +167,12 @@ class CronParser {
             const parts = field.split('-');
             const startStr = parts[0] || '0';
             const endStr = parts[1] || '0';
-            const start = parseInt(startStr, 10);
-            const end = parseInt(endStr, 10);
+            const start = Number.parseInt(startStr, 10);
+            const end = Number.parseInt(endStr, 10);
             return Array.from({ length: end - start + 1 }, (_, i) => start + i);
         }
 
-        return [parseInt(field, 10)];
+        return [Number.parseInt(field, 10)];
     }
 
     /**
@@ -196,7 +196,7 @@ class CronParser {
  * Job scheduler with cron-like functionality
  */
 export class JobScheduler extends EventEmitter {
-    private schedules: Map<string, ScheduledJob> = new Map();
+    private readonly schedules: Map<string, ScheduledJob> = new Map();
     private schedulerTimer?: NodeJS.Timeout | undefined;
     private isRunning = false;
     private checkInterval = 1000; // Check every second

@@ -16,7 +16,7 @@
  * - Sample CLI patterns
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { ETLContext } from '../core/interfaces.js';
 
 /**

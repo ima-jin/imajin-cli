@@ -49,12 +49,12 @@ export interface ListenerRegistration {
  * Central event management system
  */
 export class EventManager {
-    private emitter: ImajinEventEmitter;
+    private readonly emitter: ImajinEventEmitter;
     private registrations: Map<string, ListenerRegistration> = new Map();
-    private config: Required<EventManagerConfig>;
+    private readonly config: Required<EventManagerConfig>;
     private isInitialized: boolean = false;
     private shutdownPromise: Promise<void> | null = null;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(config: EventManagerConfig = {}) {
         this.config = {
@@ -371,7 +371,7 @@ export class EventManager {
      */
     private generateRegistrationId(): string {
         return `reg_${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`;
     }
 }
@@ -385,9 +385,7 @@ let globalEventManager: EventManager | null = null;
  * Get the global event manager instance
  */
 export function getEventManager(): EventManager {
-    if (!globalEventManager) {
-        globalEventManager = new EventManager();
-    }
+    globalEventManager ??= new EventManager();
     return globalEventManager;
 }
 

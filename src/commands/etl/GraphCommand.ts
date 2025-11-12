@@ -6,7 +6,7 @@ import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class GraphCommand {
     private readonly registry: DefaultBridgeRegistry;
-    private logger: Logger | null = null;
+    private readonly logger: Logger | null = null;
 
     constructor() {
         this.registry = new DefaultBridgeRegistry();
@@ -16,7 +16,7 @@ export class GraphCommand {
                 this.logger = container.resolve('logger') as Logger;
             }
         } catch (error) {
-            // Logger not available
+            // Logger not available - intentionally ignored during initialization
         }
     }
 
@@ -113,7 +113,7 @@ export class GraphCommand {
                 const bridges = this.registry.getBridges();
                 const compatibleModels = new Set<string>();
 
-                bridges.forEach((bridge: any) => {
+                for (const bridge of bridges) {
                     if (options.model) {
                         if (bridge.source === options.model) {
                             compatibleModels.add(bridge.target);
@@ -124,7 +124,7 @@ export class GraphCommand {
                         compatibleModels.add(bridge.source);
                         compatibleModels.add(bridge.target);
                     }
-                });
+                }
 
                 if (compatibleModels.size === 0) {
                     console.log('No compatible models found');
@@ -132,9 +132,9 @@ export class GraphCommand {
                 }
 
                 console.log('\nCompatible Models:');
-                Array.from(compatibleModels).forEach(model => {
+                for (const model of Array.from(compatibleModels)) {
                     console.log(`- ${model}`);
-                });
+                }
 
                 this.logger?.info('Graph model discovery completed', {
                     sourceModel: options.model,

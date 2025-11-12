@@ -18,9 +18,9 @@
  */
 
 import { z } from 'zod';
-import { readFile, writeFile, mkdir, access, readdir } from 'fs/promises';
-import { join } from 'path';
-import { homedir } from 'os';
+import { readFile, writeFile, mkdir, access, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 import yaml from 'js-yaml';
 import type {
     BusinessDomainModel
@@ -151,7 +151,7 @@ export class BusinessContextManager {
     private readonly backupDir: string;
     private readonly contextsDir: string;
     private currentConfig: BusinessConfiguration | null = null;
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor(configDirectory?: string, logger?: Logger) {
         this.configDir = configDirectory || join(homedir(), '.imajin');
@@ -419,14 +419,9 @@ export class BusinessContextManager {
         });
 
         const config = await this.getCurrentConfiguration();
-        
-        if (!config.translations) {
-            config.translations = { services: {} };
-        }
-        
-        if (!config.translations.services) {
-            config.translations.services = {};
-        }
+
+        config.translations ??= { services: {} };
+        config.translations.services ??= {};
         
         // Convert ServiceMapping to configuration format
         const serviceConfig = {
@@ -569,7 +564,7 @@ export class BusinessContextManager {
 return;
 }
         
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const timestamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
         const backupName = `business-context-${timestamp}.backup.yaml`;
         const backupPath = join(this.backupDir, backupName);
         
@@ -793,7 +788,7 @@ return;
             typescript += `export interface ${interfaceName} {\n`;
             
             for (const field of entityConfig.fields) {
-                const optional = !field.required ? '?' : '';
+                const optional = field.required ? '' : '?';
                 const type = this.mapToTypeScriptType(field.type);
                 typescript += `  ${field.name}${optional}: ${type};\n`;
             }
@@ -852,7 +847,12 @@ return;
             
             return entities;
         } catch (error) {
-            // Context or entity type doesn't exist yet
+            // Context or entity type doesn't exist yet - return empty array
+            this.logger?.debug('Failed to load context entities', {
+                contextName,
+                entityType,
+                error: error instanceof Error ? error.message : String(error)
+            });
             return [];
         }
     }

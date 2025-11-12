@@ -19,7 +19,7 @@
  * - Service lifecycle management
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../../container/Container.js';
 
 // Service Status Enumeration

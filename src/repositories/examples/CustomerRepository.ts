@@ -16,7 +16,7 @@
  * - Repository pattern demonstration
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Logger } from '../../logging/Logger.js';
 // Universal types removed - now using dynamic business context types
 // Customer type will be defined by business context registry

@@ -16,7 +16,7 @@
  * - Testing and development data storage
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import { v4 as uuidv4 } from 'uuid';
 import type { Logger } from '../../logging/Logger.js';
 // Universal types removed - now using dynamic business context types

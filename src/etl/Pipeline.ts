@@ -15,8 +15,8 @@
  * - Error handling and recovery strategies
  */
 
-import { randomUUID } from 'crypto';
-import { EventEmitter } from 'events';
+import { randomUUID } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import {
     ETLConfig,
     ETLContext,
@@ -62,7 +62,7 @@ export interface PipelineExecutionState {
 export class Pipeline {
     private readonly events: EventEmitter;
     private executionStates: Map<string, PipelineExecutionState> = new Map();
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor() {
         this.events = new EventEmitter();
@@ -168,14 +168,14 @@ export class Pipeline {
                     stepResults.push(stepResult);
                     state.stepResults = stepResults;
 
-                    if (!stepResult.success) {
-                        if (options.stopOnError !== false) {
-                            throw new Error(`Step '${step.name}' failed: ${stepResult.error?.message}`);
-                        }
-                    } else {
+                    if (stepResult.success) {
                         // Update data for next step
                         if (stepResult.data) {
                             currentData = Array.isArray(stepResult.data) ? stepResult.data : [stepResult.data];
+                        }
+                    } else {
+                        if (options.stopOnError !== false) {
+                            throw new Error(`Step '${step.name}' failed: ${stepResult.error?.message}`);
                         }
                     }
 

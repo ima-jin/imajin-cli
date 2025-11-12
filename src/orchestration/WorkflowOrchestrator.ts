@@ -19,7 +19,7 @@
  * - LLM-friendly workflow introspection
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { randomBytes } from 'node:crypto';
 import { Logger } from '../logging/Logger.js';
 
@@ -458,9 +458,9 @@ export class WorkflowOrchestrator extends EventEmitter {
      * Replace variables in a string with context values
      */
     private replaceVariables(template: string, context: WorkflowContext): string {
-        return template.replace(/{{([^}]+)}}/g, (match, path) => {
+        return template.replaceAll(/{{([^}]+)}}/g, (match, path) => {
             const value = this.getNestedValue(context.data, path.trim());
-            return value !== undefined ? String(value) : match;
+            return value === undefined ? match : String(value);
         });
     }
 
@@ -533,7 +533,7 @@ export class WorkflowOrchestrator extends EventEmitter {
      */
     private generateExecutionId(): string {
         return `exec_${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`;
     }
 

@@ -18,8 +18,7 @@
  */
 
 import type { BusinessDomainModel } from '../context/BusinessContextProcessor.js';
-import type { ServiceSchemaType } from '../etl/graphs/BusinessModelFactory.js';
-import { BusinessModelFactory, type WorkflowSuggestion } from '../etl/graphs/BusinessModelFactory.js';
+import { BusinessModelFactory, type WorkflowSuggestion, type ServiceSchemaType } from '../etl/graphs/BusinessModelFactory.js';
 import { z } from 'zod';
 import type { Logger } from '../logging/Logger.js';
 
@@ -68,7 +67,7 @@ export class BusinessServiceDiscovery {
     private readonly discoveredServices: Map<string, ServiceCapability> = new Map();
     private readonly businessMappings: Map<string, ServiceMapping[]> = new Map();
     private readonly knownServices: Map<string, ServiceTemplate> = new Map();
-    private logger: Logger;
+    private readonly logger: Logger;
 
     constructor() {
         // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for logger initialization
@@ -348,7 +347,7 @@ export class BusinessServiceDiscovery {
         const opSupport = requiredOps.filter(op => supportedOps.includes(op)).length / requiredOps.length;
         score += opSupport * 0.2;
         
-        return Math.min(score, 1.0);
+        return Math.min(score, 1);
     }
 
     private areEntitiesSemanticallySimilar(entity1: string, entity2: string): boolean {

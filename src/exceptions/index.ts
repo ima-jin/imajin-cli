@@ -111,9 +111,7 @@ export class ExceptionUtils {
         const groups: Partial<Record<ErrorCategory, BaseException[]>> = {};
 
         errors.forEach(error => {
-            if (!groups[error.category]) {
-                groups[error.category] = [];
-            }
+            groups[error.category] ??= [];
             groups[error.category]!.push(error);
         });
 

@@ -19,8 +19,8 @@
  * - LLM-friendly webhook introspection
  */
 
-import { createHash, createHmac } from 'crypto';
-import { EventEmitter } from 'events';
+import { createHash, createHmac } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import { Logger } from '../logging/Logger.js';
 
 export interface WebhookEvent {
@@ -132,7 +132,7 @@ export class WebhookManager extends EventEmitter {
         if (config?.timestampHeader && config.maxAge) {
             const timestamp = headers[config.timestampHeader];
             if (timestamp) {
-                const eventTime = new Date(parseInt(timestamp) * 1000);
+                const eventTime = new Date(Number.parseInt(timestamp) * 1000);
                 const age = (Date.now() - eventTime.getTime()) / 1000;
 
                 if (age > config.maxAge) {

@@ -121,7 +121,7 @@ export class HealthCheckManager {
                 percentage: Math.round((memUsage.rss / (memUsage.rss + memUsage.heapTotal)) * 100)
             },
             cpu: {
-                loadAverage: process.platform === 'win32' ? [0, 0, 0] : (await import('os')).loadavg()
+                loadAverage: process.platform === 'win32' ? [0, 0, 0] : (await import('node:os')).loadavg()
             },
             eventLoop: {
                 delay: this.measureEventLoopDelay()

@@ -341,8 +341,8 @@ export class AuthCommands {
 
                 for (const provider of providers) {
                     const status = provider.isActive ? chalk.green('● Active') :
-                        !provider.isNative ? chalk.gray('○ Available') :
-                            chalk.yellow('○ Available');
+                        provider.isNative ? chalk.yellow('○ Available') :
+                            chalk.gray('○ Available');
 
                     console.log(`  ${status} ${chalk.cyan(provider.name)}`);
                     console.log(`    ${chalk.gray(provider.description)}`);

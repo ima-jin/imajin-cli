@@ -148,16 +148,16 @@ export class HttpMockManager {
         this.mockErrors.clear();
         
         // Clear any active interceptors
-        this.interceptors.forEach(id => {
+        for (const id of this.interceptors) {
             // Clear interceptor if axios supports it
             if (axios.interceptors && axios.interceptors.request) {
                 try {
                     axios.interceptors.request.eject(id);
                 } catch (e) {
-                    // Ignore errors during cleanup
+                    // Intentionally ignore errors during cleanup - interceptor may already be ejected
                 }
             }
-        });
+        }
         this.interceptors = [];
     }
 

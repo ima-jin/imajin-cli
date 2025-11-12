@@ -174,7 +174,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
             const store = await this.loadStore();
             return Object.keys(store.credentials)
                 .filter(key => key.startsWith('imajin_cli_'))
-                .map(key => key.replace('imajin_cli_', '').replace(/_/g, '-'));
+                .map(key => key.replace('imajin_cli_', '').replaceAll(/_/g, '-'));
         } catch (error) {
             this.logger.debug(`Failed to list credentials from encrypted file: ${error}`);
             return [];
@@ -325,6 +325,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
 
             return decrypted;
         } catch (error) {
+            // Decryption failed - rethrow with clear message
             throw new Error('Failed to decrypt data. Invalid password or corrupted file.');
         }
     }

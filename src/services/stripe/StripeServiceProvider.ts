@@ -19,7 +19,7 @@
  */
 
 import type { Command } from 'commander';
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';

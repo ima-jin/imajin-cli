@@ -256,8 +256,8 @@ describe('Business Context Integration', () => {
         expect(definitions).toHaveProperty('customer');
         expect(definitions.customer).toEqual(expect.objectContaining({
             entityName: 'customer',
-            businessType: 'business', // Updated expectation
-            schema: expect.any(Object),
+            businessType: 'business',
+            schemaValidator: expect.any(Object),
             fields: expect.arrayContaining([
                 expect.objectContaining({ name: 'name', type: 'string' }),
                 expect.objectContaining({ name: 'email', type: 'string' }),

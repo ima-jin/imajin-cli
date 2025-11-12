@@ -166,25 +166,25 @@ export class DefaultPluginGenerator implements IPluginGenerator {
             });
         }
 
-        // Generate plugin config with enhanced context
+        // Generate plugin config and enhanced index file
         const configContext = {
             ...baseContext,
             version: plugin.version,
             authType: plugin.authType
         };
 
-        files.push({
-            path: `${this.pascalCase(plugin.name)}Config.ts`,
-            content: this.templateEngine.render(PLUGIN_CONFIG_TEMPLATE, configContext),
-            type: 'config'
-        });
-
-        // Generate enhanced index file
-        files.push({
-            path: 'index.ts',
-            content: this.generateEnhancedIndexFile(plugin),
-            type: 'config'
-        });
+        files.push(
+            {
+                path: `${this.pascalCase(plugin.name)}Config.ts`,
+                content: this.templateEngine.render(PLUGIN_CONFIG_TEMPLATE, configContext),
+                type: 'config'
+            },
+            {
+                path: 'index.ts',
+                content: this.generateEnhancedIndexFile(plugin),
+                type: 'config'
+            }
+        );
 
         return files;
     }
@@ -256,9 +256,9 @@ export { ${plugin.name}Config } from './${plugin.name}Config.js';
     private sanitizeName(name: string): string {
         return name
             .toLowerCase()
-            .replace(/[^a-z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
+            .replaceAll(/[^a-z0-9]/g, '-')
+            .replaceAll(/-+/g, '-')
+            .replaceAll(/^-|-$/g, '');
     }
 
     /**
@@ -266,7 +266,7 @@ export { ${plugin.name}Config } from './${plugin.name}Config.js';
      */
     private pascalCase(str: string): string {
         return str
-            .replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
+            .replaceAll(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
             .replace(/^[a-z]/, c => c.toUpperCase());
     }
 
@@ -274,14 +274,14 @@ export { ${plugin.name}Config } from './${plugin.name}Config.js';
      * Convert string to camelCase
      */
     private camelCase(str: string): string {
-        return str.replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '');
+        return str.replaceAll(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '');
     }
 
     /**
      * Convert string to kebab-case
      */
     private kebabCase(str: string): string {
-        return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^-/, '');
+        return str.replaceAll(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^-/, '');
     }
 
     /**

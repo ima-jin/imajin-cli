@@ -67,8 +67,8 @@ export class CommonOptions {
   static limit(defaultValue: number = 10): Option {
     return new Option('-l, --limit <number>', 'Maximum number of results to return')
       .argParser((value) => {
-        const parsed = parseInt(value, 10);
-        if (isNaN(parsed) || parsed < 1) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isNaN(parsed) || parsed < 1) {
           throw new Error('Limit must be a positive integer');
         }
         return parsed;
@@ -173,8 +173,8 @@ export class CommonOptions {
   static timeout(defaultValue: number = 30000): Option {
     return new Option('--timeout <ms>', 'Maximum execution time in milliseconds')
       .argParser((value) => {
-        const parsed = parseInt(value, 10);
-        if (isNaN(parsed) || parsed < 0) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isNaN(parsed) || parsed < 0) {
           throw new Error('Timeout must be a non-negative integer');
         }
         return parsed;

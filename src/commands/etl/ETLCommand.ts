@@ -5,7 +5,7 @@ import type { Logger } from '../../logging/Logger.js';
 
 export class ETLCommand {
     private readonly pipeline: Pipeline;
-    private logger: Logger | null = null;
+    private readonly logger: Logger | null = null;
 
     constructor() {
         this.pipeline = new Pipeline('default');
@@ -15,7 +15,7 @@ export class ETLCommand {
                 this.logger = container.resolve('logger') as Logger;
             }
         } catch (error) {
-            // Logger not available
+            // Logger not available - intentionally ignored during initialization
         }
     }
 

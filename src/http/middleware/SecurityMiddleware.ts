@@ -17,7 +17,7 @@
  * - CORS configuration
  */
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Logger } from '../../logging/Logger.js';
 
 export interface SignatureValidationConfig {
@@ -222,8 +222,8 @@ export class SecurityMiddleware {
         const timestampPart = parts.find(part => part.startsWith('t='));
 
         if (timestampPart) {
-            const timestamp = parseInt(timestampPart.replace('t=', ''), 10);
-            return isNaN(timestamp) ? null : timestamp;
+            const timestamp = Number.parseInt(timestampPart.replace('t=', ''), 10);
+            return Number.isNaN(timestamp) ? null : timestamp;
         }
 
         return null;

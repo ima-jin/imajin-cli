@@ -139,8 +139,8 @@ export class ApiLoggingExample {
                 const duration = Date.now() - startTime;
 
                 // Check for rate limiting
-                const rateLimitRemaining = parseInt(response.headers['x-ratelimit-remaining'] || '100');
-                const rateLimitReset = new Date(parseInt(response.headers['x-ratelimit-reset'] || '0') * 1000);
+                const rateLimitRemaining = Number.parseInt(response.headers['x-ratelimit-remaining'] || '100');
+                const rateLimitReset = new Date(Number.parseInt(response.headers['x-ratelimit-reset'] || '0') * 1000);
 
                 if (rateLimitRemaining <= 10) {
                     this.logger.rateLimitEvent('stripe', {
@@ -171,7 +171,7 @@ export class ApiLoggingExample {
 
                 // Handle rate limiting
                 if ((error as any).status === 429) {
-                    const retryAfter = parseInt((error as any).headers?.['retry-after'] || '60');
+                    const retryAfter = Number.parseInt((error as any).headers?.['retry-after'] || '60');
                     
                     this.logger.rateLimitEvent('stripe', {
                         remaining: 0,
@@ -294,7 +294,7 @@ export class ApiLoggingExample {
             },
             data: {
                 id: 'cus_' + (()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })(),
                 email: data.email,
                 name: data.name,

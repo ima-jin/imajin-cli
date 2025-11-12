@@ -19,22 +19,22 @@
  */
 
 import { Command } from 'commander';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
 
 export class MediaCommand {
-    private container: Container;
-    private logger: Logger | null = null;
+    private readonly container: Container;
+    private readonly logger: Logger | null = null;
 
     constructor(container: Container) {
         this.container = container;
         try {
             this.logger = container.resolve('logger');
         } catch (error) {
-            // Logger not available
+            // Logger not available - intentionally ignored during initialization
         }
     }
 
@@ -219,6 +219,7 @@ Examples:
                 throw new Error(`Path is not a file: ${filePath}`);
             }
         } catch (error) {
+            this.logger?.debug('File validation failed', { filePath, error: error instanceof Error ? error.message : String(error) });
             throw new Error(`File not found or not accessible: ${filePath}`);
         }
     }

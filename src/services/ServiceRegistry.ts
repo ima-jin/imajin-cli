@@ -19,7 +19,7 @@
  * - Health monitoring and status reporting
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
 import {
@@ -245,15 +245,15 @@ export class ServiceRegistry implements IServiceRegistry {
         };
 
         // Initialize status counts
-        Object.values(ServiceStatus).forEach(status => {
+        for (const status of Object.values(ServiceStatus)) {
             stats.byStatus[status] = 0;
-        });
+        }
 
         // Count services by status
-        this.getAll().forEach(service => {
+        for (const service of this.getAll()) {
             const status = service.getStatus();
             stats.byStatus[status]++;
-        });
+        }
 
         return stats;
     }

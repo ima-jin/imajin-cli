@@ -208,6 +208,7 @@ export class WebhookTestCommand extends BaseCommand {
                 const customHeaders = JSON.parse(options.headers);
                 Object.assign(headers, customHeaders);
             } catch (error) {
+                // Invalid JSON headers provided - log warning and use defaults
                 this.warn('Invalid JSON headers provided, using defaults');
             }
         }

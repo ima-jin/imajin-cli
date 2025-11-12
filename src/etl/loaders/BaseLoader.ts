@@ -212,6 +212,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
 
             return true;
         } catch (error) {
+            // Validation failed - connection or auth error
             return false;
         }
     }
@@ -273,6 +274,10 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
                 results.push(...batchResult);
             } catch (error) {
                 // Fall back to individual loading if batch fails
+                this.logger?.warn('Batch load failed, falling back to individual loads', {
+                    error: error instanceof Error ? error.message : String(error),
+                    batchSize: batch.length
+                });
                 for (const item of batch) {
                     try {
                         const result = await this.performLoad(item, context, config);
@@ -344,7 +349,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
      */
     protected async beginTransaction(_context: ETLContext): Promise<string> {
         const transactionId = `txn_${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`;
         this.activeTransactions.add(transactionId);
         return transactionId;

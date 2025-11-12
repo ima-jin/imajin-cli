@@ -21,7 +21,7 @@ import { BusinessContextManager } from '../context/BusinessContextManager.js';
 import chalk from 'chalk';
 
 export class BusinessContextValidator {
-    private contextManager: BusinessContextManager;
+    private readonly contextManager: BusinessContextManager;
     
     constructor() {
         this.contextManager = new BusinessContextManager();

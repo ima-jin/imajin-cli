@@ -55,7 +55,7 @@ export interface ResourceExhaustionConfig {
  */
 export class StressTestRunner {
     private service: BaseService;
-    private metricsCollector: PerformanceMetricsCollector;
+    private readonly metricsCollector: PerformanceMetricsCollector;
     private isRunning: boolean = false;
     private activeTests: Set<string> = new Set();
 
@@ -342,8 +342,8 @@ export class StressTestRunner {
 
             // Clean up memory hogs to prevent actual memory issues
             memoryHogs.length = 0;
-            if (global.gc) {
-                global.gc();
+            if (globalThis.gc) {
+                globalThis.gc();
             }
 
             const endTime = Date.now();

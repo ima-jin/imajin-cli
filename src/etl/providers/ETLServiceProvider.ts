@@ -2,7 +2,7 @@ import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import { DefaultBridgeRegistry, BridgeComponent } from '../bridges.js';
 import { ETLPipeline } from '../core/ETLPipeline.js';
 import { GraphTranslationEngine } from '../graphs/GraphTranslationEngine.js';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { Logger } from '../../logging/Logger.js';
 import type { Command } from 'commander';
 import type { Container } from '../../container/Container.js';

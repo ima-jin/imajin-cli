@@ -17,7 +17,7 @@
  * - Event system for data change notifications
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import { randomBytes } from 'node:crypto';
 import { SystemError } from '../exceptions/index.js';
 import type { Logger } from '../logging/Logger.js';
@@ -470,7 +470,7 @@ export abstract class BaseRepository<T extends Record<string, any>, TKey = strin
     async beginTransaction(options?: { isolationLevel?: TransactionContext['isolationLevel']; timeout?: number }): Promise<TransactionContext> {
         const context: TransactionContext = {
             id: `tx_${Date.now()}_${(()=>{
-const b = randomBytes(6); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
+const b = randomBytes(6); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,9);
 })()}`,
             isolationLevel: options?.isolationLevel ?? 'READ_COMMITTED',
             timeout: options?.timeout ?? 30000

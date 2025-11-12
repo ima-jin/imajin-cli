@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { ETLContext, ETLProgress, ETLResult, PipelineResult } from './interfaces.js';
 
 export class ETLEvents extends EventEmitter {

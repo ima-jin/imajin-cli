@@ -31,7 +31,7 @@ import {
  */
 export class LoadTestRunner {
     private service: BaseService;
-    private metricsCollector: PerformanceMetricsCollector;
+    private readonly metricsCollector: PerformanceMetricsCollector;
     private activeTests: Map<string, boolean> = new Map();
 
     constructor(service: BaseService, metricsCollector: PerformanceMetricsCollector) {

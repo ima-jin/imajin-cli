@@ -28,8 +28,8 @@ import { CreatePaymentIntentParams, CreatePaymentIntentSchema } from '../../type
 import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class CreatePaymentCommand {
-    private stripeService: StripeService;
-    private logger: Logger | null = null;
+    private readonly stripeService: StripeService;
+    private readonly logger: Logger | null = null;
 
     constructor(stripeService: StripeService) {
         this.stripeService = stripeService;
@@ -39,7 +39,7 @@ export class CreatePaymentCommand {
                 this.logger = container.resolve('logger') as Logger;
             }
         } catch (error) {
-            // Logger not available
+            // Logger not available - intentionally ignored during initialization
         }
     }
 
@@ -50,7 +50,7 @@ export class CreatePaymentCommand {
         program
             .command('stripe:create-payment')
             .description('Create a new Stripe payment intent')
-            .requiredOption('--amount <amount>', 'Payment amount in cents', parseInt)
+            .requiredOption('--amount <amount>', 'Payment amount in cents', Number.parseInt)
             .requiredOption('--currency <currency>', 'Currency code (e.g., usd, eur)', 'usd')
             .option('--customer <customerId>', 'Customer ID')
             .option('--payment-method <methodId>', 'Payment method ID')

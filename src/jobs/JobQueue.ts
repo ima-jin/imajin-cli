@@ -18,7 +18,7 @@
  * - Dead letter queue for failed jobs
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { BaseEvent, EventMetadata } from '../core/events/Event.js';
 import { Job, JobMetadata } from './Job.js';
 
@@ -115,9 +115,9 @@ export class QueueJobCompletedEvent extends BaseEvent<QueueJobCompletedPayload> 
  * Priority-based job queue with advanced features
  */
 export class JobQueue extends EventEmitter {
-    private jobs: Map<string, QueuedJob> = new Map();
+    private readonly jobs: Map<string, QueuedJob> = new Map();
     private pendingJobs: QueuedJob[] = [];
-    private activeJobs: Map<string, QueuedJob> = new Map();
+    private readonly activeJobs: Map<string, QueuedJob> = new Map();
     private completedJobs: QueuedJob[] = [];
     private failedJobs: QueuedJob[] = [];
     private deadLetterJobs: QueuedJob[] = [];

@@ -373,7 +373,7 @@ export class SchemaValidator {
                 break;
 
             case 'number':
-                if (typeof value !== 'number' || isNaN(value)) {
+                if (typeof value !== 'number' || Number.isNaN(value)) {
                     return {
                         path: fieldName,
                         message: `Expected number, got ${typeof value}`,
@@ -409,7 +409,7 @@ export class SchemaValidator {
                 }
                 if (typeof value === 'string') {
                     const date = new Date(value);
-                    if (isNaN(date.getTime())) {
+                    if (Number.isNaN(date.getTime())) {
                         return {
                             path: fieldName,
                             message: `Invalid date string: ${value}`,
@@ -503,14 +503,14 @@ export class SchemaValidator {
         // Convert string dates to Date objects
         if ((fieldDef.type === 'date' || fieldDef.type === 'datetime') && typeof value === 'string') {
             const date = new Date(value);
-            if (!isNaN(date.getTime())) {
+            if (!Number.isNaN(date.getTime())) {
                 transformations.push(`Converted string '${value}' to Date for field '${fieldName}'`);
                 return date;
             }
         }
 
         // Convert string numbers to numbers
-        if (fieldDef.type === 'number' && typeof value === 'string' && !isNaN(Number(value))) {
+        if (fieldDef.type === 'number' && typeof value === 'string' && !Number.isNaN(Number(value))) {
             const num = Number(value);
             transformations.push(`Converted string '${value}' to number for field '${fieldName}'`);
             return num;

@@ -126,7 +126,7 @@ export function createBusinessEntity(entityName: string, data: Partial<any>): an
 function generateBusinessEntityId(entityName: string): string {
     const timestamp = Date.now().toString(36);
     const random = (()=>{
-const b = randomBytes(5); return b.toString("base64").replace(/[^a-z0-9]/gi,"").toLowerCase().substring(0,6);
+const b = randomBytes(5); return b.toString("base64").replaceAll(/[^a-z0-9]/gi,"").toLowerCase().substring(0,6);
 })();
     return `${entityName}_${timestamp}_${random}`;
 }
@@ -143,10 +143,12 @@ export function exportBusinessSchemaDefinitions(): Record<string, any> {
     const definitions: Record<string, any> = {};
     for (const entityType of BusinessTypeRegistry.getEntityTypes()) {
         const schema = BusinessTypeRegistry.getSchema(entityType);
+        // Export schema shape instead of internal _def
+        // Using the schema itself for validation, not internal representation
         definitions[entityType] = {
             entityName: entityType,
             businessType: businessContext.businessType,
-            schema: schema._def, // Zod schema definition
+            schemaValidator: schema, // Export the validator function itself
             fields: businessContext.entities[entityType]?.fields || [],
         };
     }

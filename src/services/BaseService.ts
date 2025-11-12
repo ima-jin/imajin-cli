@@ -19,7 +19,7 @@
  * - Logging system for observability
  */
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import type { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
 import type { ServiceConfig, ServiceHealth, ServiceMetrics } from './interfaces/ServiceInterface.js';

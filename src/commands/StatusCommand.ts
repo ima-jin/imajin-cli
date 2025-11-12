@@ -34,8 +34,8 @@ export interface StatusOptions {
 }
 
 export class StatusCommand {
-    private systemMonitor: SystemMonitor;
-    private logger: Logger | null = null;
+    private readonly systemMonitor: SystemMonitor;
+    private readonly logger: Logger | null = null;
 
     constructor() {
         this.systemMonitor = new SystemMonitor();
@@ -47,7 +47,7 @@ export class StatusCommand {
                 this.logger = container.resolve('logger') as Logger;
             }
         } catch (error) {
-            // Logger not available yet
+            // Logger not available yet - intentionally ignored during initialization
         }
     }
 
@@ -115,7 +115,7 @@ export class StatusCommand {
     }
 
     private async watchStatus(options: StatusOptions): Promise<void> {
-        const interval = parseInt(String(options.interval ?? '5')) * 1000;
+        const interval = Number.parseInt(String(options.interval ?? '5')) * 1000;
         this.logger?.info('Starting status watch mode', { interval: interval / 1000, json: options.json });
 
         console.log(chalk.blue('👀 Watching system status... (Press Ctrl+C to stop)\n'));

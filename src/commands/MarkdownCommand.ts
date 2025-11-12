@@ -37,7 +37,7 @@ export interface MarkdownToPdfOptions {
 }
 
 export class MarkdownCommand {
-    private logger: Logger | null = null;
+    private readonly logger: Logger | null = null;
 
     constructor() {
         try {
@@ -46,7 +46,7 @@ export class MarkdownCommand {
                 this.logger = container.resolve('logger') as Logger;
             }
         } catch (error) {
-            // Logger not available
+            // Logger not available - intentionally ignored during initialization
         }
     }
 
@@ -295,7 +295,7 @@ export class MarkdownCommand {
         // Check if output is a directory (synchronously)
         try {
             // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for synchronous fs check
-            const fsSync = require('fs');
+            const fsSync = require('node:fs');
             const outputStats = fsSync.statSync(outputOption);
 
             // If output is a directory, put file there

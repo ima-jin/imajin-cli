@@ -78,7 +78,7 @@ export function createContentfulCommands(): Command {
         const container = globalThis.imajinApp?.container || new Container();
         logger = container.resolve('logger') as Logger;
     } catch (error) {
-        // Logger not available yet, commands will handle gracefully
+        // Logger not available yet - intentionally ignored during initialization, commands will handle gracefully
     }
 
     // Content listing and browsing
@@ -100,7 +100,7 @@ export function createContentfulCommands(): Command {
 
                 const content = await contentfulService.getContent(
                     options.type,
-                    parseInt(options.limit)
+                    Number.parseInt(options.limit)
                 );
 
                 logger?.info('Content retrieved', { count: content.length, type: options.type });
@@ -180,9 +180,9 @@ export function createContentfulCommands(): Command {
                     }
                     if (entry.metadata && Object.keys(entry.metadata).length > 0) {
                         console.log(chalk.cyan('Metadata:'));
-                        Object.entries(entry.metadata).forEach(([key, value]) => {
+                        for (const [key, value] of Object.entries(entry.metadata)) {
                             console.log(chalk.gray(`  ${key}: ${value}`));
-                        });
+                        }
                     }
                 }
             } catch (error) {
@@ -252,7 +252,7 @@ export function createContentfulCommands(): Command {
 
                 logger?.debug('Getting upcoming events', { limit: options.limit });
 
-                const events = await contentfulService.getUpcomingEvents(parseInt(options.limit));
+                const events = await contentfulService.getUpcomingEvents(Number.parseInt(options.limit));
 
                 logger?.info('Upcoming events retrieved', { count: events.length, limit: options.limit });
 
@@ -306,7 +306,7 @@ export function createContentfulCommands(): Command {
                 logger?.debug('Getting content items', { type: options.type, category: options.category, limit: options.limit });
 
                 // Use getTracks method but with generic naming
-                const items = await contentfulService.getTracks(options.category, parseInt(options.limit));
+                const items = await contentfulService.getTracks(options.category, Number.parseInt(options.limit));
 
                 logger?.info('Content items retrieved', { count: items.length, type: options.type, category: options.category });
 
@@ -324,11 +324,11 @@ export function createContentfulCommands(): Command {
                     for (const item of items) {
                         console.log(chalk.cyan(`• ${chalk.bold(item.title)}`));
                         if (item.metadata) {
-                            Object.entries(item.metadata).forEach(([key, value]) => {
+                            for (const [key, value] of Object.entries(item.metadata)) {
                                 if (value && key !== 'id') {
                                     console.log(chalk.gray(`  ${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`));
                                 }
-                            });
+                            }
                         }
                         console.log();
                     }
@@ -456,14 +456,14 @@ export function createContentfulCommands(): Command {
                         console.log(chalk.cyan(`Description: ${recipe.description}\n`));
 
                         console.log(chalk.blue('Content Types to Create:'));
-                        contentTypes.forEach(ct => {
+                        for (const ct of contentTypes) {
                             console.log(chalk.cyan(`  • ${ct.name} (${ct.id})`));
-                            ct.fields.forEach(field => {
+                            for (const field of ct.fields) {
                                 const required = field.required ? ' (required)' : '';
                                 console.log(chalk.gray(`    - ${field.id}: ${field.type}${required}`));
-                            });
+                            }
                             console.log();
-                        });
+                        }
                     }
                     return;
                 }

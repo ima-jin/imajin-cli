@@ -17,7 +17,7 @@
  * - Dimension analysis
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 import type { MediaMetadata } from '../../types/Media.js';
 

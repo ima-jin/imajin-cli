@@ -21,7 +21,7 @@
 import { createClient } from 'contentful';
 import contentfulManagement from 'contentful-management';
 import type { Container } from '../../container/Container.js';
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 import { BaseService } from '../BaseService.js';
 import type { ServiceConfig } from '../interfaces/ServiceInterface.js';
 
