@@ -223,6 +223,8 @@ class ContentfulServicePerformanceTest extends PerformanceTestBase<ContentfulSer
     }
 }
 
+// Skipped: Performance tests are resource-intensive and disabled by default during CI/CD.
+// Enable locally for performance regression testing and baseline establishment.
 describe.skip('ContentfulService Performance Tests', () => {
     let performanceTest: ContentfulServicePerformanceTest;
 

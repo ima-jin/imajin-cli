@@ -184,10 +184,17 @@ export class StatusCommand {
                 const statusColor = this.getStatusColor(check.status);
                 const details = check.details?.message ?? check.details?.error ?? 'OK';
 
+                let displayDetails;
+                if (detailed) {
+                    displayDetails = details;
+                } else {
+                    displayDetails = details.length > 50 ? details.substring(0, 47) + '...' : details;
+                }
+
                 healthTable.push([
                     name,
                     `${statusIcon} ${statusColor(check.status)}`,
-                    detailed ? details : (details.length > 50 ? details.substring(0, 47) + '...' : details)
+                    displayDetails
                 ]);
             });
 
@@ -213,7 +220,8 @@ export class StatusCommand {
 
             status.alerts.forEach((alert: any) => {
                 const severityColor = this.getSeverityColor(alert.severity);
-                console.log(`${severityColor(`[${alert.severity.toUpperCase()}]`)} ${alert.message}`);
+                const severityLabel = severityColor(`[${alert.severity.toUpperCase()}]`);
+                console.log(`${severityLabel} ${alert.message}`);
             });
             console.log();
         }

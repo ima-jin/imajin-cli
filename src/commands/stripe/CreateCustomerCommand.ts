@@ -189,6 +189,7 @@ export class CreateCustomerCommand {
             console.log(`${chalk.cyan('Metadata:')} ${JSON.stringify(customer.metadata, null, 2)}`);
         }
 
-        console.log(`\n${chalk.gray(`⏱️  Completed in ${duration}ms`)}`);
+        const completionMessage = `⏱️  Completed in ${duration}ms`;
+        console.log(`\n${chalk.gray(completionMessage)}`);
     }
 } 

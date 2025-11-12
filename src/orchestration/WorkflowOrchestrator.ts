@@ -194,7 +194,7 @@ export class WorkflowOrchestrator extends EventEmitter {
      */
     public async cancelExecution(executionId: string): Promise<boolean> {
         const execution = this.executions.get(executionId);
-        if (!execution || execution.status !== 'running') {
+        if (execution?.status !== 'running') {
             return false;
         }
 
@@ -315,7 +315,8 @@ export class WorkflowOrchestrator extends EventEmitter {
                         attempt: stepExecution.retries,
                         maxRetries: step.maxRetries
                     });
-                    i--; // Retry the same step
+                    // Decrement to retry the same step (compensates for loop increment)
+                    i = i - 1;
                     continue;
                 } else {
                     throw error;

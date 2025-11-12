@@ -127,9 +127,10 @@ export class TypeGenerator {
         const lines: string[] = [];
 
         // Add JSDoc comment
+        const description = entityDef.description || `${entityName} entity`;
         lines.push(
             `/**`,
-            ` * ${entityDef.description || `${entityName} entity`}`,
+            ` * ${description}`,
             ` */`
         );
         

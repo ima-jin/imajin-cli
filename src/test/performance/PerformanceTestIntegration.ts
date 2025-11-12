@@ -202,17 +202,18 @@ export class PerformanceTestIntegration {
     /**
      * Create Jest setup for performance testing
      */
-    static createJestSetup(options: PerformanceTestSuiteOptions = {
-        enableMonitoring: true,
-        enableReporting: true,
-        enableBenchmarking: true,
-        enableStressTesting: false
-    }): {
+    static createJestSetup(options?: PerformanceTestSuiteOptions): {
         beforeAll: () => Promise<void>;
         afterAll: () => Promise<void>;
         integration: PerformanceTestIntegration;
     } {
-        const integration = new PerformanceTestIntegration(options);
+        const defaultOptions: PerformanceTestSuiteOptions = {
+            enableMonitoring: true,
+            enableReporting: true,
+            enableBenchmarking: true,
+            enableStressTesting: false
+        };
+        const integration = new PerformanceTestIntegration(options || defaultOptions);
 
         return {
             integration,

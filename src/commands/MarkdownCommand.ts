@@ -268,7 +268,7 @@ export class MarkdownCommand {
         // Convert to PDF
         const result = await mdToPdf(pdfOptions);
         
-        if (!result || !result.content) {
+        if (!result?.content) {
             throw new Error('Failed to generate PDF content');
         }
 

@@ -174,7 +174,7 @@ export class EncryptedFileProvider extends BaseCredentialProvider {
             const store = await this.loadStore();
             return Object.keys(store.credentials)
                 .filter(key => key.startsWith('imajin_cli_'))
-                .map(key => key.replace('imajin_cli_', '').replaceAll(/_/g, '-'));
+                .map(key => key.replace('imajin_cli_', '').replaceAll('_', '-'));
         } catch (error) {
             this.logger.debug(`Failed to list credentials from encrypted file: ${error}`);
             return [];

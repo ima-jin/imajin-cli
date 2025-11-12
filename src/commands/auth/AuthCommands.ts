@@ -340,13 +340,19 @@ export class AuthCommands {
                 console.log();
 
                 for (const provider of providers) {
-                    const status = provider.isActive ? chalk.green('● Active') :
-                        provider.isNative ? chalk.yellow('○ Available') :
-                            chalk.gray('○ Available');
+                    let status: string;
+                    if (provider.isActive) {
+                        status = chalk.green('● Active');
+                    } else if (provider.isNative) {
+                        status = chalk.yellow('○ Available');
+                    } else {
+                        status = chalk.gray('○ Available');
+                    }
 
                     console.log(`  ${status} ${chalk.cyan(provider.name)}`);
                     console.log(`    ${chalk.gray(provider.description)}`);
-                    console.log(`    ${chalk.gray(`Type: ${provider.type}, Secure: ${provider.isSecure}, Native: ${provider.isNative}`)}`);
+                    const providerDetails = `Type: ${provider.type}, Secure: ${provider.isSecure}, Native: ${provider.isNative}`;
+                    console.log(`    ${chalk.gray(providerDetails)}`);
                     console.log();
                 }
                 return;

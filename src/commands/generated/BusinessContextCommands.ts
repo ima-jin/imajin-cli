@@ -600,9 +600,15 @@ Important business rules:
                     }
                     
                     for (const suggestion of suggestions) {
-                        const priorityColor = suggestion.priority === 'high' ? chalk.red : 
-                                             suggestion.priority === 'medium' ? chalk.yellow : chalk.green;
-                        
+                        let priorityColor;
+                        if (suggestion.priority === 'high') {
+                            priorityColor = chalk.red;
+                        } else if (suggestion.priority === 'medium') {
+                            priorityColor = chalk.yellow;
+                        } else {
+                            priorityColor = chalk.green;
+                        }
+
                         console.log(`\n${priorityColor('●')} ${chalk.cyan(suggestion.name)}`);
                         console.log(`  ${suggestion.description}`);
                         console.log(`  ${chalk.gray('Services:')} ${suggestion.services.join(', ')}`);

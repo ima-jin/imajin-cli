@@ -86,8 +86,8 @@ export type {
 /**
  * Create a complete performance testing setup for Jest
  */
-export function createPerformanceTestSuite(options: {
-    serviceName: string;
+export function createPerformanceTestSuite(options?: {
+    serviceName?: string;
     enableStressTesting?: boolean;
     enableReporting?: boolean;
     outputDirectory?: string;
@@ -97,35 +97,36 @@ export function createPerformanceTestSuite(options: {
         errorRate: { warning: number; critical: number };
         memoryUsage: { warning: number; critical: number };
     }>;
-} = { serviceName: 'unknown' }) {
-    
+}) {
+    const serviceName = options?.serviceName || 'unknown';
+
     const { PerformanceTestIntegration } = require('./PerformanceTestIntegration');
     return PerformanceTestIntegration.createJestSetup({
         enableMonitoring: true,
-        enableReporting: options.enableReporting ?? true,
+        enableReporting: options?.enableReporting ?? true,
         enableBenchmarking: true,
-        enableStressTesting: options.enableStressTesting ?? false,
-        outputDirectory: options.outputDirectory || `./performance-reports/${options.serviceName}`,
+        enableStressTesting: options?.enableStressTesting ?? false,
+        outputDirectory: options?.outputDirectory || `./performance-reports/${serviceName}`,
         thresholds: {
             responseTime: {
                 warning: 1000,
                 critical: 5000,
-                ...options.thresholds?.responseTime
+                ...options?.thresholds?.responseTime
             },
             throughput: {
                 minimum: 10,
                 warning: 50,
-                ...options.thresholds?.throughput
+                ...options?.thresholds?.throughput
             },
             errorRate: {
                 warning: 0.05,
                 critical: 0.1,
-                ...options.thresholds?.errorRate
+                ...options?.thresholds?.errorRate
             },
             memoryUsage: {
                 warning: 100 * 1024 * 1024, // 100MB
                 critical: 500 * 1024 * 1024, // 500MB
-                ...options.thresholds?.memoryUsage
+                ...options?.thresholds?.memoryUsage
             },
             cpuUsage: {
                 warning: 70,
@@ -285,7 +286,7 @@ export async function runQuickBenchmark(
         results.push(durationMs);
     }
 
-    const sorted = results.sort((a, b) => a - b);
+    const sorted = results.toSorted((a, b) => a - b);
     const average = results.reduce((sum, val) => sum + val, 0) / results.length;
 
     return {

@@ -521,7 +521,7 @@ export class StressTestRunner {
         }
 
         const durations = results.map(r => r.duration);
-        const sorted = durations.sort((a, b) => a - b);
+        const sorted = durations.toSorted((a, b) => a - b);
         const sum = durations.reduce((a, b) => a + b, 0);
         const avg = sum / durations.length;
 

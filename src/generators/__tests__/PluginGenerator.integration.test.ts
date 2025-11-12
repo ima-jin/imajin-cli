@@ -14,11 +14,10 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { DefaultOpenAPIParser } from '../OpenAPIParser.js';
 import { DefaultPluginGenerator } from '../PluginGenerator.js';
 import { TemplateEngine } from '../templates/TemplateEngine.js';
-import { OpenAPISpec } from '../types.js';
 
 describe('PluginGenerator Integration', () => {
     let generator: DefaultPluginGenerator;
-    let mockOpenAPISpec: OpenAPISpec;
+    let mockOpenAPISpec: any;
 
     beforeEach(() => {
         const parser = new DefaultOpenAPIParser();

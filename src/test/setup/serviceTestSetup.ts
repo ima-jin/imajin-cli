@@ -220,7 +220,7 @@ expect.extend({
      */
     toHaveEmittedEvent(received: EventEmitter, eventName: string) {
         const emitSpy = received.emit as jest.Mock;
-        const pass = emitSpy && emitSpy.mock.calls.some(call => call[0] === eventName);
+        const pass = emitSpy?.mock.calls.some(call => call[0] === eventName);
         
         return {
             message: () => pass

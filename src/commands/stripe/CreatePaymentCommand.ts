@@ -68,6 +68,8 @@ export class CreatePaymentCommand {
      * Execute the payment creation command
      */
     private async execute(options: any): Promise<void> {
+        const startTime = Date.now();
+
         try {
             this.logger?.debug('Create payment command starting', { options });
 
@@ -95,13 +97,18 @@ export class CreatePaymentCommand {
 ...(validatedParams.metadata && Object.keys(validatedParams.metadata).length > 0 && { metadata: validatedParams.metadata }),
             };
 
-            const _startTime = Date.now();
-
             // Setup progress callback for real-time updates
             const progressCallback: LLMProgressCallback | undefined = options.watch
                 ? (event) => {
                     if (!options.json) {
-                        const icon = event.type === 'error' ? '❌' : event.type === 'complete' ? '✅' : '⏳';
+                        let icon: string;
+                        if (event.type === 'error') {
+                            icon = '❌';
+                        } else if (event.type === 'complete') {
+                            icon = '✅';
+                        } else {
+                            icon = '⏳';
+                        }
                         console.log(chalk.blue(`${icon} ${event.message}`));
                         if (event.progress !== undefined) {
                             console.log(chalk.gray(`   Progress: ${event.progress}%`));
@@ -113,7 +120,7 @@ export class CreatePaymentCommand {
             // Create payment intent
             const result = await this.stripeService.createPaymentIntent(params, progressCallback);
 
-            const executionTime = Date.now() - _startTime;
+            const executionTime = Date.now() - startTime;
 
             this.logger?.info('Create payment command completed', {
                 paymentIntentId: result.paymentIntent.id,
@@ -151,7 +158,7 @@ export class CreatePaymentCommand {
             }
 
         } catch (error) {
-            const executionTime = Date.now() - Date.now();
+            const executionTime = Date.now() - startTime;
 
             this.logger?.error('Create payment command failed', error as Error, { options, executionTime });
 

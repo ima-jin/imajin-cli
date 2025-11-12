@@ -442,7 +442,7 @@ export class LocalFileService extends BaseService {
 
     private generateUrlFromPath(filePath: string): string {
         const relativePath = path.relative(this.localFileConfig.storagePath, filePath);
-        return `${this.localFileConfig.baseUrl}/${relativePath.replaceAll(/\\/g, '/')}`;
+        return `${this.localFileConfig.baseUrl}/${relativePath.replaceAll('\\', '/')}`;
     }
 
     private extractAssetIdFromFileName(fileName: string): string | null {

@@ -77,11 +77,11 @@ export interface UploadOptions {
 }
 
 export interface Transformation {
-    type: TransformationType;
+    // Transformation type - can be: resize, crop, format, quality, rotate, blur, sharpen,
+    // brightness, contrast, saturation, watermark, overlay, video_transcode, thumbnail, optimize
+    type: string;
     params: TransformationParams;
 }
-
-export type TransformationType = string; // Allow any string for transformation types including: resize, crop, format, quality, rotate, blur, sharpen, brightness, contrast, saturation, watermark, overlay, video_transcode, thumbnail, optimize
 
 export interface TransformationParams {
     width?: number;

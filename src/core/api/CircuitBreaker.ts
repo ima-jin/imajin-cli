@@ -156,7 +156,7 @@ export class CircuitBreaker extends EventEmitter {
         fallback?: FallbackFunction<T>
     ): Promise<RequestResult<T>> {
         const config = this.configs.get(serviceId);
-        if (!config || !config.enabled) {
+        if (!config?.enabled) {
             // Circuit breaker not configured or disabled
             return this.executeDirectly(request);
         }
@@ -224,7 +224,7 @@ export class CircuitBreaker extends EventEmitter {
      */
     public canExecute(serviceId: string): boolean {
         const config = this.configs.get(serviceId);
-        if (!config || !config.enabled) {
+        if (!config?.enabled) {
             return true;
         }
 

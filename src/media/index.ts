@@ -28,6 +28,6 @@ export { MetadataExtractor } from './metadata/MetadataExtractor.js';
 export type {
     BatchOperation, CDNConfig, CropMode, DeviceInfo, GeoLocation, GravityMode, ListOptions, MediaAsset, MediaLimits, MediaMetadata,
     MediaProcessingConfig, MediaProcessingEvent, MediaProcessingOptions, MediaProvider, OptimizationConfig, OutputFormat, Position, ProviderConfig, Transformation, TransformationParams,
-    TransformationRecord, TransformationType, UploadOptions, VideoCodec
+    TransformationRecord, UploadOptions, VideoCodec
 } from '../types/Media.js';
 

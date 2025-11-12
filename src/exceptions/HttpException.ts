@@ -36,7 +36,15 @@ export class HttpException extends BaseException {
             response?: any;
         }
     ) {
-        const severity = statusCode >= 500 ? 'high' : statusCode >= 400 ? 'medium' : 'low';
+        let severity: 'low' | 'medium' | 'high';
+        if (statusCode >= 500) {
+            severity = 'high';
+        } else if (statusCode >= 400) {
+            severity = 'medium';
+        } else {
+            severity = 'low';
+        }
+
         const recoverable = statusCode >= 500 || statusCode === 408 || statusCode === 429;
 
         super(

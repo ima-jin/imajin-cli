@@ -70,8 +70,14 @@ export class SlidingWindowStrategy extends BaseRateLimitStrategy {
         }
 
         // Find the oldest request that needs to expire
+        const firstRequest = activeRequests[0];
+        if (!firstRequest) {
+            return 0;
+        }
+
         const oldestRequest = activeRequests.reduce((oldest, current) =>
-            current.timestamp < oldest.timestamp ? current : oldest
+            current.timestamp < oldest.timestamp ? current : oldest,
+            firstRequest
         );
 
         const expireTime = oldestRequest.timestamp + this.windowMs;
@@ -114,8 +120,14 @@ export class SlidingWindowStrategy extends BaseRateLimitStrategy {
         }
 
         // Find when the oldest request will expire
+        const firstRequest = activeRequests[0];
+        if (!firstRequest) {
+            return Date.now();
+        }
+
         const oldestRequest = activeRequests.reduce((oldest, current) =>
-            current.timestamp < oldest.timestamp ? current : oldest
+            current.timestamp < oldest.timestamp ? current : oldest,
+            firstRequest
         );
 
         return oldestRequest.timestamp + this.windowMs;

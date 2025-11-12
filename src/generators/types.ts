@@ -17,9 +17,10 @@
  */
 
 /**
- * OpenAPI specification type (simplified)
+ * OpenAPI specification type
+ * Note: Using 'any' type as OpenAPI specs can have varying structures depending on version (2.0, 3.0, 3.1)
+ * In production, consider using a proper OpenAPI type library like 'openapi-types' for type safety
  */
-export type OpenAPISpec = any;
 
 /**
  * Validation result for OpenAPI specs
@@ -145,8 +146,8 @@ export interface PropertyDefinition {
  * Plugin Generator interface
  */
 export interface PluginGenerator {
-    generateFromOpenAPI(spec: OpenAPISpec): Promise<GeneratedPlugin>;
-    validateSpec(spec: OpenAPISpec): ValidationResult;
+    generateFromOpenAPI(spec: any): Promise<GeneratedPlugin>;
+    validateSpec(spec: any): ValidationResult;
     createPluginFiles(plugin: GeneratedPlugin): Promise<string[]>;
 }
 
@@ -154,10 +155,10 @@ export interface PluginGenerator {
  * OpenAPI Parser interface
  */
 export interface OpenAPIParser {
-    parse(spec: OpenAPISpec): Promise<ParsedOpenAPI>;
-    extractCommands(spec: OpenAPISpec): CommandDefinition[];
-    extractModels(spec: OpenAPISpec): ModelDefinition[];
-    extractAuthConfig(spec: OpenAPISpec): AuthConfig | undefined;
+    parse(spec: any): Promise<ParsedOpenAPI>;
+    extractCommands(spec: any): CommandDefinition[];
+    extractModels(spec: any): ModelDefinition[];
+    extractAuthConfig(spec: any): AuthConfig | undefined;
 }
 
 /**

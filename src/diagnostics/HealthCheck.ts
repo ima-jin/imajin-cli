@@ -308,8 +308,17 @@ export class CoreHealthChecks {
                 const hasUnhealthy = results.some(r => r.status === 'unhealthy');
                 const hasDegraded = results.some(r => r.status === 'degraded');
 
+                let status: 'healthy' | 'degraded' | 'unhealthy';
+                if (hasUnhealthy) {
+                    status = 'unhealthy';
+                } else if (hasDegraded) {
+                    status = 'degraded';
+                } else {
+                    status = 'healthy';
+                }
+
                 return {
-                    status: hasUnhealthy ? 'unhealthy' : (hasDegraded ? 'degraded' : 'healthy'),
+                    status,
                     details: { providers: results },
                     timestamp: new Date()
                 };

@@ -239,7 +239,7 @@ export abstract class PerformanceTestBase<T extends BaseService> extends Service
      */
     private calculateStatistics(results: TestMetrics[]) {
         const durations = results.map(r => r.duration);
-        const sorted = durations.sort((a, b) => a - b);
+        const sorted = durations.toSorted((a, b) => a - b);
         
         return {
             count: results.length,

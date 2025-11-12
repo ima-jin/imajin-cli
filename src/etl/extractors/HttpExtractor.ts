@@ -111,7 +111,7 @@ export class HttpExtractor<TOutput = any> extends BaseExtractor<TOutput> {
      */
     private getValueByPath(obj: any, path: string): any {
         return path.split('.').reduce((current, key) => {
-            return current && current[key] !== undefined ? current[key] : undefined;
+            return current?.[key] !== undefined ? current[key] : undefined;
         }, obj);
     }
 }

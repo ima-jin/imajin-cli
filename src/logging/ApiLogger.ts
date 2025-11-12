@@ -104,7 +104,7 @@ export class ApiLogger extends Logger {
         this.apiMetrics.averageResponseTime = this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length;
 
         // Check for rate limiting
-        if (options.rateLimitInfo && options.rateLimitInfo.remaining === 0) {
+        if (options.rateLimitInfo?.remaining === 0) {
             this.apiMetrics.rateLimitHits++;
             this.warn(`Rate limit hit for ${method} ${url}`, {
                 type: 'rate_limit_hit',

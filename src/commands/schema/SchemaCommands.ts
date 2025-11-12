@@ -443,8 +443,9 @@ yaml += `    max: ${field.max}\n`;
 yaml += `    pattern: "${field.pattern}"\n`;
 }
         if (field.values) {
-yaml += `    values: [${field.values.map((v: string) => `"${v}"`).join(', ')}]\n`;
-}
+            const valuesList = field.values.map((v: string) => `"${v}"`).join(', ');
+            yaml += `    values: [${valuesList}]\n`;
+        }
     }
     
     return yaml;

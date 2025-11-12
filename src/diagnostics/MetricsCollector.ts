@@ -98,7 +98,7 @@ export class MetricsCollector extends EventEmitter {
         const key = this.getMetricKey(name, labels);
         const existing = this.metrics.get(key);
 
-        if (existing && existing.type === 'counter') {
+        if (existing?.type === 'counter') {
             existing.value += value;
             existing.timestamp = new Date();
         } else {
@@ -138,7 +138,7 @@ export class MetricsCollector extends EventEmitter {
         const key = this.getMetricKey(name, labels);
         const existing = this.metrics.get(key);
 
-        if (existing && existing.type === 'histogram') {
+        if (existing?.type === 'histogram') {
             existing.count = (existing.count ?? 0) + 1;
             existing.sum = (existing.sum ?? 0) + value;
             existing.value = existing.sum / existing.count; // Average
@@ -306,7 +306,7 @@ export class MetricsCollector extends EventEmitter {
         return {
             totalExecutions,
             successRate: totalExecutions > 0 ? (totalExecutions - errors) / totalExecutions : 1,
-            avgDuration: durations.length > 0 ? durations.reduce((a, b) => a + b) / durations.length : 0
+            avgDuration: durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0
         };
     }
 

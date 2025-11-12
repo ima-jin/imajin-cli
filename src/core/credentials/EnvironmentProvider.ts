@@ -129,7 +129,7 @@ export class EnvironmentProvider extends BaseCredentialProvider {
 
             return credentialKeys
                 .map(key => key.replace(`${this.envPrefix}_`, '').toLowerCase())
-                .map(service => service.replaceAll(/_/g, '-'));
+                .map(service => service.replaceAll('_', '-'));
         } catch (error) {
             this.logger.debug(`Failed to list credentials from environment: ${error}`);
             return [];
@@ -178,14 +178,14 @@ export class EnvironmentProvider extends BaseCredentialProvider {
      */
     private getCredentialType(credentials: CredentialData): string {
         if (credentials.apiKey) {
-return 'api-key';
-}
+            return 'api-key';
+        }
         if (credentials.accessToken && credentials.refreshToken) {
-return 'oauth2';
-}
+            return 'oauth2';
+        }
         if (credentials.accessToken) {
-return 'bearer-token';
-}
+            return 'bearer-token';
+        }
         return 'unknown';
     }
 

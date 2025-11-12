@@ -289,7 +289,7 @@ export class SchemaLoader {
         // Simple hash for change detection
         let hash = 0;
         for (let i = 0; i < content.length; i++) {
-            const char = content.charCodeAt(i);
+            const char = content.codePointAt(i) ?? 0;
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash; // Convert to 32-bit integer
         }

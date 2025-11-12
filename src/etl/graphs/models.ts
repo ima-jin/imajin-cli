@@ -18,7 +18,7 @@
  */
 
 import { z } from 'zod';
-import { CompatibilityMatrix, GraphModel, GraphSchema } from '../core/interfaces.js';
+import type { GraphModel, GraphSchema, CompatibilityMatrix } from '../core/interfaces.js';
 
 // Re-export interfaces needed by other modules
 export type { GraphModel, GraphSchema, CompatibilityMatrix };
@@ -335,7 +335,11 @@ export class ModelRegistry {
 return undefined;
 }
 
-        const latestVersion = Array.from(versions).sort().pop();
+        const sortedVersions = Array.from(versions).sort();
+        const latestVersion = sortedVersions[sortedVersions.length - 1];
+        if (!latestVersion) {
+            return undefined;
+        }
         return this.models.get(`${name}@${latestVersion}`);
     }
 
@@ -645,5 +649,4 @@ export const registerDefaultModels = () => {
 registerDefaultModels();
 
 // Export types
-export type ModelType = string;
 export type ModelData<T extends GraphModel> = Partial<T>; 

@@ -30,7 +30,6 @@ import type {
     GeneratedPlugin,
     PluginGenerator as IPluginGenerator,
     ModelDefinition,
-    OpenAPISpec,
     PluginFile,
     TemplateContext,
     ValidationResult
@@ -48,7 +47,7 @@ export class DefaultPluginGenerator implements IPluginGenerator {
     /**
      * Generate plugin from OpenAPI specification
      */
-    async generateFromOpenAPI(spec: OpenAPISpec): Promise<GeneratedPlugin> {
+    async generateFromOpenAPI(spec: any): Promise<GeneratedPlugin> {
         // Parse the OpenAPI spec
         const parsed = await this.parser.parse(spec);
 
@@ -77,7 +76,7 @@ export class DefaultPluginGenerator implements IPluginGenerator {
     /**
      * Validate OpenAPI specification
      */
-    validateSpec(spec: OpenAPISpec): ValidationResult {
+    validateSpec(spec: any): ValidationResult {
         return this.parser.validateSpec(spec);
     }
 
@@ -258,7 +257,8 @@ export { ${plugin.name}Config } from './${plugin.name}Config.js';
             .toLowerCase()
             .replaceAll(/[^a-z0-9]/g, '-')
             .replaceAll(/-+/g, '-')
-            .replaceAll(/^-|-$/g, '');
+            .replace(/^-+/, '')
+            .replace(/-+$/, '');
     }
 
     /**

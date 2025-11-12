@@ -176,9 +176,14 @@ numberType = numberType.max(fieldDef.validation.max);
                 break;
 
             case 'array': {
-                const itemType = fieldDef.items === 'string' ? z.string() :
-                               fieldDef.items === 'number' ? z.number() :
-                               z.any();
+                let itemType;
+                if (fieldDef.items === 'string') {
+                    itemType = z.string();
+                } else if (fieldDef.items === 'number') {
+                    itemType = z.number();
+                } else {
+                    itemType = z.any();
+                }
                 zodType = z.array(itemType);
                 break;
             }
@@ -356,14 +361,12 @@ export class TypeRegistry {
 
     /**
      * Get type collision resolution strategy
+     * TODO: Implement different strategies based on service characteristics
+     * Currently always returns 'namespace' - future enhancement needed for 'version' and 'merge' strategies
      */
-    static getResolutionStrategy(typeName: string): 'namespace' | 'version' | 'merge' {
-        const services = this.getServices(typeName);
-        if (services.length <= 1) {
-return 'namespace';
-}
-        
-        // Default strategy for multiple services
+    static getResolutionStrategy(_typeName: string): 'namespace' | 'version' | 'merge' {
+        // Currently only namespace strategy is implemented
+        // Future: Analyze service compatibility and type characteristics to determine optimal strategy
         return 'namespace';
     }
 }
@@ -441,11 +444,18 @@ export class UniversalEntityFactory {
      * Create a universal entity with proper validation
      */
     static async createEntity<T>(
-        entityType: string, 
-        data: Partial<T>, 
+        entityType: string,
+        data: Partial<T>,
         sourceService: ServiceNamespace,
-        config: SchemaValidationConfig = { strict: true, allowAdditionalProperties: false, validateReferences: true, enforceBusinessRules: true }
+        config?: SchemaValidationConfig
     ): Promise<T> {
+        const defaultConfig: SchemaValidationConfig = {
+            strict: true,
+            allowAdditionalProperties: false,
+            validateReferences: true,
+            enforceBusinessRules: true
+        };
+        const validationConfig = config || defaultConfig;
         await initializeBusinessTypeSystem();
         
         const baseEntity = {
@@ -461,8 +471,8 @@ export class UniversalEntityFactory {
         // Validate against business context schema
         const businessType = 'default'; // Could be extracted from context
         const schema = BusinessTypeRegistry.getBusinessEntitySchema(businessType, entityType);
-        
-        if (schema && config.strict) {
+
+        if (schema && validationConfig.strict) {
             const validation = schema.safeParse(baseEntity);
             if (!validation.success) {
                 throw new Error(`Schema validation failed: ${validation.error.message}`);
@@ -513,16 +523,15 @@ export class SchemaVersionManager {
         // Business context migration logic would go here
         // For now, log the migration requirement
         console.log(`Migration needed from ${fromVersion} to ${this.currentVersion}`);
-        const migrations: any[] = []; // Placeholder for business context migrations
 
-        // Apply migrations sequentially
-        const result = data;
-        for (const migration of migrations) {
-            // Migration application would go here
-            console.log(`Applying migration: ${migration.description}`);
-        }
+        // Placeholder for business context migrations
+        // TODO: Implement actual migration logic when business context migrations are defined
+        // const migrations: any[] = [];
+        // for (const migration of migrations) {
+        //     console.log(`Applying migration: ${migration.description}`);
+        // }
 
-        return result;
+        return data;
     }
 }
 

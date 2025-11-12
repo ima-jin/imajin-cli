@@ -507,8 +507,8 @@ updates.assignee = options.assignee;
         updates.dependencies = [...new Set([...task.dependencies, ...newDeps])];
       }
       if (options.removeDeps) {
-        const removeDeps = options.removeDeps.split(',').map(d => d.trim());
-        updates.dependencies = task.dependencies.filter(d => !removeDeps.includes(d));
+        const removeDeps = new Set(options.removeDeps.split(',').map(d => d.trim()));
+        updates.dependencies = task.dependencies.filter(d => !removeDeps.has(d));
       }
 
       // Run update workflow

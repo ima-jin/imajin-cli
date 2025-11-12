@@ -251,7 +251,7 @@ export class WebhookManager extends EventEmitter {
 
         let result = 0;
         for (let i = 0; i < a.length; i++) {
-            result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+            result |= (a.codePointAt(i) ?? 0) ^ (b.codePointAt(i) ?? 0);
         }
 
         return result === 0;

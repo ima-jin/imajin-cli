@@ -69,7 +69,7 @@ export class GraphExtractor extends BaseExtractor<GraphModel> implements IGraphE
      * Implementation of abstract performExtraction method
      */
     protected async performExtraction(context: ETLContext, config?: any): Promise<GraphModel[]> {
-        if (!config || !config.endpoint) {
+        if (!config?.endpoint) {
             throw new Error('GraphExtractionConfig is required with endpoint');
         }
 

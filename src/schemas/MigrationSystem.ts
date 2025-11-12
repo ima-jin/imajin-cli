@@ -92,7 +92,7 @@ export class MigrationSystem {
             const fileName = path.basename(filePath, path.extname(filePath));
             const versionMatch = /(\d+\.\d+\.\d+)_to_(\d+\.\d+\.\d+)/.exec(fileName);
 
-            if (versionMatch && versionMatch[1] && versionMatch[2]) {
+            if (versionMatch?.[1] && versionMatch[2]) {
                 return {
                     id: fileName,
                     description: `Migration from ${versionMatch[1]} to ${versionMatch[2]}`,
@@ -203,7 +203,8 @@ export class MigrationSystem {
                 return this.addDefaultValue(data, transform);
             
             case 'remove_field':
-                return this.removeField(data, transform);
+                this.removeField(data, transform);
+                return data;
             
             default:
                 console.warn(`Unknown transformation type: ${transform.type}`);
@@ -282,20 +283,19 @@ return data;
 
     /**
      * Remove field from data
+     * Note: This method mutates the input data object
      */
-    private removeField(data: any, transform: Transform): any {
+    private removeField(data: any, transform: Transform): void {
         if (!data || typeof data !== 'object') {
-return data;
+return;
 }
 
         const pathParts = transform.path.split('.');
         const fieldName = pathParts.at(-1);
-        
+
         if (fieldName && fieldName in data) {
             delete data[fieldName];
         }
-
-        return data;
     }
 
     // =============================================================================
@@ -375,7 +375,7 @@ return data;
             description: `Rollback of ${migration.description}`,
             fromVersion: migration.toVersion,
             toVersion: migration.fromVersion,
-            transforms: rollbackTransforms.reverse() // Reverse order for rollback
+            transforms: rollbackTransforms.toReversed() // Reverse order for rollback
         };
     }
 } 

@@ -601,13 +601,13 @@ export class ContentfulService extends BaseService {
     private findDisplayField(fields: any[]): string {
         // Try to find a good display field - prefer 'name', 'title', or the first text field
         const preferredFields = ['name', 'title'];
-        
+
         for (const preferred of preferredFields) {
-            if (fields.find(f => f.id === preferred && f.type === 'Symbol')) {
+            if (fields.some(f => f.id === preferred && f.type === 'Symbol')) {
                 return preferred;
             }
         }
-        
+
         // Fallback to first Symbol field
         const firstSymbolField = fields.find(f => f.type === 'Symbol');
         return firstSymbolField?.id || fields[0]?.id || 'name';

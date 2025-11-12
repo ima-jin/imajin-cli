@@ -51,7 +51,10 @@ export class LocalMediaProvider implements MediaProvider {
 
     constructor(config: LocalProviderConfig) {
         this.config = config;
-        void this.ensureDirectories();
+        // Initialize directories asynchronously (fire and forget with error handling)
+        this.ensureDirectories().catch((error) => {
+            console.warn(`⚠️  Could not initialize directories: ${error}`);
+        });
     }
 
     /**
@@ -152,7 +155,7 @@ throw error;
             let transformedBuffer = originalBuffer;
 
             for (const transformation of transformations) {
-                transformedBuffer = await this.applyTransformation(transformedBuffer, transformation);
+                transformedBuffer = await LocalMediaProvider.applyTransformation(transformedBuffer, transformation);
             }
 
             // Generate new filename for transformed asset
@@ -348,12 +351,19 @@ throw error;
             // Sort assets
             if (options.sortBy) {
                 assets.sort((a, b) => {
-                    const aValue = options.sortBy === 'name' ? a.fileName :
-                        options.sortBy === 'size' ? a.size :
-                            a.uploadedAt.getTime();
-                    const bValue = options.sortBy === 'name' ? b.fileName :
-                        options.sortBy === 'size' ? b.size :
-                            b.uploadedAt.getTime();
+                    let aValue: string | number;
+                    let bValue: string | number;
+
+                    if (options.sortBy === 'name') {
+                        aValue = a.fileName;
+                        bValue = b.fileName;
+                    } else if (options.sortBy === 'size') {
+                        aValue = a.size;
+                        bValue = b.size;
+                    } else {
+                        aValue = a.uploadedAt.getTime();
+                        bValue = b.uploadedAt.getTime();
+                    }
 
                     if (options.sortOrder === 'asc') {
                         return aValue > bValue ? 1 : -1;
@@ -404,7 +414,7 @@ throw error;
     /**
      * Apply basic transformation to buffer
      */
-    private async applyTransformation(buffer: Buffer, transformation: Transformation): Promise<Buffer> {
+    private static async applyTransformation(buffer: Buffer, transformation: Transformation): Promise<Buffer> {
         // For local provider, transformations would be very basic
         // In a real implementation, you'd use libraries like Sharp, ImageMagick, or FFmpeg
 

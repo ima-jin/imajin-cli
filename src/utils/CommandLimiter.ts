@@ -107,8 +107,8 @@ export class CommandLimiter {
         // Replace * with .* for wildcard matching
         const regexPattern = pattern
             .replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
-            .replaceAll(/\\\*/g, '.*'); // Convert \* back to .*
-        
+            .replaceAll('\\*', '.*'); // Convert \* back to .*
+
         const regex = new RegExp(`^${regexPattern}$`, 'i');
         return regex.test(command);
     }

@@ -150,7 +150,7 @@ export class HttpMockManager {
         // Clear any active interceptors
         for (const id of this.interceptors) {
             // Clear interceptor if axios supports it
-            if (axios.interceptors && axios.interceptors.request) {
+            if (axios.interceptors?.request) {
                 try {
                     axios.interceptors.request.eject(id);
                 } catch (e) {

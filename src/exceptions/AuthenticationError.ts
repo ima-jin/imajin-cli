@@ -151,8 +151,9 @@ export class AuthenticationError extends BaseException {
      * Create AuthenticationError for missing credentials
      */
     public static missingCredentials(service?: string, context: ErrorContext = {}): AuthenticationError {
+        const servicePart = service ? ` for ${service}` : '';
         return new AuthenticationError(
-            `Missing credentials${service ? ` for ${service}` : ''}`,
+            `Missing credentials${servicePart}`,
             { type: 'missing_credentials', ...(service && { service }) },
             context
         );
@@ -162,8 +163,9 @@ export class AuthenticationError extends BaseException {
      * Create AuthenticationError for invalid credentials
      */
     public static invalidCredentials(service?: string, context: ErrorContext = {}): AuthenticationError {
+        const servicePart = service ? ` for ${service}` : '';
         return new AuthenticationError(
-            `Invalid credentials${service ? ` for ${service}` : ''}`,
+            `Invalid credentials${servicePart}`,
             { type: 'invalid_credentials', ...(service && { service }) },
             context
         );
@@ -177,8 +179,9 @@ export class AuthenticationError extends BaseException {
         expiresAt?: Date,
         context: ErrorContext = {}
     ): AuthenticationError {
+        const servicePart = service ? ` for ${service}` : '';
         return new AuthenticationError(
-            `Authentication token expired${service ? ` for ${service}` : ''}`,
+            `Authentication token expired${servicePart}`,
             {
                 type: 'expired_token',
                 ...(service && { service }),
@@ -197,8 +200,9 @@ export class AuthenticationError extends BaseException {
         service?: string,
         context: ErrorContext = {}
     ): AuthenticationError {
+        const servicePart = service ? ` for ${service}` : '';
         return new AuthenticationError(
-            `Insufficient permissions${service ? ` for ${service}` : ''}`,
+            `Insufficient permissions${servicePart}`,
             {
                 type: 'insufficient_permissions',
                 ...(service && { service }),
@@ -217,8 +221,9 @@ export class AuthenticationError extends BaseException {
         service?: string,
         context: ErrorContext = {}
     ): AuthenticationError {
+        const servicePart = service ? ` for ${service}` : '';
         return new AuthenticationError(
-            `OAuth authentication failed${service ? ` for ${service}` : ''}: ${oauthError}`,
+            `OAuth authentication failed${servicePart}: ${oauthError}`,
             {
                 type: 'oauth_error',
                 ...(service && { service }),

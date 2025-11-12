@@ -108,7 +108,7 @@ export class SecurityMiddleware {
         }
 
         // Check blacklist first
-        if (config.blacklist && config.blacklist.includes(ip)) {
+        if (config.blacklist?.includes(ip)) {
             if (this.logger) {
                 this.logger.warn('IP address blocked by blacklist', { ip });
             }

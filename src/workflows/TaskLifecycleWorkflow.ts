@@ -309,7 +309,7 @@ export class TaskLifecycleWorkflow extends EventEmitter {
   ): Promise<WorkflowResult> {
     const transition = this.transitions.find(t => t.from === from && t.to === to);
     
-    if (!transition || !transition.allowed) {
+    if (!transition || !transition?.allowed) {
       return {
         success: false,
         errors: [`Invalid status transition from ${from} to ${to}`]

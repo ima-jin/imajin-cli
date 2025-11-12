@@ -97,7 +97,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         }
 
         // List plugins command
-        if (!this.program.commands.find(cmd => cmd.name() === 'plugin:list')) {
+        if (!this.program.commands.some(cmd => cmd.name() === 'plugin:list')) {
             this.program
                 .command('plugin:list')
                 .description('List all loaded plugins')
@@ -130,7 +130,7 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         }
 
         // Load plugins command
-        if (!this.program.commands.find(cmd => cmd.name() === 'plugin:load')) {
+        if (!this.program.commands.some(cmd => cmd.name() === 'plugin:load')) {
             this.program
                 .command('plugin:load')
                 .description('Load all plugins from the plugins directory')

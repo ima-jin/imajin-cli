@@ -703,7 +703,7 @@ return;
         }
         
         // Check if entity is in the current configuration
-        if (this.currentConfig && this.currentConfig.entities[entityName]) {
+        if (this.currentConfig?.entities[entityName]) {
             return true;
         }
         

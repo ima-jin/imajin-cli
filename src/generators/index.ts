@@ -25,7 +25,7 @@ export {
 
 // Types
 export type {
-    AuthConfig, CommandDefinition, GeneratedPlugin, ModelDefinition, OAuth2FlowConfig, OpenAPIParser, OpenAPISpec, ParameterDefinition, ParsedOpenAPI, PluginFile, PluginGenerator, PropertyDefinition, RequestBodyDefinition,
+    AuthConfig, CommandDefinition, GeneratedPlugin, ModelDefinition, OAuth2FlowConfig, OpenAPIParser, ParameterDefinition, ParsedOpenAPI, PluginFile, PluginGenerator, PropertyDefinition, RequestBodyDefinition,
     ResponseDefinition, TemplateContext, ValidationResult
 } from './types.js';
 

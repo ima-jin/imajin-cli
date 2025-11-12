@@ -237,15 +237,15 @@ export class BusinessContextProcessor {
      */
     private hasKeywordOverlap(text1: string, text2: string): boolean {
         const words1 = text1.split(/\s+/).filter(word => word.length > 3);
-        const words2 = text2.split(/\s+/).filter(word => word.length > 3);
-        
+        const words2 = new Set(text2.split(/\s+/).filter(word => word.length > 3));
+
         let matches = 0;
         for (const word of words1) {
-            if (words2.includes(word)) {
+            if (words2.has(word)) {
                 matches++;
             }
         }
-        
+
         // Require at least 2 matching keywords
         return matches >= 2;
     }
@@ -258,7 +258,7 @@ export class BusinessContextProcessor {
         // First, try to load entities from the recipe system
         const recipe = await this.recipeManager.getRecipe(businessType);
 
-        if (recipe && recipe.entities) {
+        if (recipe?.entities) {
             this.logger.debug('Loaded entities from recipe', {
                 recipeName: recipe.name,
                 entitiesCount: Object.keys(recipe.entities).length

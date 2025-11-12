@@ -130,7 +130,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
             return credentials
                 .map(cred => cred.account)
                 .filter(account => account.startsWith(WindowsCredentialProvider.IMAJIN_CLI_PREFIX))
-                .map(account => account.replace(WindowsCredentialProvider.IMAJIN_CLI_PREFIX, '').replaceAll(/_/g, '-'));
+                .map(account => account.replace(WindowsCredentialProvider.IMAJIN_CLI_PREFIX, '').replaceAll('_', '-'));
         } catch (error) {
             this.logger.debug(`Failed to list credentials: ${error}`);
             return [];

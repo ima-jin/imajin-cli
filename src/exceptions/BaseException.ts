@@ -64,9 +64,11 @@ export abstract class BaseException extends Error {
         recoverable: boolean = false,
         userMessage?: string,
         technicalDetails?: any,
-        context: ErrorContext = {},
-        recoveryStrategy: RecoveryStrategy = { type: 'none' }
+        context?: ErrorContext,
+        recoveryStrategy?: RecoveryStrategy
     ) {
+        const defaultContext: ErrorContext = {};
+        const defaultRecoveryStrategy: RecoveryStrategy = { type: 'none' };
         super(message);
 
         this.name = this.constructor.name;
@@ -76,12 +78,12 @@ export abstract class BaseException extends Error {
         this.recoverable = recoverable;
         this.userMessage = userMessage || this.generateUserMessage();
         this.technicalDetails = technicalDetails;
-        this.context = context;
-        this.recoveryStrategy = recoveryStrategy;
+        this.context = context || defaultContext;
+        this.recoveryStrategy = recoveryStrategy || defaultRecoveryStrategy;
         this.metadata = {
             timestamp: new Date(),
             ...(this.stack && { stackTrace: this.stack }),
-            ...this.extractMetadataFromContext(context)
+            ...this.extractMetadataFromContext(this.context)
         };
 
         // Maintain proper prototype chain
