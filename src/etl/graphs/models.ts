@@ -18,8 +18,9 @@
  */
 
 import { z } from 'zod';
+import type { GraphModel, GraphSchema, CompatibilityMatrix } from '../core/interfaces.js';
 // Re-export interfaces needed by other modules
-export type { GraphModel, GraphSchema, CompatibilityMatrix } from '../core/interfaces.js';
+export type { GraphModel, GraphSchema, CompatibilityMatrix };
 
 // Define TranslationMapping interface for business context integration
 export interface TranslationMapping {
@@ -333,7 +334,7 @@ export class ModelRegistry {
 return undefined;
 }
 
-        const sortedVersions = Array.from(versions).sort();
+        const sortedVersions = Array.from(versions).sort((a, b) => a.localeCompare(b));
         if (sortedVersions.length === 0) {
             return undefined;
         }

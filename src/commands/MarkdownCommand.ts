@@ -195,7 +195,7 @@ export class MarkdownCommand {
 
         const chokidar = await import('chokidar');
         const watcher = chokidar.watch(input, {
-            ignored: /(^|[\/\\])\../, // ignore dotfiles
+            ignored: /(^|[/\\])\../, // ignore dotfiles
             persistent: true
         });
 

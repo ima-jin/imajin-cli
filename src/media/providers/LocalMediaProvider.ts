@@ -415,20 +415,12 @@ throw error;
      * Apply basic transformation to buffer
      */
     private static async applyTransformation(buffer: Buffer, transformation: Transformation): Promise<Buffer> {
-        // For local provider, transformations would be very basic
+        // For local provider, transformations are not yet implemented
         // In a real implementation, you'd use libraries like Sharp, ImageMagick, or FFmpeg
-
-        switch (transformation.type) {
-            case 'optimize':
-                // Could compress the image here
-                return buffer;
-            case 'format':
-                // Could convert format here
-                return buffer;
-            default:
-                // Return original buffer for unsupported transformations
-                return buffer;
-        }
+        // to handle transformation types: optimize, format, etc.
+        // For now, return the original buffer unchanged
+        void transformation; // Mark as intentionally unused
+        return buffer;
     }
 
     /**

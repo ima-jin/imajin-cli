@@ -577,7 +577,7 @@ complexityScore += 1;
 }
         
         // Business entity mapping complexity
-        const businessEntityCount = Object.keys(businessContext.entities).length;
+        const businessEntityCount = Object.keys(_businessContext.entities).length;
         if (businessEntityCount > 8) {
 complexityScore += 1;
 }

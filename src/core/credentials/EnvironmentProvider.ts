@@ -195,7 +195,7 @@ export class EnvironmentProvider extends BaseCredentialProvider {
     public getAvailableKeys(): string[] {
         return Object.keys(process.env)
             .filter((key): key is string => typeof key === 'string' && key.startsWith(`${this.envPrefix}_`))
-            .sort();
+            .sort((a, b) => a.localeCompare(b));
     }
 
     /**

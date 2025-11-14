@@ -70,6 +70,7 @@ export abstract class BaseLoader<TInput = any> implements Loader<TInput> {
 
     protected httpClient: AxiosInstance;
     protected activeTransactions: Set<string> = new Set();
+    protected logger?: { warn: (message: string, context?: any) => void; debug?: (message: string, context?: any) => void };
 
     constructor(protected config: BaseLoaderConfig = {}) {
         this.httpClient = this.createHttpClient();

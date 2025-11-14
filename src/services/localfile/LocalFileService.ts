@@ -351,7 +351,7 @@ export class LocalFileService extends BaseService {
                 } catch (error) {
                     // Skip files that can't be read - may be permissions or corrupted files
                     this.logger?.debug('Skipping file that cannot be read', {
-                        file: entry.name,
+                        file: path.basename(filePath),
                         error: error instanceof Error ? error.message : String(error)
                     });
                     continue;
