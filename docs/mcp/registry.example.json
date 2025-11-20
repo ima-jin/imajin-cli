@@ -1,0 +1,225 @@
+{
+  "registryVersion": "1.0.0",
+  "generatedAt": "2025-11-14T00:00:00Z",
+  "buildId": "cli-0.3.1+stripe-contentful-cloudinary-localfile",
+  "owner": "imajin-team",
+  "servers": [
+    {
+      "id": "stripe-cli-mcp",
+      "name": "Stripe Business CLI",
+      "version": "0.3.1",
+      "businessContext": "payment-processing",
+      "specSource": {
+        "type": "openapi",
+        "uri": "https://api.stripe.com/openapi.json",
+        "revision": "2025-11-10"
+      },
+      "artifact": {
+        "cliBinary": "./dist/stripe-cli",
+        "mcpAdapter": "./adapters/mcp/stripe-server.js",
+        "checksum": "sha256:REPLACE_ME"
+      },
+      "server": {
+        "endpoint": "http://localhost:7431",
+        "protocol": "mcp/1.0"
+      },
+      "auth": {
+        "type": "bearer",
+        "scopes": [
+          "payments:read",
+          "payments:write"
+        ],
+        "credentialSource": "env:STRIPE_TOKEN"
+      },
+      "tools": [
+        {
+          "name": "customer:create",
+          "inputSchema": "schemas/stripe/customer-create.json",
+          "outputSchema": "schemas/command-result.json",
+          "idempotent": true
+        },
+        {
+          "name": "subscription:start",
+          "inputSchema": "schemas/stripe/subscription-start.json",
+          "outputSchema": "schemas/command-result.json"
+        }
+      ],
+      "rateLimits": [
+        {
+          "name": "stripe-default",
+          "strategy": "token-bucket",
+          "limit": 100,
+          "perSeconds": 60,
+          "burst": 20
+        }
+      ],
+      "logging": {
+        "level": "info",
+        "emitStructured": true,
+        "fields": [
+          "tool",
+          "version",
+          "durationMs",
+          "traceId"
+        ]
+      },
+      "health": {
+        "check": "http://localhost:7431/health",
+        "expectedVersion": "0.3.1"
+      }
+    },
+    {
+      "id": "contentful-cli-mcp",
+      "name": "Contentful Business CLI",
+      "version": "0.3.1",
+      "businessContext": "content-management",
+      "specSource": {
+        "type": "openapi",
+        "uri": "https://contentful.com/openapi.json",
+        "revision": "2025-11-10"
+      },
+      "artifact": {
+        "cliBinary": "./dist/contentful-cli",
+        "mcpAdapter": "./adapters/mcp/contentful-server.js",
+        "checksum": "sha256:REPLACE_ME"
+      },
+      "server": {
+        "endpoint": "http://localhost:7432",
+        "protocol": "mcp/1.0"
+      },
+      "auth": {
+        "type": "bearer",
+        "scopes": [
+          "cms:read",
+          "cms:write"
+        ],
+        "credentialSource": "env:CONTENTFUL_TOKEN"
+      },
+      "tools": [
+        {
+          "name": "entry:create",
+          "inputSchema": "schemas/contentful/entry-create.json",
+          "outputSchema": "schemas/command-result.json"
+        },
+        {
+          "name": "asset:publish",
+          "inputSchema": "schemas/contentful/asset-publish.json",
+          "outputSchema": "schemas/command-result.json"
+        }
+      ],
+      "logging": {
+        "level": "info",
+        "emitStructured": true,
+        "fields": [
+          "tool",
+          "version",
+          "durationMs",
+          "traceId"
+        ]
+      },
+      "health": {
+        "check": "http://localhost:7432/health",
+        "expectedVersion": "0.3.1"
+      }
+    },
+    {
+      "id": "cloudinary-cli-mcp",
+      "name": "Cloudinary Media CLI",
+      "version": "0.3.1",
+      "businessContext": "media-pipeline",
+      "specSource": {
+        "type": "openapi",
+        "uri": "https://cloudinary.com/openapi.json",
+        "revision": "2025-11-10"
+      },
+      "artifact": {
+        "cliBinary": "./dist/cloudinary-cli",
+        "mcpAdapter": "./adapters/mcp/cloudinary-server.js",
+        "checksum": "sha256:REPLACE_ME"
+      },
+      "server": {
+        "endpoint": "http://localhost:7433",
+        "protocol": "mcp/1.0"
+      },
+      "auth": {
+        "type": "basic",
+        "credentialSource": "env:CLOUDINARY_BASIC_AUTH"
+      },
+      "tools": [
+        {
+          "name": "asset:upload",
+          "inputSchema": "schemas/cloudinary/asset-upload.json",
+          "outputSchema": "schemas/command-result.json"
+        },
+        {
+          "name": "asset:transform",
+          "inputSchema": "schemas/cloudinary/asset-transform.json",
+          "outputSchema": "schemas/command-result.json"
+        }
+      ],
+      "logging": {
+        "level": "info",
+        "emitStructured": true,
+        "fields": [
+          "tool",
+          "version",
+          "durationMs",
+          "traceId"
+        ]
+      },
+      "health": {
+        "check": "http://localhost:7433/health",
+        "expectedVersion": "0.3.1"
+      }
+    },
+    {
+      "id": "localfile-cli-mcp",
+      "name": "Local File CLI",
+      "version": "0.3.1",
+      "businessContext": "storage-local",
+      "specSource": {
+        "type": "internal",
+        "uri": "localfile",
+        "revision": "2025-11-10"
+      },
+      "artifact": {
+        "cliBinary": "./dist/localfile-cli",
+        "mcpAdapter": "./adapters/mcp/localfile-server.js",
+        "checksum": "sha256:REPLACE_ME"
+      },
+      "server": {
+        "endpoint": "http://localhost:7434",
+        "protocol": "mcp/1.0"
+      },
+      "auth": {
+        "type": "none"
+      },
+      "tools": [
+        {
+          "name": "file:list",
+          "inputSchema": "schemas/localfile/file-list.json",
+          "outputSchema": "schemas/command-result.json"
+        },
+        {
+          "name": "file:read",
+          "inputSchema": "schemas/localfile/file-read.json",
+          "outputSchema": "schemas/command-result.json"
+        }
+      ],
+      "logging": {
+        "level": "info",
+        "emitStructured": true,
+        "fields": [
+          "tool",
+          "version",
+          "durationMs",
+          "traceId"
+        ]
+      },
+      "health": {
+        "check": "http://localhost:7434/health",
+        "expectedVersion": "0.3.1"
+      }
+    }
+  ]
+}
