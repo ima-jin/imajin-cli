@@ -51,10 +51,13 @@ export class LocalMediaProvider implements MediaProvider {
 
     constructor(config: LocalProviderConfig) {
         this.config = config;
-        // Initialize directories asynchronously (fire and forget with error handling)
-        this.ensureDirectories().catch((error) => {
-            console.warn(`⚠️  Could not initialize directories: ${error}`);
-        });
+    }
+
+    /**
+     * Initialize directory structure required for local media storage.
+     */
+    public async initialize(): Promise<void> {
+        await this.ensureDirectories();
     }
 
     /**
@@ -414,12 +417,11 @@ throw error;
     /**
      * Apply basic transformation to buffer
      */
-    private static async applyTransformation(buffer: Buffer, transformation: Transformation): Promise<Buffer> {
+    private static async applyTransformation(buffer: Buffer, _transformation: Transformation): Promise<Buffer> {
         // For local provider, transformations are not yet implemented
         // In a real implementation, you'd use libraries like Sharp, ImageMagick, or FFmpeg
         // to handle transformation types: optimize, format, etc.
         // For now, return the original buffer unchanged
-        void transformation; // Mark as intentionally unused
         return buffer;
     }
 

@@ -52,7 +52,14 @@ export class MediaServiceProvider extends ServiceProvider {
         // Register individual providers
         this.container.singleton('LocalMediaProvider', () => {
             const config = this.getLocalProviderConfig();
-            return new LocalMediaProvider(config);
+            const provider = new LocalMediaProvider(config);
+            provider.initialize().catch((error) => {
+                this.logger.warn('LocalMediaProvider initialization failed', {
+                    provider: 'MediaServiceProvider',
+                    error: error instanceof Error ? error.message : String(error)
+                });
+            });
+            return provider;
         });
 
         this.container.singleton('CloudinaryProvider', () => {

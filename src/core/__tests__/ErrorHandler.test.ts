@@ -86,10 +86,10 @@ describe('ErrorHandler', () => {
             expect(history[0]?.error.message).toBe('Test error');
         });
 
-        it('should emit error event', async () => {
+        it('should emit errorHandled event', async () => {
             const error = new Error('Test error');
             const eventPromise = new Promise<ErrorReport>(resolve => {
-                errorHandler.once('error', (report: ErrorReport) => resolve(report));
+                errorHandler.once('errorHandled', (report: ErrorReport) => resolve(report));
             });
 
             await errorHandler.handleError(error);
@@ -230,11 +230,11 @@ describe('ErrorHandler', () => {
     });
 
     describe('event emission', () => {
-        it('should emit error event when enabled', async () => {
+        it('should emit errorHandled event when enabled', async () => {
             const handler = new ErrorHandler({ enableEventEmission: true });
             const emittedEvents: ErrorReport[] = [];
 
-            handler.on('error', (report: ErrorReport) => {
+            handler.on('errorHandled', (report: ErrorReport) => {
                 emittedEvents.push(report);
             });
 
@@ -248,7 +248,7 @@ describe('ErrorHandler', () => {
             const handler = new ErrorHandler({ enableEventEmission: false });
             let eventCount = 0;
 
-            handler.on('error', () => {
+            handler.on('errorHandled', () => {
                 eventCount++;
             });
 

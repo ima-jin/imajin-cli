@@ -36,7 +36,10 @@
     "sonar": "eslint src/**/*.ts --ext .ts",
     "update-dates": "node scripts/update-task-dates.js",
     "update-dates:tasks": "node scripts/update-task-dates.js docs/prompts/tasks/*.md",
-    "update-dates:projects": "node scripts/update-task-dates.js docs/prompts/projects/*.md"
+    "update-dates:projects": "node scripts/update-task-dates.js docs/prompts/projects/*.md",
+    "session:export": "powershell -ExecutionPolicy Bypass -File scripts/export-current-session.ps1",
+    "session:list": "powershell -ExecutionPolicy Bypass -File scripts/claude-session-export.ps1 -ListSessions",
+    "session:summary": "powershell -ExecutionPolicy Bypass -File scripts/claude-session-export.ps1 -OutputFormat summary"
   },
   "keywords": [
     "cli",

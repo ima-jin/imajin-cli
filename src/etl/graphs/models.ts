@@ -331,14 +331,15 @@ export class ModelRegistry {
         // If no version specified, get the latest version
         const versions = this.versionMap.get(name);
         if (!versions || versions.size === 0) {
-return undefined;
-}
-
-        const sortedVersions = Array.from(versions).sort((a, b) => a.localeCompare(b));
-        if (sortedVersions.length === 0) {
             return undefined;
         }
-        const latestVersion = sortedVersions[sortedVersions.length - 1]!;
+
+        const sortedVersions = Array.from(versions).sort((a, b) => a.localeCompare(b));
+        const latestVersion = sortedVersions.at(-1);
+        if (!latestVersion) {
+            return undefined;
+        }
+
         return this.models.get(`${name}@${latestVersion}`);
     }
 

@@ -43,7 +43,7 @@ export class Application {
   private readonly program: Command;
   private readonly logger: Logger;
   private readonly config: ImajinConfig;
-  private providers: ServiceProvider[] = [];
+  private readonly providers: ServiceProvider[] = [];
   private isBooted: boolean = false;
   private commandsRegistered: boolean = false;
   private readonly errorHandler: ErrorHandler;

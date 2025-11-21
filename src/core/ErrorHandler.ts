@@ -82,12 +82,7 @@ export class ErrorHandler extends EventEmitter {
         };
 
         try {
-            // Emit error event if enabled
-            if (this.options.enableEventEmission) {
-                this.emit('error', imajinException, context);
-            }
-
-            // Log error if enabled
+            // Log error if enabled (do this first, before any event emission)
             if (this.options.enableLogging) {
                 await this.logError(imajinException, context);
             }
@@ -107,6 +102,12 @@ export class ErrorHandler extends EventEmitter {
             // Store in history
             this.addToHistory(report);
 
+            // Emit error event if enabled (renamed to avoid Node.js 'error' event special behavior)
+            // Note: Using 'errorHandled' instead of 'error' to prevent unhandled error exceptions
+            if (this.options.enableEventEmission) {
+                this.emit('errorHandled', report);
+            }
+
             // Exit on critical errors if configured
             if (this.options.exitOnCritical && imajinException.severity === 'critical') {
                 this.handleCriticalError(imajinException);
@@ -114,7 +115,7 @@ export class ErrorHandler extends EventEmitter {
 
         } catch (handlerError) {
             // Meta-error: error in error handler
-            this.logger.error('Error in error handler', handlerError instanceof Error ? handlerError : new Error(String(handlerError)));
+            // Only log to console to avoid potential infinite loops
             console.error('Error in error handler:', handlerError);
             report.handled = false;
         }
@@ -127,7 +128,11 @@ export class ErrorHandler extends EventEmitter {
      */
     private normalizeError(error: Error | BaseException, context: any): BaseException {
         if (error instanceof BaseException) {
-            return error.withContext(context);
+            // Only create new exception with context if there's actually context to add
+            if (context && Object.keys(context).length > 0) {
+                return error.withContext(context);
+            }
+            return error;
         }
 
         // Convert common Node.js errors to appropriate exceptions

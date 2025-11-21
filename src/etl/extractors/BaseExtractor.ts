@@ -160,7 +160,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
         _context: ETLContext
     ): Promise<T> {
         return new Promise<T>((resolve, reject) => {
-            void this.requestQueue.push(async () => {
+            this.requestQueue.push(async () => {
                 try {
                     const response = await this.httpClient.request<T>({
                         url,
@@ -172,7 +172,9 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
                 }
             });
 
-            void this.processQueue();
+            this.processQueue().catch((error) =>
+                reject(error instanceof Error ? error : new Error(String(error)))
+            );
         });
     }
 
@@ -276,7 +278,7 @@ export abstract class BaseExtractor<TOutput = any> implements Extractor<TOutput>
     private setupRateLimit(): void {
         if (this.config.rateLimit) {
             setInterval(() => {
-                void this.processQueue();
+                this.processQueue().catch(() => undefined);
             }, 1000 / this.config.rateLimit.requestsPerSecond);
         }
     }

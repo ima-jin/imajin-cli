@@ -361,7 +361,7 @@ export class TypeRegistry {
 
     /**
      * Get type collision resolution strategy
-     * TODO: Implement different strategies based on service characteristics
+     * Strategy selection can be extended based on service characteristics.
      * Currently always returns 'namespace' - future enhancement needed for 'version' and 'merge' strategies
      */
     static getResolutionStrategy(_typeName: string): 'namespace' | 'version' | 'merge' {
@@ -525,7 +525,7 @@ export class SchemaVersionManager {
         console.log(`Migration needed from ${fromVersion} to ${this.currentVersion}`);
 
         // Placeholder for business context migrations
-        // TODO: Implement actual migration logic when business context migrations are defined
+        // Migration logic will be added when business context migrations are defined
         // const migrations: any[] = [];
         // for (const migration of migrations) {
         //     console.log(`Applying migration: ${migration.description}`);

@@ -261,64 +261,78 @@ export class WorkflowOrchestrator extends EventEmitter {
                 stepName: step.name
             });
 
-            try {
-                // Execute the step
-                const result = await this.executeStep(step, execution.context);
+            let attempt = 0;
+            const maxRetries = step.maxRetries ?? 0;
 
-                stepExecution.status = 'completed';
-                stepExecution.result = result;
-                stepExecution.completedAt = new Date();
+            // Retry loop without mutating the outer loop counter
+            // to satisfy Sonar/S2310 and make retry intent explicit.
+            while (true) {
+                try {
+                    const result = await this.executeStep(step, execution.context);
 
-                // Update workflow context with step result
-                if (result.output) {
-                    execution.context.data = { ...execution.context.data, ...result.output };
-                }
+                    stepExecution.status = 'completed';
+                    stepExecution.result = result;
+                    stepExecution.completedAt = new Date();
 
-                this.logger.info(`Step completed: ${step.name}`, {
-                    workflowId: workflow.id,
-                    executionId: execution.id,
-                    stepIndex: i
-                });
+                    if (result.output) {
+                        execution.context.data = { ...execution.context.data, ...result.output };
+                    }
 
-                this.emit('step:completed', {
-                    executionId: execution.id,
-                    stepId: step.id,
-                    result: result.output
-                });
-
-            } catch (error) {
-                stepExecution.status = 'failed';
-                stepExecution.error = error instanceof Error ? error.message : String(error);
-                stepExecution.completedAt = new Date();
-
-                this.logger.error(`Step failed: ${step.name}`, error instanceof Error ? error : new Error(String(error)), {
-                    workflowId: workflow.id,
-                    executionId: execution.id,
-                    stepIndex: i
-                });
-
-                this.emit('step:failed', {
-                    executionId: execution.id,
-                    stepId: step.id,
-                    error: stepExecution.error
-                });
-
-                // Handle step failure based on step configuration
-                if (step.onFailure === 'stop') {
-                    throw error;
-                } else if (step.onFailure === 'continue') {
-                    this.logger.warn(`Continuing workflow despite step failure: ${step.name}`);
-                    continue;
-                } else if (step.onFailure === 'retry' && (stepExecution.retries || 0) < (step.maxRetries || 0)) {
-                    stepExecution.retries = (stepExecution.retries || 0) + 1;
-                    this.logger.info(`Retrying step: ${step.name}`, {
-                        attempt: stepExecution.retries,
-                        maxRetries: step.maxRetries
+                    this.logger.info(`Step completed: ${step.name}`, {
+                        workflowId: workflow.id,
+                        executionId: execution.id,
+                        stepIndex: i
                     });
-                    // Decrement to retry the same step (compensates for loop increment)
-                    i = i - 1;
-                    continue;
-                } else {
+
+                    this.emit('step:completed', {
+                        executionId: execution.id,
+                        stepId: step.id,
+                        result: result.output
+                    });
+
+                    break;
+                } catch (error) {
+                    attempt += 1;
+                    stepExecution.status = 'failed';
+                    stepExecution.error = error instanceof Error ? error.message : String(error);
+                    stepExecution.completedAt = new Date();
+                    stepExecution.retries = attempt;
+
+                    this.logger.error(
+                        `Step failed: ${step.name}`,
+                        error instanceof Error ? error : new Error(String(error)),
+                        {
+                            workflowId: workflow.id,
+                            executionId: execution.id,
+                            stepIndex: i,
+                            attempt,
+                            maxRetries
+                        }
+                    );
+
+                    this.emit('step:failed', {
+                        executionId: execution.id,
+                        stepId: step.id,
+                        error: stepExecution.error
+                    });
+
+                    if (step.onFailure === 'stop') {
+                        throw error;
+                    }
+
+                    if (step.onFailure === 'continue') {
+                        this.logger.warn(`Continuing workflow despite step failure: ${step.name}`);
+                        break;
+                    }
+
+                    if (step.onFailure === 'retry' && attempt <= maxRetries) {
+                        this.logger.info(`Retrying step: ${step.name}`, {
+                            attempt,
+                            maxRetries
+                        });
+                        continue;
+                    }
+
                     throw error;
                 }
             }
