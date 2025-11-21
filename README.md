@@ -1,6 +1,6 @@
-# imajin-cli: Professional CLI Generation System
+# imajin-cli: AI-Safe Universal Command Layer
 
-**Generate Professional CLI Tools from API Specifications**
+**The missing infrastructure layer between AI agents and distributed systems**
 
 [![License: .fair](https://img.shields.io/badge/License-.fair-blue.svg)](docs/.fair-license.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
@@ -9,49 +9,195 @@
 
 ---
 
-## Overview
+## The Problem
 
-**The Challenge:**
+**AI agents can't reliably control distributed systems:**
 
-API middleware platforms typically require ongoing subscriptions ($50-500+/month) for access to API integration tools. This creates recurring costs and dependencies on third-party services.
-
-**Our Approach:**
 ```bash
-# Generate a custom CLI tool from OpenAPI specifications
-imajin generate stripe --spec openapi.json
-my-stripe-cli customer:create --name "John Doe" --email "john@example.com"
-my-stripe-cli subscription:cancel --id sub_123 --reason "requested"
-my-stripe-cli payment:refund --charge ch_456 --notify-customer
+# AI agent tries to share content across device network:
+❌ Step 1: Share album          # AI executes
+❌ Step 2: Transcode patterns   # AI forgets
+❌ Step 3: Sync to peers        # AI forgets
+❌ Step 4: Notify subscribers   # AI forgets
+❌ Step 5: Update cache         # AI forgets
+❌ Step 6: Log for audit        # AI forgets
+
+Result: Inconsistent state, silent failures, broken distributed systems
 ```
 
-Generated CLI tools run independently with no ongoing subscription requirements.
+**Why AI fails:**
+- Forgets multi-step workflows (high probability)
+- Can't handle network failures gracefully
+- Doesn't retry operations properly
+- Leaves systems in partial/inconsistent state
+
+---
+
+## The Solution: AI-Safe Command Layer
+
+**imajin-cli generates CLIs with guardrails built-in:**
+
+```bash
+# AI agent runs ONE command:
+✅ device-cli content share --album sunset-patterns
+
+# Infrastructure handles EVERYTHING automatically:
+→ Event: content.shared emitted
+  → ContentGroomer subscribes    → transcodes patterns automatically
+  → PeerSyncService subscribes   → syncs with DLQ for offline devices
+  → NotificationService subscribes → alerts subscribers automatically
+  → CacheManager subscribes      → updates cache automatically
+  → AuditLogger subscribes       → logs action automatically
+
+Result: Consistent state guaranteed. AI can't forget steps.
+```
+
+**How It Works:**
+1. AI declares intent: "share this album"
+2. CLI emits event with complete context
+3. Subscribers react automatically (AI never needs to call them)
+4. Network failures → Dead Letter Queue (no data loss)
+5. Retries happen automatically (exponential backoff)
+6. System state stays consistent
+
+---
+
+## Core Architecture: Universal Adapter Pattern
+
+**imajin-cli is the command layer. Everything attaches to it:**
+
+```
+┌─────────────────────────────────────────────┐
+│         AI Agents (ChatGPT, Claude)         │
+└──────────────────┬──────────────────────────┘
+                   │ Natural language
+                   ↓
+┌─────────────────────────────────────────────┐
+│              Web Interface                   │
+│         (imajin-ai/web Next.js app)         │
+└──────────────────┬──────────────────────────┘
+                   │ HTTP/REST
+                   ↓
+┌─────────────────────────────────────────────┐
+│           imajin-cli (THIS)                  │
+│   Universal AI-Safe Command Layer            │
+│                                              │
+│  • Event-driven (declarative operations)    │
+│  • Dead Letter Queue (fault tolerance)      │
+│  • Middleware pipeline (auto validation)    │
+│  • Job queues (async operations)            │
+│  • Structured errors (AI-readable)          │
+└────┬──────────┬──────────┬──────────┬───────┘
+     │          │          │          │
+     ↓          ↓          ↓          ↓
+  Stripe   Cloudinary  Database   Hardware
+  (CLI)      (CLI)      (CLI)     Devices
+                                  (imajin-os
+                                   LED units)
+```
+
+**Key Insight:** The CLI isn't just "developer tooling" – it's the **universal command bus** that:
+- AI agents send commands through (safely)
+- Web interfaces send requests through (consistently)
+- Hardware devices send events through (reliably)
+- Services coordinate operations through (automatically)
+
+**You can attach practically anything to it.**
+
+---
+
+## Why This Matters: Real Use Case
+
+**Scenario:** User buys LED device from website, device ships, arrives, gets set up
+
+**Traditional Approach (Fragile):**
+```typescript
+// Web backend handles order
+await stripe.charge(payment);
+await db.orders.create(order);
+await email.send(confirmation);
+await inventory.decrement(sku);
+await shipping.createLabel(address);
+// ... 12 more steps that might fail at any point
+// If ANY step fails → partial state, data inconsistency
+```
+
+**imajin-cli Approach (Robust):**
+```typescript
+// Web sends ONE command through CLI:
+await cli.execute('order create', orderData);
+
+// CLI emits: order.created
+//   → PaymentService handles Stripe automatically
+//   → DatabaseService persists automatically
+//   → EmailService sends confirmation automatically
+//   → InventoryService decrements automatically
+//   → ShippingService creates label automatically
+//   → DeviceProvisionService queues NFT mint automatically
+//   → All retries/failures handled via DLQ
+
+// If network fails → DLQ queues retry
+// If service is down → Retry with backoff
+// State is ALWAYS consistent
+```
+
+---
 
 ## Key Features
 
-Transform OpenAPI/GraphQL specifications into business-focused CLI tools with enterprise-grade patterns built-in.
-
 ### Core Capabilities
 
-**Self-Contained CLI Generation**
-- Generate once, use independently
-- No runtime dependencies on third-party services
-- Self-contained executables
-- Direct API access (subject to original service limits)
+**AI-Safe by Design**
+- **Declarative Commands** - AI states intent, infrastructure executes
+- **Automatic Side Effects** - All operations trigger via events, not manual calls
+- **Fault Tolerance** - Dead Letter Queue ensures no data loss on network failures
+- **Consistent State** - Transactions succeed completely or roll back cleanly
+- **Structured Errors** - Machine-readable codes with recovery suggestions
 
-**Enterprise-Grade Patterns**
-- **Credential Management** - Secure cross-platform storage
-- **Rate Limiting** - Intelligent API throttling
-- **Error Handling** - Structured exceptions with recovery
-- **Real-time Events** - Progress tracking and coordination
-- **Background Jobs** - Long-running operations
-- **Monitoring & Logging** - Complete audit trails
-- **Business Context** - Domain-specific commands, not generic endpoints
+**Universal Adapter Pattern**
+- **Generate from any API** - OpenAPI, GraphQL, or custom specs
+- **Attach to anything** - Web, devices, databases, external services
+- **No vendor lock-in** - Self-contained executables, no runtime dependencies
+- **No subscriptions** - Generate once, use forever
+- **Cross-service orchestration** - Coordinate operations across multiple APIs
 
-**AI Integration Support**
-- **JSON-native output** - Structured, parseable responses
-- **Introspection APIs** - Capability discovery
-- **Real-time progress** - Live operation feedback
-- **Structured errors** - Machine-readable error responses
+**Enterprise Infrastructure Built-In**
+- **Event System** - Middleware pipeline, subscribers, priority queues
+- **Job Queues** - Background processing with progress tracking
+- **Credential Management** - Secure cross-platform storage (Keychain/Windows)
+- **Rate Limiting** - Intelligent API throttling with multiple strategies
+- **Monitoring** - Health checks, metrics, audit trails
+- **Error Recovery** - Automatic retry with exponential backoff
+
+---
+
+## The imajin Ecosystem
+
+**imajin-cli is part of a sovereign technology stack:**
+
+1. **imajin-os** - Volumetric LED hardware (512+ LEDs per device, ESP32-controlled)
+2. **imajin-ai/web** - E-commerce platform (Next.js, Stripe, device sales)
+3. **mjn** - Solana token protocol (identity, settlement, escrow)
+4. **.fair** - Attribution standard (contributor tracking, automated royalties)
+5. **imajin-cli** - Universal command layer (THIS - the glue layer)
+
+**Why CLI is central:**
+- Web interface → sends commands through CLI
+- Hardware devices → send events through CLI
+- AI agents → send instructions through CLI
+- Services → coordinate operations through CLI
+
+**Everything goes through the AI-safe command layer.**
+
+**Philosophy:**
+- ❌ No subscriptions (you own it forever)
+- ❌ No cloud dependency (self-hosted, privacy-first)
+- ❌ No vendor lock-in (open source, standard protocols)
+- ❌ No surveillance (your data stays yours)
+
+**See:** [imajin-os ecosystem docs](../imajin-os/docs/governance/ECOSYSTEM.md) for full context
+
+---
 
 ## 🏗️ **Current Implementation Status**
 
@@ -327,6 +473,18 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for:
 - AI coordination layer
 
 ## 📚 **Documentation**
+
+### **Architecture Documentation** ⭐ **Start Here**
+
+- **[docs/architecture/AI_SAFE_INFRASTRUCTURE.md](docs/architecture/AI_SAFE_INFRASTRUCTURE.md)** - **Essential**
+  - Why EventManager is complex (distributed systems + AI-safety)
+  - How declarative commands prevent AI failures
+  - Dead Letter Queue, middleware, event subscribers
+  - Real use cases: content sharing, firmware updates, device coordination
+- **[docs/architecture/README.md](docs/architecture/README.md)** - Architecture navigation
+- **[CLAUDE.md](CLAUDE.md)** - Development guide with ecosystem context
+
+### **Implementation Guides**
 
 - **[Getting Started](docs/GETTING_STARTED.md)** - Business context setup guide
 - **[Architecture](docs/ARCHITECTURE.md)** - Technical foundation

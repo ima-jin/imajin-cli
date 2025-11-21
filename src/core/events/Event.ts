@@ -66,6 +66,15 @@ export interface IEventListener<T = any> {
 
 /**
  * Event subscriber interface for multiple event types
+ *
+ * Use this pattern for services that need to react to multiple events.
+ * Subscribers are registered once and automatically handle all their events.
+ *
+ * Example: ContentGroomer subscribes to content.shared, content.deleted,
+ * device.offline, and user.preferences.changed - all handled automatically
+ * when AI agents trigger these events through CLI commands.
+ *
+ * @see docs/architecture/AI_SAFE_INFRASTRUCTURE.md#2-ieventsubscriber-pattern
  */
 export interface IEventSubscriber {
     getSubscribedEvents(): Record<string, string | string[]>;

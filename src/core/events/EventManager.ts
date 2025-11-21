@@ -1,6 +1,6 @@
 /**
  * EventManager - Event registration and coordination system
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  core/events
  * @author      Generated
@@ -14,6 +14,15 @@
  * - Event middleware pipeline
  * - Error handling and dead letter queues
  * - Performance monitoring and metrics
+ *
+ * ARCHITECTURE NOTE:
+ * This system is designed for AI-safe distributed operations. When AI agents
+ * use generated CLIs, events ensure all side effects execute automatically,
+ * preventing inconsistent state from forgotten steps or network failures.
+ *
+ * @see docs/architecture/AI_SAFE_INFRASTRUCTURE.md - Why this is complex
+ * @see docs/architecture/AI_SAFE_INFRASTRUCTURE.md#eventmanager - Component details
+ * @see docs/architecture/AI_SAFE_INFRASTRUCTURE.md#distributed-systems-context
  */
 
 import type { EventMetadata, IEvent, IEventListener, IEventSubscriber } from './Event.js';

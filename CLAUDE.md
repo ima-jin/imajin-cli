@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **imajin-cli** is a CLI generation system that transforms OpenAPI/GraphQL specifications into business-focused CLI tools with enterprise-grade patterns. It enables multi-service orchestration through Universal Elements and generates professional CLI tools with no subscription dependencies.
 
+**Critical Context:** This is part of the imajin ecosystem (see `https://github.com/ima-jin/imajin-os`), which includes distributed LED hardware devices that form peer-to-peer networks. The generated CLIs will be used by **AI agents** to coordinate operations across these distributed systems. The event-driven architecture ensures AI agents can trigger complex multi-step workflows declaratively, preventing inconsistent state from forgotten steps or network failures.
+
+**See:** [docs/architecture/AI_SAFE_INFRASTRUCTURE.md](docs/architecture/AI_SAFE_INFRASTRUCTURE.md) for architectural rationale.
+
 ## Common Development Commands
 
 ### Building and Testing
@@ -80,6 +84,16 @@ export abstract class ServiceProvider {
 }
 ```
 
+#### Event-Driven Architecture (AI-Safe Infrastructure)
+**Critical:** EventManager (`src/core/events/`) provides distributed systems infrastructure for AI agents:
+- **Declarative Operations**: AI runs ONE command → infrastructure triggers ALL side effects
+- **Dead Letter Queue**: Network failures don't cause data loss
+- **Middleware Pipeline**: Auth, rate limiting, validation happen automatically
+- **Subscriber Pattern**: Services react to events without AI coordination
+- **Why It's Complex**: AI agents can't be trusted to remember multi-step workflows; infrastructure ensures consistency
+
+**See:** [docs/architecture/AI_SAFE_INFRASTRUCTURE.md](docs/architecture/AI_SAFE_INFRASTRUCTURE.md) - explains why EventManager is enterprise-grade for distributed systems.
+
 #### Universal Elements System
 Cross-service compatibility layer in `src/etl/` that enables multi-service workflows:
 - **Graph Translation**: `src/etl/graphs/` - converts between service-specific data models
@@ -88,9 +102,10 @@ Cross-service compatibility layer in `src/etl/` that enables multi-service workf
 
 #### Command Pattern Framework
 All CLI commands follow the pattern in `src/commands/`:
-- **BaseCommand**: Foundation class with common functionality
+- **BaseCommand**: Foundation class with event emission for AI-safe operations
 - **Generated Commands**: Business-context-driven command generation
 - **Service-specific Commands**: Located in respective service directories (e.g., `src/services/stripe/commands/`)
+- **Pattern**: Commands emit events rather than calling services directly (prevents AI agents from leaving inconsistent state)
 
 ### Directory Structure Deep Dive
 

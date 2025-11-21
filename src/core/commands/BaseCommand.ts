@@ -1,6 +1,6 @@
 /**
  * BaseCommand - Abstract base class for all commands
- * 
+ *
  * @package     @imajin/cli
  * @subpackage  core/commands
  * @author      Generated
@@ -14,6 +14,16 @@
  * - Error handling and logging
  * - Progress tracking and events
  * - Validation and type safety
+ *
+ * ARCHITECTURE NOTE:
+ * Commands emit events for side effects rather than calling services directly.
+ * This ensures AI agents using these commands trigger all necessary operations
+ * automatically, preventing inconsistent state from forgotten steps.
+ *
+ * Pattern: AI runs ONE command → EventManager triggers ALL side effects
+ *
+ * @see docs/architecture/AI_SAFE_INFRASTRUCTURE.md#pattern-1-declarative-commands
+ * @see docs/architecture/AI_SAFE_INFRASTRUCTURE.md#ai-agent-interaction-patterns
  */
 
 import type { Logger } from '../../logging/Logger.js';

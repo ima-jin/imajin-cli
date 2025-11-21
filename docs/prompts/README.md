@@ -84,11 +84,17 @@ docs/prompts/
 | 17.3 | `phase2/17_3_business_context_schema_system.md` | ✅ Complete    | Business-context-driven schema system |
 | 17.4 | `phase2/17_4_business_context_cleanup.md`       | ✅ Complete    | Business context cleanup and optimization |
 | 17.5 | `phase2/17_5_business_context_recipe_system.md` | ✅ Complete    | Business context recipe system implementation |
-| **18**   | **`phase2/18_phase2_cleanup.md`**                   | 🔄 **CURRENT** | **Phase 2 cleanup & production readiness** |
-| 18.1 | `phase2/18_1_console_log_migration.md`          | ⏳ Pending     | Console.log to logger migration (1,095 violations) |
-| 18.2 | `phase2/18_2_eslint_configuration.md`           | ⏳ Pending     | ESLint v9 flat config setup |
-| 18.3 | `phase2/18_3_test_suite_fixes.md`               | ⏳ Pending     | Fix 7 failing test suites |
+| **18**   | **`phase2/18_phase2_cleanup.md`**                   | ✅ Complete | **Phase 2 cleanup & production readiness** |
+| 18.1 | `phase2/18_1_console_log_migration.md`          | ✅ Complete     | Console.log reviewed (CLI output correct) |
+| 18.2 | `phase2/18_2_eslint_configuration.md`           | ✅ Complete     | ESLint v9 flat config configured |
+| 18.3 | `phase2/18_3_test_suite_fixes.md`               | ✅ Complete     | All tests passing (267 tests) |
 | 18.4 | `phase2/18_4_code_quality_improvements.md`      | ⏳ Pending     | DRY refactoring & type safety |
+| **18.7** | **`phase2/18_7_test_coverage_plan.md`**         | 📋 **PLAN COMPLETE** | **Systematic test coverage 11% → 90%** |
+| 18.7.1 | `phase2/18_7_1_core_infrastructure_tests.md`  | ⏳ Pending     | Core infrastructure tests (30-40h, +15-20%) |
+| 18.7.2 | `phase2/18_7_2_data_layer_tests.md`           | ⏳ Pending     | Data layer & repository tests (15-20h, +8-12%) |
+| 18.7.3 | `phase2/18_7_3_etl_pipeline_tests.md`         | ⏳ Pending     | ETL pipeline tests (15-20h, +10-15%) |
+| 18.7.4 | `phase2/18_7_4_service_integration_tests.md`  | ⏳ Pending     | Service integration tests (12-16h, +8-12%) |
+| 18.7.5 | `phase2/18_7_5_integration_tests.md`          | ⏳ Pending     | Integration & E2E tests (10-14h, +15-20%) ⭐ HIGH ROI |
 | 19   | `phase2/19_service_hardening_multi_api.md`      | ⏳ Pending     | Connect 5-6 APIs for practical testing |
 | 20   | `phase2/20_local_model_samples.md`              | ⏳ Pending     | Build sample local model integrations |
 
