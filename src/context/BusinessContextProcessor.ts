@@ -19,7 +19,7 @@
 
 import { z } from 'zod';
 import { RecipeManager } from './RecipeManager.js';
-import type { Logger } from '../logging/Logger.js';
+import { Logger } from '../logging/Logger.js';
 
 // =============================================================================
 // BUSINESS DOMAIN MODEL DEFINITIONS

@@ -538,7 +538,7 @@ export class StripeService extends BaseService {
     async listProducts(options: any, _progressCallback?: (event: any) => void): Promise<any> {
         return this.execute('listProducts', async () => {
             const products = await this.stripe.products.list(options);
-            
+
             return {
                 products: products.data.map(product => ({
                     id: product.id,
@@ -550,6 +550,30 @@ export class StripeService extends BaseService {
                 })),
                 hasMore: products.has_more,
                 totalCount: products.data.length
+            };
+        });
+    }
+
+    /**
+     * Get a single product by ID
+     */
+    async getProduct(productId: string, _progressCallback?: (event: any) => void): Promise<any> {
+        return this.execute('getProduct', async () => {
+            const product = await this.stripe.products.retrieve(productId);
+
+            return {
+                product: {
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    active: product.active,
+                    created: new Date(product.created * 1000),
+                    updated: new Date(product.updated * 1000),
+                    metadata: product.metadata,
+                    images: product.images,
+                    defaultPrice: product.default_price,
+                    url: product.url,
+                }
             };
         });
     }

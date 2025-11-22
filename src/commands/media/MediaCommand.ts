@@ -24,6 +24,7 @@ import * as path from 'node:path';
 
 import type { Container } from '../../container/Container.js';
 import type { Logger } from '../../logging/Logger.js';
+import type { MediaProcessor } from '../../media/MediaProcessor.js';
 
 export class MediaCommand {
     private readonly container: Container;
@@ -52,7 +53,7 @@ export class MediaCommand {
             .description('Upload media files')
             .argument('<file>', 'File to upload')
             .option('-p, --provider <provider>', 'Media provider (local, cloudinary)', 'local')
-            .option('-f, --folder <folder>', 'Upload folder')
+            .option('-d, --folder <folder>', 'Upload folder')
             .option('--optimize', 'Optimize the uploaded file')
             .action(async (file: string, options: any) => {
                 await this.handleUpload(file, options);
@@ -72,7 +73,7 @@ export class MediaCommand {
             .command('list')
             .description('List uploaded media assets')
             .option('-p, --provider <provider>', 'Media provider', 'local')
-            .option('-f, --folder <folder>', 'Filter by folder')
+            .option('-d, --folder <folder>', 'Filter by folder')
             .action(async (options: any) => {
                 await this.handleList(options);
             });
@@ -181,21 +182,33 @@ Examples:
             this.logger?.debug('Media list command starting', { options });
             console.log('📋 Listing media assets...\n');
 
-            console.log(`🏷️  Provider: ${options.provider}`);
+            console.log(`🏷️  Provider: ${options.provider || 'local'}`);
             if (options.folder) {
                 console.log(`📂 Folder: ${options.folder}`);
             }
 
-            // Simulate asset listing
-            const assets = [
-                { name: 'vacation-photo-1.jpg', size: '2.3 MB', uploaded: '2025-01-20' },
-                { name: 'vacation-video.mp4', size: '45.7 MB', uploaded: '2025-01-19' },
-                { name: 'landscape.png', size: '1.8 MB', uploaded: '2025-01-18' }
-            ];
+            // Get MediaProcessor from container
+            const mediaProcessor = this.container.resolve<MediaProcessor>('MediaProcessor');
+
+            // Get the specific provider
+            const provider = mediaProcessor.getProvider(options.provider || 'local');
+
+            // List assets from the provider
+            const assets = await provider.listAssets({
+                folder: options.folder,
+                limit: 100
+            });
+
+            if (assets.length === 0) {
+                console.log('\n📭 No assets found');
+                return;
+            }
 
             console.log('\n📁 Assets:');
             for (const [index, asset] of assets.entries()) {
-                console.log(`   ${index + 1}. ${asset.name} (${asset.size}) - ${asset.uploaded}`);
+                const size = this.formatFileSize(asset.size || 0);
+                const date = asset.uploadedAt ? new Date(asset.uploadedAt).toLocaleDateString() : 'Unknown';
+                console.log(`   ${index + 1}. ${asset.fileName || asset.id} (${size}) - ${date}`);
             }
 
             console.log(`\n📊 Total: ${assets.length} assets`);
@@ -204,7 +217,7 @@ Examples:
 
         } catch (error) {
             this.logger?.error('Media list failed', error as Error, { options });
-            console.error(`\n❌ List failed: ${error}`);
+            console.error(`\n❌ List failed: ${error instanceof Error ? error.message : String(error)}`);
             process.exit(1);
         }
     }

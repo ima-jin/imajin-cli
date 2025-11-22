@@ -28,7 +28,7 @@ import type {
 import type { Recipe } from './RecipeManager.js';
 import type { ServiceMapping } from '../discovery/BusinessServiceDiscovery.js';
 import { BusinessTypeRegistry } from './BusinessTypeRegistry.js';
-import type { Logger } from '../logging/Logger.js';
+import { Logger } from '../logging/Logger.js';
 
 // =============================================================================
 // CONFIGURATION SCHEMAS
@@ -158,8 +158,7 @@ export class BusinessContextManager {
         this.configFile = join(this.configDir, 'business-context.yaml');
         this.backupDir = join(this.configDir, 'backups');
         this.contextsDir = join(this.configDir, 'contexts');
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Dynamic require for optional logger dependency
-        this.logger = logger || new (require('../logging/Logger.js').Logger)({ level: 'info' });
+        this.logger = logger || new Logger({ level: 'info' });
     }
 
     /**

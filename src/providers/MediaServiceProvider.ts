@@ -23,6 +23,7 @@
 import type { MediaProcessingConfig, MediaProvider } from '../types/Media.js';
 
 import { MediaUploadCommand } from '../commands/media/MediaUploadCommand.js';
+import { MediaCommand } from '../commands/media/MediaCommand.js';
 import type { Logger } from '../logging/Logger.js';
 import { MediaProcessor } from '../media/MediaProcessor.js';
 import { CloudinaryProvider } from '../media/providers/CloudinaryProvider.js';
@@ -71,6 +72,10 @@ export class MediaServiceProvider extends ServiceProvider {
         this.container.singleton('MediaUploadCommand', () => {
             return new MediaUploadCommand(this.container);
         });
+
+        this.container.singleton('MediaCommand', () => {
+            return new MediaCommand(this.container);
+        });
     }
 
     /**
@@ -96,7 +101,8 @@ export class MediaServiceProvider extends ServiceProvider {
             'MediaProcessor',
             'LocalMediaProvider',
             'CloudinaryProvider',
-            'MediaUploadCommand'
+            'MediaUploadCommand',
+            'MediaCommand'
         ];
     }
 
@@ -130,6 +136,9 @@ export class MediaServiceProvider extends ServiceProvider {
     public registerCommands(): void {
         const uploadCommand = this.container.resolve<MediaUploadCommand>('MediaUploadCommand');
         uploadCommand.register(this.program);
+
+        const mediaCommand = this.container.resolve<MediaCommand>('MediaCommand');
+        mediaCommand.register(this.program);
     }
 
     /**

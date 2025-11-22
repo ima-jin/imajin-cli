@@ -1,43 +1,176 @@
 # Phase 4 – MCP Integration
 
-Goal: expose imajin-generated CLIs through MCP so agents can discover and invoke business-context commands with guarded, auditable execution.
+**Goal:** Expose imajin-cli commands through Model Context Protocol (MCP) so Claude Code/Desktop can discover and invoke business-context commands directly.
+
+**Why MCP?** Rather than building a chat interface inside imajin-cli, expose the CLI TO Claude via MCP. This provides:
+- Superior UX (Claude Code's interface)
+- Natural language to CLI translation
+- File context awareness
+- Multi-step workflows
+- No need to rebuild Claude's interface
+
+## Architecture Decision: Unified Server (Not Per-Service)
+
+**Approach:** Single MCP server that exposes ALL imajin-cli commands as tools, rather than separate servers per service.
+
+**Why:**
+- Simpler deployment (one server process)
+- Unified auth/credential management
+- Reuses existing command introspection from `AIServiceProvider`
+- Matches how the CLI actually works (unified command tree)
+- Easier for users (one config entry in Claude)
+
+## Implementation Strategy
+
+### Phase 1: Static Tool Exposure (Start Here)
+Expose existing CLI commands as fixed MCP tools. No dynamic generation, no self-modification.
+
+**Components:**
+1. **MCP Server** (`src/mcp/server.ts`)
+   - Implements MCP protocol
+   - Discovers commands via Commander.js introspection (reuse `AIServiceProvider.introspectCommands()`)
+   - Converts `CommandSchema` to MCP tool definitions
+   - Executes commands by calling Commander programmatically
+
+2. **Tool Generator** (`src/mcp/tool-generator.ts`)
+   - Converts Commander command tree → MCP tool definitions
+   - Maps positional args + options → tool input schema
+   - Generates tool descriptions from command metadata
+
+3. **Command Executor** (`src/mcp/executor.ts`)
+   - Takes tool call (name + args) → executes CLI command
+   - Captures stdout/stderr
+   - Returns structured JSON response
+
+### Phase 2: Self-Extension (Future - Maybe Never)
+*Only if Phase 1 works flawlessly and there's clear need.*
+
+Could add meta-tool that generates missing commands on-the-fly using existing PluginGenerator infrastructure. **Deferred due to complexity.**
 
 ## Deliverables
-- MCP registry emitted per build (example: `dist/mcp/registry.json`; template in `docs/mcp/registry.example.json`).
-- MCP server/adapters for each generated CLI (Stripe, Contentful, Cloudinary, LocalFile).
-- Schemas for each tool input/output, aligned with CLI JSON output shape.
-- Structured logging/health endpoints for MCP servers to support agent observability.
 
-## Approach
-1) **Generator hook**  
-   - Add `scripts/mcp/emit-registry.ts` (or similar) that reads build outputs (version, checksums, adapter paths) and writes `dist/mcp/registry.json`.  
-   - Ensure the generator is invoked in the build/publish pipeline so the registry matches shipped binaries.
+### Immediate (Phase 1)
+- [ ] `src/mcp/server.ts` - MCP server implementation
+- [ ] `src/mcp/tool-generator.ts` - Command → Tool converter
+- [ ] `src/mcp/executor.ts` - Tool execution handler
+- [ ] `src/mcp/types.ts` - MCP type definitions
+- [ ] Claude Code config example in `docs/mcp/`
+- [ ] README update with MCP setup instructions
 
-2) **Adapter pattern**  
-   - For each CLI, provide an MCP server wrapper (e.g., `adapters/mcp/stripe-server.js`) that shells to the CLI or calls directly into the command layer.  
-   - Surface tool schemas (inputs/outputs) via MCP tool descriptors; reuse CLI validation where possible to avoid drift.
+### Future (Phase 2+)
+- [ ] Tool usage analytics/logging
+- [ ] Rate limiting per tool
+- [ ] Command result caching
+- [ ] Self-extending capability (if needed)
 
-3) **Schema source of truth**  
-   - Keep input/output schemas in `schemas/<service>/` and reference them in the registry.  
-   - Align output with the structured JSON already emitted by the CLI (`success`, `data`, `metadata`, `error`).
+## Technical Details
 
-4) **Auth and secrets**  
-   - Use env/scoped tokens per server entry; avoid duplicating secrets across servers.  
-   - Document which credentials are required per service in the registry and adapter README.
+### Command Discovery
+Reuse `AIServiceProvider.introspectCommands()` which already:
+- Walks Commander.js program tree
+- Extracts command names, args, options
+- Generates `CommandSchema` objects
+- Runs at application boot
 
-5) **Ops and safety**  
-   - Add health endpoints for MCP servers and record expected versions in the registry.  
-   - Emit structured logs with tool name, version, duration, and trace IDs.  
-   - Apply rate-limit hints in the registry (`rateLimits` block) for agent-side courtesy.
+### Tool Schema Format
+```typescript
+{
+  name: "stripe_catalog_product",  // stripe:catalog:product → stripe_catalog_product
+  description: "Show detailed information about a product",
+  input_schema: {
+    type: "object",
+    properties: {
+      productId: { type: "string", description: "Product ID" },
+      json: { type: "boolean", description: "Output in JSON format" }
+    },
+    required: ["productId"]
+  }
+}
+```
 
-## Task list
-- [ ] Add registry generator (scripts) and wire into build/publish.
-- [ ] Implement MCP adapters per service (Stripe, Contentful, Cloudinary, LocalFile).
-- [ ] Generate/confirm schemas for tool inputs/outputs and link them in the registry.
-- [ ] Add health/logging defaults to adapters.
-- [ ] Document agent bootstrap: where to find the emitted registry for a given build.
+### Execution Flow
+```
+Claude → MCP Tool Call: stripe_catalog_product({ productId: "prod_123" })
+  ↓
+MCP Server receives call
+  ↓
+Convert to CLI args: ["stripe:catalog:product", "prod_123"]
+  ↓
+Execute via Commander: program.parseAsync(argv, { from: 'user' })
+  ↓
+Capture output + return to Claude
+```
+
+### Auth/Secrets
+- MCP server runs with same `.env` as CLI
+- No separate credential management needed
+- Uses existing CredentialServiceProvider
+
+### Configuration
+User adds to Claude Code's MCP settings:
+```json
+{
+  "mcpServers": {
+    "imajin-cli": {
+      "command": "node",
+      "args": ["D:/Projects/imajin/imajin-cli/dist/mcp/server.js"],
+      "env": {
+        "STRIPE_SECRET_KEY": "sk_test_...",
+        "CLOUDINARY_CLOUD_NAME": "...",
+        // ... other credentials
+      }
+    }
+  }
+}
+```
+
+## Task List (Phase 1)
+
+### 1. Setup MCP Infrastructure
+- [ ] Install `@modelcontextprotocol/sdk` package
+- [ ] Create `src/mcp/` directory structure
+- [ ] Define MCP types (`src/mcp/types.ts`)
+
+### 2. Implement Core Components
+- [ ] `tool-generator.ts` - Convert CommandSchema → MCP tools
+- [ ] `executor.ts` - Execute CLI commands from tool calls
+- [ ] `server.ts` - MCP server with stdio transport
+
+### 3. Integration
+- [ ] Wire up command introspection (reuse AIServiceProvider)
+- [ ] Test with Claude Code locally
+- [ ] Handle errors gracefully
+
+### 4. Documentation
+- [ ] Setup guide for users
+- [ ] Example usage in Claude Code
+- [ ] Troubleshooting common issues
+
+## Anti-Patterns to Avoid
+
+❌ **Don't:** Build per-service MCP servers (Stripe server, Contentful server, etc.)
+✅ **Do:** Single unified server that exposes all commands
+
+❌ **Don't:** Start with self-generating/meta-programming
+✅ **Do:** Static tool exposure first, evaluate later
+
+❌ **Don't:** Recreate command execution logic
+✅ **Do:** Reuse existing Commander.js command tree
+
+❌ **Don't:** Build yet another chat interface
+✅ **Do:** Let Claude Code handle the UI
+
+## Success Criteria
+
+Phase 1 is successful when:
+- [ ] Claude Code can discover all ~62 imajin-cli commands
+- [ ] Commands execute correctly with proper args/options
+- [ ] Errors are surfaced clearly to Claude
+- [ ] User can accomplish tasks via natural language
+- [ ] No worse than running commands manually
 
 ## References
-- Canonical dev/arch guidance: `CLAUDE.md`, `README.md`.
-- Registry template: `docs/mcp/registry.example.json`.
-- Services present today: `src/services/{stripe,contentful,cloudinary,localfile}`.
+- MCP SDK: https://github.com/anthropics/model-context-protocol
+- Existing command introspection: `src/services/ai/AIServiceProvider.ts`
+- Command schemas: `src/services/ai/NaturalLanguageProcessor.ts`
+- Canonical guidance: `CLAUDE.md`, `README.md`

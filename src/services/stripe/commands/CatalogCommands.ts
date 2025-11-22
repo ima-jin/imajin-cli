@@ -107,6 +107,73 @@ active = false;
                 }
             });
 
+        // Show product command
+        catalogCmd
+            .command('product <productId>')
+            .description('Show detailed information about a product')
+            .addOption(CommonOptions.json())
+            .addOption(CommonOptions.watch())
+            .action(async (productId, options) => {
+                try {
+                    this.logger.debug('Getting Stripe product', {
+                        productId
+                    });
+
+                    const progressCallback = options.watch ? (event: any) => {
+                        if (!options.json) {
+                            console.log(chalk.blue(`[${event.type}] ${event.message}`));
+                        }
+                    } : undefined;
+
+                    const result = await this.stripeService.getProduct(
+                        productId,
+                        progressCallback
+                    );
+
+                    if (options.json) {
+                        console.log(JSON.stringify(result, null, 2));
+                    } else {
+                        const product = result.product;
+                        console.log(chalk.green('📦 Product Details'));
+                        console.log(chalk.cyan(`ID: ${product.id}`));
+                        console.log(chalk.cyan(`Name: ${product.name}`));
+                        if (product.description) {
+                            console.log(chalk.cyan(`Description: ${product.description}`));
+                        }
+                        console.log(chalk.cyan(`Active: ${product.active ? '✅' : '❌'}`));
+                        console.log(chalk.cyan(`Created: ${product.created.toISOString()}`));
+                        console.log(chalk.cyan(`Updated: ${product.updated.toISOString()}`));
+
+                        if (product.defaultPrice) {
+                            console.log(chalk.cyan(`Default Price: ${product.defaultPrice}`));
+                        }
+                        if (product.url) {
+                            console.log(chalk.cyan(`URL: ${product.url}`));
+                        }
+                        if (product.images && product.images.length > 0) {
+                            console.log(chalk.yellow('\n🖼️  Images:'));
+                            for (const image of product.images) {
+                                console.log(`   ${image}`);
+                            }
+                        }
+
+                        if (product.metadata && Object.keys(product.metadata).length > 0) {
+                            console.log(chalk.yellow('\n🏷️  Metadata:'));
+                            for (const [key, value] of Object.entries(product.metadata)) {
+                                console.log(`   ${key}: ${value}`);
+                            }
+                        }
+                    }
+
+                    this.logger.info('Product retrieved via CLI', {
+                        productId: result.product.id
+                    });
+
+                } catch (error) {
+                    this.handleError(error, options.json);
+                }
+            });
+
         // List prices command
         catalogCmd
             .command('prices')

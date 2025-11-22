@@ -70,7 +70,7 @@ export class MediaUploadCommand {
             .description('Upload media files to configured provider')
             .argument('<files...>', 'File paths or glob patterns to upload')
             .option('-p, --provider <provider>', 'Media provider to use (local, cloudinary, aws)')
-            .option('-f, --folder <folder>', 'Upload to specific folder')
+            .option('-d, --folder <folder>', 'Upload to specific folder')
             .option('-t, --tags <tags>', 'Comma-separated tags', this.parseTags)
             .option('--optimize', 'Automatically optimize uploaded files')
             .option('--resize <dimensions>', 'Resize images (e.g., 1920x1080)')
