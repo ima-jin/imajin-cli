@@ -168,6 +168,7 @@ await cli.execute('order create', orderData);
 - **Rate Limiting** - Intelligent API throttling with multiple strategies
 - **Monitoring** - Health checks, metrics, audit trails
 - **Error Recovery** - Automatic retry with exponential backoff
+- **MCP Integration** - Expose all CLI commands to Claude Desktop via Model Context Protocol
 
 ---
 

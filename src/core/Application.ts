@@ -135,6 +135,12 @@ export class Application {
     this.container.singleton('errorRecovery', () => this.errorRecovery);
     this.container.singleton('businessValidator', () => this.businessValidator);
     this.container.singleton('eventEmitter', () => new EventEmitter());
+
+    // Register CommandManager (needed by PluginManager and other services)
+    this.container.singleton('commandManager', async () => {
+      const { CommandManager } = await import('./commands/CommandManager.js');
+      return new CommandManager(this.program, this.container);
+    });
   }
 
   private setupProgram(): void {
@@ -667,5 +673,25 @@ export class Application {
       this.logger.error('Failed to show recipe', error instanceof Error ? error : new Error(String(error)));
       console.error(chalk.red('❌ Failed to show recipe:'), error);
     }
+  }
+
+  /**
+   * Bootstrap the application (register providers and boot)
+   * Used by external integrations like MCP server
+   */
+  public async bootstrap(): Promise<void> {
+    await this.boot();
+  }
+
+  /**
+   * Get the Commander program instance
+   * Used by external integrations like MCP server
+   */
+  public getProgram(): Command {
+    return this.program;
+  }
+
+  public getContainer(): Container {
+    return this.container;
   }
 } 

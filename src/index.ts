@@ -92,7 +92,7 @@ async function main(): Promise<void> {
 
   try {
     const debugMode = shouldEnableDebugMode();
-    
+
     app = new Application({
       debug: debugMode,
       logLevel: debugMode ? 'debug' : ((process.env.LOG_LEVEL as any) ?? 'info'),

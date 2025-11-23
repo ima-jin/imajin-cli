@@ -54,6 +54,7 @@
   "license": ".fair LICENSING AGREEMENT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",
+    "@modelcontextprotocol/sdk": "^1.22.0",
     "@types/blessed": "^0.1.26",
     "@types/chokidar": "^1.7.5",
     "@types/express": "^5.0.3",

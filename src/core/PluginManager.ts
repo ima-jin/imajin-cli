@@ -18,6 +18,7 @@
 
 import { promises as fs } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { Container } from '../container/Container.js';
 import type { Logger } from '../logging/Logger.js';
 import type { CommandManager, ICommand } from './commands/CommandManager.js';
@@ -85,7 +86,9 @@ export class PluginManager {
         }
 
         // Load plugin module
-        const pluginModule = await import(resolve(configPath));
+        // Convert Windows paths to file:// URLs for ES module imports
+        const pluginModuleURL = pathToFileURL(resolve(configPath)).href;
+        const pluginModule = await import(pluginModuleURL);
 
         // Extract plugin info
         const _config = pluginModule.default || pluginModule;
@@ -186,12 +189,25 @@ export class PluginManager {
         const commands: any[] = [];
 
         try {
+            // First, find the service class (e.g., StripeService)
+            const ServiceClass = Object.values(pluginModule).find((exportValue: any) => {
+                return typeof exportValue === 'function' &&
+                       exportValue.name &&
+                       exportValue.name.endsWith('Service');
+            });
+
+            // Instantiate the service if found
+            const serviceInstance = ServiceClass ? new (ServiceClass as any)() : null;
+
             // Look for command exports
             for (const [exportName, exportValue] of Object.entries(pluginModule)) {
                 if (exportName.endsWith('Command') && typeof exportValue === 'function') {
                     try {
-                        // Create command instance
-                        const commandInstance = this.container.resolve(exportValue as any) as ICommand;
+                        // Instantiate command with service dependency
+                        const CommandClass = exportValue as any;
+                        const commandInstance = serviceInstance
+                            ? new CommandClass(serviceInstance)
+                            : new CommandClass();
 
                         // Verify it's a valid command
                         if (commandInstance && typeof commandInstance.execute === 'function' && commandInstance.name) {

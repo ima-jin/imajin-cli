@@ -123,3 +123,9 @@ test-reports/
 # Claude
 .claude/settings.local.json
 .claude-sessions/
+
+# Generated plugin JavaScript files (keep TypeScript source)
+plugins/**/*.js
+plugins/**/*.js.map
+plugins/**/*.d.ts
+plugins/**/*.d.ts.map

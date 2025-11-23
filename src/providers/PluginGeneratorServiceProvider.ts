@@ -20,9 +20,14 @@
 
 import type { Command } from 'commander';
 import { GeneratePluginCommand } from '../commands/GeneratePluginCommand.js';
+import { PluginGenerateCommand } from '../commands/plugin/PluginGenerateCommand.js';
+import { PluginShowCommand } from '../commands/plugin/PluginShowCommand.js';
+import { PluginCommitCommand } from '../commands/plugin/PluginCommitCommand.js';
 import type { Container } from '../container/Container.js';
 import type { CommandManager } from '../core/commands/CommandManager.js';
 import { PluginManager } from '../core/PluginManager.js';
+import { SelfExtensionManager } from '../core/SelfExtensionManager.js';
+import { CodeGenerationAgent } from '../core/CodeGenerationAgent.js';
 import { DefaultOpenAPIParser } from '../generators/OpenAPIParser.js';
 import { DefaultPluginGenerator } from '../generators/PluginGenerator.js';
 import { TemplateEngine } from '../generators/templates/TemplateEngine.js';
@@ -53,10 +58,24 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         });
 
         // Register plugin manager
-        this.container.singleton('pluginManager', () => {
+        this.container.singleton('pluginManager', async () => {
             const logger = this.container.resolve<Logger>('logger');
-            const commandManager = this.container.resolve<CommandManager>('commandManager');
+            const commandManager = await this.container.resolve<CommandManager>('commandManager');
             return new PluginManager(commandManager, this.container, logger);
+        });
+
+        // Register code generation agent
+        this.container.singleton('codeGenerationAgent', () => {
+            const logger = this.container.resolve<Logger>('logger');
+            return new CodeGenerationAgent(logger, process.env.ANTHROPIC_API_KEY);
+        });
+
+        // Register self-extension manager
+        this.container.singleton('selfExtensionManager', async () => {
+            const pluginManager = await this.container.resolve<PluginManager>('pluginManager');
+            const credentialManager = this.container.resolve<any>('credentialManager');
+            const logger = this.container.resolve<Logger>('logger');
+            return new SelfExtensionManager(pluginManager, credentialManager, logger);
         });
     }
 
@@ -64,8 +83,9 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
      * Bootstrap services after all providers have been registered
      */
     public async boot(): Promise<void> {
-        // Services are already registered, no additional boot actions needed
-        // Commands will be registered by Application.registerProviderCommands()
+        // Auto-load all plugins on boot
+        const pluginManager = await this.container.resolve<PluginManager>('pluginManager');
+        await pluginManager.loadAllPlugins();
     }
 
     /**
@@ -73,6 +93,12 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
      */
     public registerCommands(): void {
         const logger = this.container.resolve<Logger>('logger');
+
+        // Create parent 'plugin' command once
+        let pluginCommand = this.program.commands.find(cmd => cmd.name() === 'plugin');
+        if (!pluginCommand) {
+            pluginCommand = this.program.command('plugin').description('Plugin management commands');
+        }
 
         // Check if command already exists to prevent duplicates
         const existingCommand = this.program.commands.find(cmd => cmd.name() === 'generate:plugin');
@@ -97,13 +123,13 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         }
 
         // List plugins command
-        if (!this.program.commands.some(cmd => cmd.name() === 'plugin:list')) {
-            this.program
-                .command('plugin:list')
+        if (!pluginCommand.commands.some(cmd => cmd.name() === 'list')) {
+            pluginCommand
+                .command('list')
                 .description('List all loaded plugins')
                 .option('--json', 'Output in JSON format')
                 .action(async (options: any) => {
-                    const pluginManager = this.container.resolve<PluginManager>('pluginManager');
+                    const pluginManager = await this.container.resolve<PluginManager>('pluginManager');
                     const plugins = pluginManager.getLoadedPlugins();
 
                     if (options.json) {
@@ -130,12 +156,12 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
         }
 
         // Load plugins command
-        if (!this.program.commands.some(cmd => cmd.name() === 'plugin:load')) {
-            this.program
-                .command('plugin:load')
+        if (!pluginCommand.commands.some(cmd => cmd.name() === 'load')) {
+            pluginCommand
+                .command('load')
                 .description('Load all plugins from the plugins directory')
                 .action(async () => {
-                    const pluginManager = this.container.resolve<PluginManager>('pluginManager');
+                    const pluginManager = await this.container.resolve<PluginManager>('pluginManager');
                     await pluginManager.loadAllPlugins();
                     // CLI Output: User-facing success message (console is the UI)
                     // eslint-disable-next-line no-console
@@ -143,7 +169,67 @@ export class PluginGeneratorServiceProvider extends ServiceProvider {
                 });
         }
 
-        logger.info('Registered plugin generator commands');
+        // Self-extension commands
+        // Generate plugin on-demand
+        if (!pluginCommand.commands.some(cmd => cmd.name() === 'generate')) {
+            pluginCommand
+                .command('generate')
+                .description('Generate a new plugin for a service using AI')
+                .option('--service <name>', 'Service name to generate plugin for')
+                .option('--name <name>', 'Alias for --service')
+                .option('--command <command>', 'Specific command to generate')
+                .option('--spec <spec>', 'API specification (JSON)')
+                .action(async (options: any) => {
+                    const selfExtensionManager = await this.container.resolve<SelfExtensionManager>('selfExtensionManager');
+                    const command = new PluginGenerateCommand(selfExtensionManager, logger);
+                    const result = await command.execute([], options);
+
+                    if (!result.success) {
+                        process.exit(1);
+                    }
+                });
+        }
+
+        // Show plugin source code
+        if (!pluginCommand.commands.some(cmd => cmd.name() === 'show')) {
+            pluginCommand
+                .command('show')
+                .description('Display plugin source code')
+                .option('--name <name>', 'Plugin name')
+                .option('--plugin <name>', 'Alias for --name')
+                .option('--file <file>', 'Specific file to show')
+                .action(async (options: any) => {
+                    const pluginManager = await this.container.resolve<PluginManager>('pluginManager');
+                    const command = new PluginShowCommand(pluginManager, logger);
+                    const result = await command.execute([], options);
+
+                    if (!result.success) {
+                        process.exit(1);
+                    }
+                });
+        }
+
+        // Commit plugin to git
+        if (!pluginCommand.commands.some(cmd => cmd.name() === 'commit')) {
+            pluginCommand
+                .command('commit')
+                .description('Commit a generated plugin to git')
+                .option('--name <name>', 'Plugin name')
+                .option('--plugin <name>', 'Alias for --name')
+                .option('--message <message>', 'Commit message')
+                .option('-m <message>', 'Alias for --message')
+                .action(async (options: any) => {
+                    const pluginManager = await this.container.resolve<PluginManager>('pluginManager');
+                    const command = new PluginCommitCommand(pluginManager, logger);
+                    const result = await command.execute([], options);
+
+                    if (!result.success) {
+                        process.exit(1);
+                    }
+                });
+        }
+
+        logger.info('Registered plugin generator and self-extension commands');
     }
 
     /**

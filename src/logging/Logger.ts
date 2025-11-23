@@ -53,6 +53,7 @@ export class Logger {
                 case 'console':
                     transports.push(new winston.transports.Console({
                         level: transportConfig.level || this.config.level,
+                        stderrLevels: ['error', 'warn', 'info', 'debug', 'verbose', 'silly'], // Force all logs to stderr
                         format: winston.format.combine(
                             winston.format.colorize({ all: this.config.enableColors }),
                             winston.format.simple(),
