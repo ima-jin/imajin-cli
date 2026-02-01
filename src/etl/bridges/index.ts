@@ -128,16 +128,19 @@ export class BridgeComponent implements ETLComponent {
     }
 
     private async transformData(data: any): Promise<any> {
-        // Apply mappings
-        const mappedData = this.applyMappings(data);
-        
-        // Apply transformations
-        return this.applyTransformations(mappedData);
+        // Apply transformations on original data
+        const transformationResult = this.applyTransformations(data);
+
+        // Apply mappings on original data
+        const mappingResult = this.applyMappings(data);
+
+        // Merge both results (transformations take precedence)
+        return this.deepMerge(mappingResult, transformationResult);
     }
 
     private applyMappings(data: any): any {
         const result: any = {};
-        
+
         for (const [sourcePath, targetPath] of Object.entries(this.bridge.mappings)) {
             const value = this.getNestedValue(data, sourcePath);
             this.setNestedValue(result, targetPath, value);
@@ -147,14 +150,14 @@ export class BridgeComponent implements ETLComponent {
     }
 
     private applyTransformations(data: any): any {
-        const result = { ...data };
+        const result: any = {};
 
         for (const [_key, transformation] of Object.entries(this.bridge.transformations)) {
             const sourceValue = this.getNestedValue(data, transformation.source);
-            
+
             if (sourceValue !== undefined) {
                 let transformedValue = sourceValue;
-                
+
                 for (const rule of transformation.rules) {
                     if (rule.transform) {
                         transformedValue = rule.transform(transformedValue);
@@ -162,6 +165,20 @@ export class BridgeComponent implements ETLComponent {
                 }
 
                 this.setNestedValue(result, transformation.target, transformedValue);
+            }
+        }
+
+        return result;
+    }
+
+    private deepMerge(target: any, source: any): any {
+        const result = { ...target };
+
+        for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                result[key] = this.deepMerge(result[key] || {}, source[key]);
+            } else {
+                result[key] = source[key];
             }
         }
 

@@ -8,7 +8,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Critical Context:** This is part of the imajin ecosystem (see `https://github.com/ima-jin/imajin-os`), which includes distributed LED hardware devices that form peer-to-peer networks. The generated CLIs will be used by **AI agents** to coordinate operations across these distributed systems. The event-driven architecture ensures AI agents can trigger complex multi-step workflows declaratively, preventing inconsistent state from forgotten steps or network failures.
 
-**See:** [docs/architecture/AI_SAFE_INFRASTRUCTURE.md](docs/architecture/AI_SAFE_INFRASTRUCTURE.md) for architectural rationale.
+**Governance Context:** This CLI is the operational backbone of a **community-owned company** transitioning to employee ownership via a Co-op + Corporation hybrid structure. The CLI must support:
+- Founder contribution tracking for equity allocation (0.5-3% based on hours/years)
+- `.fair` attribution manifests for transparent equity grants
+- Launch milestone coordination for equity formalization
+- MJN token vesting and patronage rewards
+- Co-op formation tools and voting systems
+
+**See:**
+- [docs/architecture/AI_SAFE_INFRASTRUCTURE.md](docs/architecture/AI_SAFE_INFRASTRUCTURE.md) for architectural rationale
+- [docs/business/GOVERNANCE_INTEGRATION.md](docs/business/GOVERNANCE_INTEGRATION.md) for ownership structure and CLI requirements
+- [docs/agents/IMAJIN_LIGHTING.md](docs/agents/IMAJIN_LIGHTING.md) for hardware ecosystem and 11-person founding team context
 
 ## Common Development Commands
 

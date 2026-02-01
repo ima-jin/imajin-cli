@@ -15,6 +15,9 @@ This folder contains streamlined business documentation focused on investment an
 ### 👤 [Founder Profile](./founder-profile-ryan-veteze.md)
 **Leadership credentials** and technical track record for Ryan VETEZE.
 
+### 🏛️ [Governance Integration](./GOVERNANCE_INTEGRATION.md)
+**Community ownership structure** connecting imajin-cli to the broader imajin ecosystem's Co-op + Corporation hybrid model, founder equity allocation (11-person team), and CLI implementation requirements for contributor tracking.
+
 ## Key Value Proposition
 
 imajin-cli generates business-specific CLI tools that orchestrate workflows across multiple services - something impossible with existing single-service CLIs or generic middleware platforms.
