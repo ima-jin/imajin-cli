@@ -174,18 +174,11 @@ export class SecurityMiddleware {
     /**
      * Parse webhook signature from various formats
      */
-    public parseSignature(signatureHeader: string, format: 'github' | 'stripe' | 'generic' = 'generic'): string {
+    public parseSignature(signatureHeader: string, format: 'github' | 'generic' = 'generic'): string {
         switch (format) {
             case 'github':
                 // GitHub format: sha1=<signature>
                 return signatureHeader.replace(/^sha1=/, '');
-
-            case 'stripe': {
-                // Stripe format: t=timestamp,v1=signature
-                const parts = signatureHeader.split(',');
-                const signaturePart = parts.find(part => part.startsWith('v1='));
-                return signaturePart ? signaturePart.replace('v1=', '') : '';
-            }
 
             case 'generic':
             default:
@@ -215,7 +208,7 @@ export class SecurityMiddleware {
     }
 
     /**
-     * Extract timestamp from Stripe-style signature
+     * Extract timestamp from timestamped signature headers
      */
     public extractTimestamp(signatureHeader: string): number | null {
         const parts = signatureHeader.split(',');
@@ -246,21 +239,13 @@ export class SecurityMiddleware {
     /**
      * Create security configuration for common services
      */
-    public static createServiceConfig(service: 'github' | 'stripe' | 'shopify'): Partial<SignatureValidationConfig> {
+    public static createServiceConfig(service: 'github' | 'shopify'): Partial<SignatureValidationConfig> {
         switch (service) {
             case 'github': {
                 return {
                     algorithm: 'sha1',
                     headerName: 'x-hub-signature',
                     prefix: 'sha1='
-                };
-            }
-
-            case 'stripe': {
-                return {
-                    algorithm: 'sha256',
-                    headerName: 'stripe-signature',
-                    prefix: 'v1='
                 };
             }
 

@@ -44,7 +44,7 @@ export const CIRCUIT_BREAKER_EVENTS = {
 
 // Common service identifiers
 export const SERVICE_IDS = {
-    STRIPE: 'stripe',
+    IMAJIN_AI: 'imajin-ai',
     CORE: 'core',
     AUTH: 'auth'
 } as const;

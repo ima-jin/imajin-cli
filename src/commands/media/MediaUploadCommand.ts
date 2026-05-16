@@ -69,7 +69,7 @@ export class MediaUploadCommand {
             .command('media:upload')
             .description('Upload media files to configured provider')
             .argument('<files...>', 'File paths or glob patterns to upload')
-            .option('-p, --provider <provider>', 'Media provider to use (local, cloudinary, aws)')
+            .option('-p, --provider <provider>', 'Media provider to use (local)')
             .option('-d, --folder <folder>', 'Upload to specific folder')
             .option('-t, --tags <tags>', 'Comma-separated tags', this.parseTags)
             .option('--optimize', 'Automatically optimize uploaded files')
@@ -87,7 +87,7 @@ export class MediaUploadCommand {
         uploadCommand.addHelpText('after', `
 Examples:
   $ imajin media:upload ./image.jpg --optimize --resize 1920x1080
-  $ imajin media:upload ./photos/*.jpg --provider cloudinary --folder vacation
+  $ imajin media:upload ./photos/*.jpg --provider local --folder workspace
   $ imajin media:upload ./video.mp4 --format webm --quality 85
   $ imajin media:upload ./media/* --batch --tags nature,landscape
         `);

@@ -24,15 +24,261 @@ import { CLI_OPTIONS, CLI_DESCRIPTIONS } from '../../constants/CommonStrings.js'
 import { CredentialManager } from '../../core/credentials/CredentialManager.js';
 import type { CredentialData } from '../../core/credentials/interfaces.js';
 import { Logger } from '../../logging/Logger.js';
+import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
+import type { LoginFinalizeOptions } from '../../services/imajin-ai/ImajinAiSessionService.js';
 import { CommonOptions } from '../../utils/commonOptions.js';
 
 export class AuthCommands {
     private readonly credentialManager: CredentialManager;
     private readonly logger: Logger;
+    private readonly imajinAiSessionService: ImajinAiSessionService;
 
     constructor(credentialManager: CredentialManager, logger: Logger) {
         this.credentialManager = credentialManager;
         this.logger = logger;
+        this.imajinAiSessionService = new ImajinAiSessionService(credentialManager, logger);
+    }
+
+    private async handleImajinAiStatus(options: any): Promise<void> {
+        try {
+            const local = await this.imajinAiSessionService.getSessionStatusSummary();
+            let remote: any = null;
+            if (options.remote) {
+                remote = await this.imajinAiSessionService.fetchSession({
+                    includeGrants: !!options.includeGrants,
+                    includeGas: !!options.includeGas
+                });
+            }
+
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: true,
+                    data: {
+                        local,
+                        remote
+                    }
+                }, null, 2));
+                return;
+            }
+
+            console.log(chalk.blue('imajin-ai session status'));
+            console.log(chalk.gray(`  Base URL configured: ${local.baseUrlConfigured ? 'yes' : 'no'}`));
+            console.log(chalk.gray(`  Session configured: ${local.configured ? 'yes' : 'no'}`));
+            console.log(chalk.gray(`  Session cookie: ${local.hasSessionCookie ? 'present' : 'missing'}`));
+            console.log(chalk.gray(`  Access token: ${local.hasAccessToken ? 'present' : 'missing'}`));
+            console.log(chalk.gray(`  Refresh token: ${local.hasRefreshToken ? 'present' : 'missing'}`));
+            if (local.expiresAt) {
+                console.log(chalk.gray(`  Expires at: ${local.expiresAt}`));
+                if (local.isExpired !== null) {
+                    const expiredLabel = local.isExpired ? chalk.red('yes') : chalk.green('no');
+                    console.log(chalk.gray(`  Expired: ${expiredLabel}`));
+                }
+            }
+            if (local.scopes.length > 0) {
+                console.log(chalk.gray(`  Scopes: ${local.scopes.join(', ')}`));
+            }
+
+            if (remote) {
+                console.log();
+                console.log(chalk.green('✅ Remote session fetched from /api/session'));
+            }
+        } catch (error) {
+            this.logger?.error('Failed to get imajin-ai session status', error as Error, { options });
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: false,
+                    error: String(error)
+                }, null, 2));
+                return;
+            }
+            console.error(chalk.red(`❌ Failed to get imajin-ai status: ${error}`));
+            process.exit(1);
+        }
+    }
+
+    private async handleImajinAiChallenge(handle: string, options: any): Promise<void> {
+        try {
+            const challenge = await this.imajinAiSessionService.createLoginChallenge(handle);
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: true,
+                    data: challenge
+                }, null, 2));
+                return;
+            }
+
+            console.log(chalk.green('✅ Login challenge created'));
+            console.log(chalk.gray(`  Handle: ${handle}`));
+            console.log(chalk.gray('  Next: run `imajin auth imajin-ai login --challenge-id <id> --signature <hex>`'));
+        } catch (error) {
+            this.logger?.error('Failed to create imajin-ai login challenge', error as Error, { handle });
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: false,
+                    error: String(error)
+                }, null, 2));
+                return;
+            }
+            console.error(chalk.red(`❌ Failed to request challenge: ${error}`));
+            process.exit(1);
+        }
+    }
+
+    private async handleImajinAiLogout(options: any): Promise<void> {
+        try {
+            const current = await this.imajinAiSessionService.getStoredSession();
+            if (!current) {
+                if (options.json) {
+                    console.log(JSON.stringify({
+                        success: true,
+                        data: {
+                            cleared: false,
+                            message: 'No stored imajin-ai session found'
+                        }
+                    }, null, 2));
+                    return;
+                }
+                console.log(chalk.yellow('No stored imajin-ai session found'));
+                return;
+            }
+
+            await this.imajinAiSessionService.clearStoredSession();
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: true,
+                    data: {
+                        cleared: true
+                    }
+                }, null, 2));
+                return;
+            }
+            console.log(chalk.green('✅ Cleared imajin-ai session credentials'));
+        } catch (error) {
+            this.logger?.error('Failed to clear imajin-ai session', error as Error);
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: false,
+                    error: String(error)
+                }, null, 2));
+                return;
+            }
+            console.error(chalk.red(`❌ Failed to logout: ${error}`));
+            process.exit(1);
+        }
+    }
+
+    private async handleImajinAiLogin(options: any): Promise<void> {
+        try {
+            let challengeId = options.challengeId as string | undefined;
+            let handle = options.handle as string | undefined;
+            let signature = options.signature as string | undefined;
+
+            let challengeResponse: any = null;
+            if (!challengeId) {
+                if (!handle && options.prompt !== false) {
+                    const prompt = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'handle',
+                            message: 'Identity handle:'
+                        }
+                    ]);
+                    handle = prompt.handle;
+                }
+
+                if (!handle) {
+                    throw new Error('Either --challenge-id or --handle is required');
+                }
+                challengeResponse = await this.imajinAiSessionService.createLoginChallenge(handle);
+                challengeId = challengeResponse?.challengeId;
+                if (!challengeId) {
+                    throw new Error('Challenge response did not include challengeId');
+                }
+                if (challengeResponse?.challenge && !options.json) {
+                    console.log(chalk.gray(`Challenge: ${challengeResponse.challenge}`));
+                }
+            }
+
+            if (!signature && options.prompt !== false) {
+                const prompt = await inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'signature',
+                        message: 'Challenge signature (hex):'
+                    }
+                ]);
+                signature = prompt.signature;
+            }
+
+            if (!signature) {
+                throw new Error('Signature is required. Pass --signature or run interactive mode.');
+            }
+
+            const dfosChain = this.parseDfosChainOption(options.dfosChain);
+            const finalizeOptions: LoginFinalizeOptions = {
+                challengeId,
+                signature
+            };
+            if (dfosChain) {
+                finalizeOptions.dfosChain = dfosChain;
+            }
+            const result = await this.imajinAiSessionService.finalizeLogin(finalizeOptions);
+
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: true,
+                    data: {
+                        challenge: challengeResponse,
+                        session: result
+                    }
+                }, null, 2));
+                return;
+            }
+
+            console.log(chalk.green('✅ imajin-ai login verified and session stored'));
+            if (result.identity?.did) {
+                console.log(chalk.gray(`  DID: ${result.identity.did}`));
+            }
+            if (result.identity?.handle) {
+                console.log(chalk.gray(`  Handle: ${result.identity.handle}`));
+            }
+        } catch (error) {
+            this.logger?.error('imajin-ai login failed', error as Error, { options });
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: false,
+                    error: String(error)
+                }, null, 2));
+                return;
+            }
+            console.error(chalk.red(`❌ Login failed: ${error}`));
+            process.exit(1);
+        }
+    }
+
+    private parseDfosChainOption(value: unknown): string[] | undefined {
+        if (!value) {
+            return undefined;
+        }
+
+        if (Array.isArray(value)) {
+            return value.map(v => String(v));
+        }
+
+        const raw = String(value).trim();
+        if (!raw) {
+            return undefined;
+        }
+
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                throw new Error('dfos-chain must be a JSON array');
+            }
+            return parsed.map(v => String(v));
+        } catch (error) {
+            throw new Error(`Invalid --dfos-chain value: ${error}`);
+        }
     }
 
     /**
@@ -46,7 +292,7 @@ export class AuthCommands {
         // Setup command
         authCommand
             .command('setup')
-            .argument('<service>', 'Service name (e.g., stripe, github)')
+            .argument('<service>', 'Service name (e.g., github, notion)')
             .option('--api-key <key>', 'API key for the service')
             .option('--access-token <token>', 'Access token for OAuth')
             .option('--refresh-token <token>', 'Refresh token for OAuth')
@@ -55,6 +301,43 @@ export class AuthCommands {
             .option('--provider <type>', 'Force specific provider (keychain, credential-manager, libsecret, environment, encrypted-file)')
             .description('Setup credentials for a service')
             .action(this.handleSetup.bind(this));
+
+        const imajinAiCommand = authCommand
+            .command('imajin-ai')
+            .description('Manage imajin-ai login/session lifecycle');
+
+        imajinAiCommand
+            .command('status')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
+            .option('--remote', 'Fetch remote session from imajin-ai backend')
+            .option('--include-grants', 'Include grants in remote session response')
+            .option('--include-gas', 'Include gas details in remote session response')
+            .description('Show local and optional remote imajin-ai session status')
+            .action(this.handleImajinAiStatus.bind(this));
+
+        imajinAiCommand
+            .command('challenge')
+            .argument('<handle>', 'Identity handle used to request login challenge')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
+            .description('Request imajin-ai login challenge for a handle')
+            .action(this.handleImajinAiChallenge.bind(this));
+
+        imajinAiCommand
+            .command('logout')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
+            .description('Clear stored imajin-ai session credentials')
+            .action(this.handleImajinAiLogout.bind(this));
+
+        imajinAiCommand
+            .command('login')
+            .option('--handle <handle>', 'Identity handle used to request challenge when challenge-id is not provided')
+            .option('--challenge-id <id>', 'Existing challenge ID to verify')
+            .option('--signature <hex>', 'Challenge signature (hex)')
+            .option('--dfos-chain <json>', 'Optional DFOS chain as JSON array string')
+            .option('--no-prompt', 'Disable interactive prompts')
+            .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)
+            .description('Run imajin-ai login challenge + verify flow and store session')
+            .action(this.handleImajinAiLogin.bind(this));
 
         // List command
         authCommand

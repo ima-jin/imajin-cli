@@ -402,7 +402,7 @@ export class TaskValidationWorkflow {
     // Check if assumption mentions obsolete patterns
     const obsoletePatterns = [
       'single businesscontextmanager',
-      'hardcoded in contentfulcommands',
+      'hardcoded in legacy service commands',
       'manual markdown editing'
     ];
 

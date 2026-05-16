@@ -1,0 +1,554 @@
+{
+  "version": "v1",
+  "generated_for": "sprint-planning",
+  "notes": [
+    "HTTP mappings are based on current OpenAPI specs under imajin-ai/apps/*/api-spec/*.yaml.",
+    "Workspace mappings are routed through agent workspace tools for now.",
+    "Composite workspace operations require CLI adapter logic before they are production-ready."
+  ],
+  "commands": [
+    {
+      "rank": 1,
+      "command": "identity.session.get",
+      "signature": "imajin identity session get [--include-grants] [--include-gas]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "http",
+        "service": "auth",
+        "spec": "apps/kernel/api-spec/auth.yaml",
+        "path": "/api/session",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 2,
+      "command": "identity.resolve",
+      "signature": "imajin identity resolve --did <did> [--include <profile,standing,keys,chain,contact>]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "http",
+        "service": "auth",
+        "spec": "apps/kernel/api-spec/auth.yaml",
+        "path": "/api/identity/{did}",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 3,
+      "command": "identity.lookup",
+      "signature": "imajin identity lookup --id <did|handle|email>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "auth",
+        "spec": "apps/kernel/api-spec/auth.yaml",
+        "path": "/api/lookup/{id}",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 4,
+      "command": "identity.attest.create",
+      "signature": "imajin identity attest create --subject-did <did> --type <type> [--payload-json <json> | --payload-file <path>] [--countersign]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "auth",
+        "spec": "apps/kernel/api-spec/auth.yaml",
+        "path": "/api/attestations",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 5,
+      "command": "identity.attest.list",
+      "signature": "imajin identity attest list [--did <did>] [--issuer-did <did>] [--type <type>] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "auth",
+        "spec": "apps/kernel/api-spec/auth.yaml",
+        "path": "/api/attestations",
+        "method": "GET",
+        "alternate_path": "/api/attestations/{did}"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 6,
+      "command": "identity.login.challenge",
+      "signature": "imajin identity login challenge --handle <handle>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "auth",
+        "spec": "apps/kernel/api-spec/auth.yaml",
+        "path": "/api/login/challenge",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 7,
+      "command": "workspace.get",
+      "signature": "imajin workspace get --path <path> [--version <n>]",
+      "sprint_tier": "top3",
+      "backend": {
+        "kind": "agent_tool",
+        "tool": "workspace.read"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 8,
+      "command": "workspace.put",
+      "signature": "imajin workspace put --path <path> (--content <text> | --content-file <path> | --content-b64 <b64>) [--content-type <mime>] [--if-match <etag>]",
+      "sprint_tier": "top3",
+      "backend": {
+        "kind": "agent_tool",
+        "tool": "workspace.write"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 9,
+      "command": "workspace.list",
+      "signature": "imajin workspace list [--path <path>] [--recursive] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "agent_tool",
+        "tool": "workspace.list"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 10,
+      "command": "workspace.search",
+      "signature": "imajin workspace search --query <text> [--path <path>] [--type <file|doc|blob|folder>] [--limit <n>]",
+      "sprint_tier": "top3",
+      "backend": {
+        "kind": "adapter",
+        "tooling_base": [
+          "workspace.list",
+          "workspace.read"
+        ]
+      },
+      "readiness": "available_with_adapter"
+    },
+    {
+      "rank": 11,
+      "command": "workspace.patch",
+      "signature": "imajin workspace patch --path <path> --ops-file <json-patch-file> [--if-match <etag>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "adapter",
+        "tooling_base": [
+          "workspace.read",
+          "workspace.write"
+        ]
+      },
+      "readiness": "available_with_adapter"
+    },
+    {
+      "rank": 12,
+      "command": "workspace.move",
+      "signature": "imajin workspace move --from <path> --to <path> [--if-match <etag>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "adapter",
+        "tooling_base": [
+          "workspace.read",
+          "workspace.write",
+          "workspace.rm"
+        ]
+      },
+      "readiness": "available_with_adapter"
+    },
+    {
+      "rank": 13,
+      "command": "workspace.delete",
+      "signature": "imajin workspace delete --path <path> [--recursive] [--if-match <etag>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "agent_tool",
+        "tool": "workspace.rm"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 14,
+      "command": "workspace.diff",
+      "signature": "imajin workspace diff --path <path> --from <version|etag> [--to <version|etag>]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "adapter",
+        "tooling_base": [
+          "workspace.read"
+        ]
+      },
+      "readiness": "available_with_adapter"
+    },
+    {
+      "rank": 15,
+      "command": "workspace.snapshot.create",
+      "signature": "imajin workspace snapshot create [--path <path>] [--label <label>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "new_backend_contract",
+        "proposed_api": "/api/workspace/snapshots"
+      },
+      "readiness": "requires_new_backend"
+    },
+    {
+      "rank": 16,
+      "command": "workspace.revert",
+      "signature": "imajin workspace revert --path <path> --to <snapshot-id|version> [--reason <text>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "new_backend_contract",
+        "proposed_api": "/api/workspace/revert"
+      },
+      "readiness": "requires_new_backend"
+    },
+    {
+      "rank": 17,
+      "command": "commerce.balance.get",
+      "signature": "imajin commerce balance get --did <did>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/balance/{did}",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 18,
+      "command": "commerce.checkout.create",
+      "signature": "imajin commerce checkout create --amount <decimal> --currency <code> [--recipient-did <did>] [--fair-file <path>] [--metadata-json <json>]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/checkout",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 19,
+      "command": "commerce.settle.create",
+      "signature": "imajin commerce settle create --amount <decimal> --currency <code> --from-did <did> [--fair-file <path>] [--reference <text>]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/settle",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 20,
+      "command": "commerce.charge.create",
+      "signature": "imajin commerce charge create --payment-method <id> --amount <decimal> --currency <code> [--customer-did <did>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/charge",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 21,
+      "command": "commerce.refund.create",
+      "signature": "imajin commerce refund create --transaction-id <id> [--amount <decimal>] [--reason <text>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/refund",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 22,
+      "command": "commerce.transfer.create",
+      "signature": "imajin commerce transfer create --from-did <did> --to-did <did> --amount <decimal> --currency <code> [--memo <text>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/balance/transfer",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 23,
+      "command": "commerce.transactions.list",
+      "signature": "imajin commerce transactions list --did <did> [--limit <n>] [--cursor <token>] [--from <iso8601>] [--to <iso8601>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "pay",
+        "spec": "apps/kernel/api-spec/pay.yaml",
+        "path": "/api/transactions/{did}",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 24,
+      "command": "chat.conversations.list",
+      "signature": "imajin chat conversations list [--participant-did <did>] [--unread-only] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "chat",
+        "spec": "apps/kernel/api-spec/chat.yaml",
+        "path": "/api/conversations",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 25,
+      "command": "chat.messages.list",
+      "signature": "imajin chat messages list --conversation <did|id> [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "chat",
+        "spec": "apps/kernel/api-spec/chat.yaml",
+        "path": "/api/conversations/{id}/messages",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 26,
+      "command": "chat.message.send",
+      "signature": "imajin chat message send --conversation <did|id> --content <text> [--content-type <text|markdown|json>] [--reply-to <msg-id>]",
+      "sprint_tier": "top10",
+      "backend": {
+        "kind": "http",
+        "service": "chat",
+        "spec": "apps/kernel/api-spec/chat.yaml",
+        "path": "/api/conversations/{id}/messages",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 27,
+      "command": "chat.conversation.read",
+      "signature": "imajin chat conversation read --conversation <did|id>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "chat",
+        "spec": "apps/kernel/api-spec/chat.yaml",
+        "path": "/api/conversations/{id}/read",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 28,
+      "command": "chat.invite.create",
+      "signature": "imajin chat invite create --conversation <did|id> --member-did <did> [--role <text>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "chat",
+        "spec": "apps/kernel/api-spec/chat.yaml",
+        "path": "/api/invites",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 29,
+      "command": "notify.send",
+      "signature": "imajin notify send --to <did|email> --scope <scope> --title <title> --body <text> [--data-json <json>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "notify",
+        "spec": "apps/kernel/api-spec/notify.yaml",
+        "path": "/api/send",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 30,
+      "command": "notify.inbox.list",
+      "signature": "imajin notify inbox list [--unread-only] [--scope <scope>] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "notify",
+        "spec": "apps/kernel/api-spec/notify.yaml",
+        "path": "/api/notifications",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 31,
+      "command": "trust.invite.create",
+      "signature": "imajin trust invite create [--delivery <link|email>] [--email <email>] [--message <text>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "connections",
+        "spec": "apps/kernel/api-spec/connections.yaml",
+        "path": "/api/invites",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 32,
+      "command": "trust.invite.accept",
+      "signature": "imajin trust invite accept --code <invite-code>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "connections",
+        "spec": "apps/kernel/api-spec/connections.yaml",
+        "path": "/api/invites/{code}/accept",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 33,
+      "command": "trust.connections.list",
+      "signature": "imajin trust connections list [--did <did>] [--scope <actor|family|community|business>] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "connections",
+        "spec": "apps/kernel/api-spec/connections.yaml",
+        "path": "/api/connections",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 34,
+      "command": "trust.distance.get",
+      "signature": "imajin trust distance get --from-did <did> --to-did <did>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "connections",
+        "spec": "apps/kernel/api-spec/connections.yaml",
+        "path": "/api/trust/distance",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 35,
+      "command": "profile.get",
+      "signature": "imajin profile get --id <did|handle>",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "profile",
+        "spec": "apps/kernel/api-spec/profile.yaml",
+        "path": "/api/profile/{id}",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 36,
+      "command": "media.upload",
+      "signature": "imajin media upload --file <path> [--folder-id <id>] [--access <public|private|trusted>] [--fair-file <path>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "media",
+        "spec": "apps/kernel/api-spec/media.yaml",
+        "path": "/api/assets",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 37,
+      "command": "media.get",
+      "signature": "imajin media get --id <asset-id> [--include <fair,folders,references,content,og,transcript>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "media",
+        "spec": "apps/kernel/api-spec/media.yaml",
+        "path": "/api/assets/{id}",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 38,
+      "command": "events.create",
+      "signature": "imajin events create --title <text> --start <iso8601> [--end <iso8601>] [--venue <text>] [--price <decimal>] [--currency <code>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "events",
+        "spec": "apps/events/api-spec/openapi.yaml",
+        "path": "/api/events",
+        "method": "POST"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 39,
+      "command": "market.listings.list",
+      "signature": "imajin market listings list [--seller-did <did>] [--status <active|sold|archived>] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "market",
+        "spec": "apps/market/api-spec/openapi.yaml",
+        "path": "/api/listings",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    },
+    {
+      "rank": 40,
+      "command": "learn.courses.list",
+      "signature": "imajin learn courses list [--mine] [--teaching] [--limit <n>] [--cursor <token>]",
+      "sprint_tier": "top40",
+      "backend": {
+        "kind": "http",
+        "service": "learn",
+        "spec": "apps/learn/api-spec/openapi.yaml",
+        "path": "/api/courses",
+        "method": "GET"
+      },
+      "readiness": "available_now"
+    }
+  ]
+}

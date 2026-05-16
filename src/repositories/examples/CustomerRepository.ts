@@ -110,9 +110,9 @@ export class CustomerRepository extends MemoryRepository<any> {
                 email: 'john.doe@example.com',
                 name: 'John Doe',
                 phone: '+1-555-0123',
-                sourceService: 'stripe',
+                sourceService: 'imajin-ai',
                 metadata: { plan: 'premium' },
-                serviceData: { customerId: 'cus_stripe_123' }
+                serviceData: { customerId: 'idn_123' }
             },
             {
                 email: 'jane.smith@example.com',

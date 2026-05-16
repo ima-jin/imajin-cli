@@ -26,7 +26,6 @@ import { MediaUploadCommand } from '../commands/media/MediaUploadCommand.js';
 import { MediaCommand } from '../commands/media/MediaCommand.js';
 import type { Logger } from '../logging/Logger.js';
 import { MediaProcessor } from '../media/MediaProcessor.js';
-import { CloudinaryProvider } from '../media/providers/CloudinaryProvider.js';
 import { LocalMediaProvider } from '../media/providers/LocalMediaProvider.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
@@ -63,10 +62,6 @@ export class MediaServiceProvider extends ServiceProvider {
             return provider;
         });
 
-        this.container.singleton('CloudinaryProvider', () => {
-            const config = this.getCloudinaryProviderConfig();
-            return new CloudinaryProvider(config);
-        });
 
         // Register commands
         this.container.singleton('MediaUploadCommand', () => {
@@ -100,7 +95,6 @@ export class MediaServiceProvider extends ServiceProvider {
         return [
             'MediaProcessor',
             'LocalMediaProvider',
-            'CloudinaryProvider',
             'MediaUploadCommand',
             'MediaCommand'
         ];
@@ -114,20 +108,6 @@ export class MediaServiceProvider extends ServiceProvider {
         // eslint-disable-next-line deprecation/deprecation
         const localProvider = this.container.resolve<MediaProvider>('LocalMediaProvider');
         processor.registerProvider('local', localProvider);
-
-        // Register Cloudinary provider if configured
-        try {
-            // eslint-disable-next-line deprecation/deprecation
-            const cloudinaryProvider = this.container.resolve<MediaProvider>('CloudinaryProvider');
-            processor.registerProvider('cloudinary', cloudinaryProvider);
-        } catch (error) {
-            // Cloudinary not configured or credentials missing - skip and log warning
-            this.logger.warn('Cloudinary provider not configured, skipping', {
-                provider: 'MediaServiceProvider',
-                reason: 'Missing configuration or credentials',
-                error: error instanceof Error ? error.message : String(error)
-            });
-        }
     }
 
     /**
@@ -153,19 +133,6 @@ export class MediaServiceProvider extends ServiceProvider {
                     credentials: {},
                     settings: {},
                     enabled: true
-                },
-                cloudinary: {
-                    type: 'cloudinary',
-                    credentials: {
-                        cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
-                        apiKey: process.env.CLOUDINARY_API_KEY || '',
-                        apiSecret: process.env.CLOUDINARY_API_SECRET || ''
-                    },
-                    settings: {
-                        secure: true,
-                        uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET
-                    },
-                    enabled: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY)
                 }
             },
             optimization: {
@@ -213,35 +180,8 @@ export class MediaServiceProvider extends ServiceProvider {
         return {
             storagePath: process.env.MEDIA_LOCAL_STORAGE_PATH || './storage/media',
             publicPath: process.env.MEDIA_LOCAL_PUBLIC_PATH || './public/media',
-            baseUrl: process.env.MEDIA_LOCAL_BASE_URL || 'http://localhost:3000/media',
+            baseUrl: process.env.MEDIA_LOCAL_BASE_URL || '',
             maxFileSize: Number.parseInt(process.env.MEDIA_MAX_FILE_SIZE || '52428800')
         };
-    }
-
-    /**
-     * Get Cloudinary provider configuration
-     */
-    private getCloudinaryProviderConfig() {
-        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-        const apiKey = process.env.CLOUDINARY_API_KEY;
-        const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-        if (!cloudName || !apiKey || !apiSecret) {
-            throw new Error('Cloudinary configuration missing. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.');
-        }
-
-        const config = {
-            cloudName,
-            apiKey,
-            apiSecret,
-            secure: true
-        };
-
-        // Only add uploadPreset if it's defined
-        if (process.env.CLOUDINARY_UPLOAD_PRESET) {
-            (config as any).uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
-        }
-
-        return config;
     }
 } 

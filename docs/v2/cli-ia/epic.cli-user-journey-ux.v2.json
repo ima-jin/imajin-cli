@@ -1,0 +1,169 @@
+{
+  "epic": {
+    "id": "EPIC-CLI-UX-001",
+    "title": "CLI User Journey + UX/UI Modernization (v2)",
+    "summary": "Define and implement an end-to-end CLI user journey with consistent visual language, machine-safe output contracts, and orchestrator-first workflows.",
+    "problem_statement": "The current CLI has useful pieces (colorized outputs, interactive menus, JSON mode), but user experience is fragmented across commands. Command output conventions, startup behavior, and state feedback are inconsistent, creating friction for both humans and orchestrators.",
+    "goals": [
+      "Map the complete CLI user journey from invocation to follow-up actions.",
+      "Establish a unified UX system (tone, structure, color semantics, error/receipt patterns).",
+      "Preserve strict machine-consumable mode while improving human-readable mode.",
+      "Define and implement package-level UI strategy using current dependencies and targeted additions only where needed.",
+      "Ship UX standards first for top3/top10 commands, then scale to top40."
+    ],
+    "non_goals": [
+      "Building a full TUI application in v2.",
+      "Redesigning all business/domain logic during UX standardization.",
+      "Replacing current backend contracts as part of this epic."
+    ],
+    "scope": {
+      "in_scope": [
+        "CLI startup experience and first-run ergonomics",
+        "Command output spec for success/error/receipt/progress",
+        "Color and typography standards for terminal output",
+        "Interactive prompt behavior for destructive/high-risk operations",
+        "JSON mode guarantees and compatibility",
+        "Cross-command output normalization for top40 roadmap"
+      ],
+      "out_of_scope": [
+        "GUI/web dashboard implementation",
+        "Protocol-level auth/settlement redesign",
+        "Cross-repo migration work beyond CLI adapter boundaries"
+      ]
+    },
+    "user_journey_map": [
+      {
+        "phase": "J0-invocation",
+        "user_intent": "Run a command quickly with confidence.",
+        "entry_points": [
+          "imajin <namespace> <verb>",
+          "imajin (interactive mode)"
+        ],
+        "ux_requirements": [
+          "Fast startup (<250ms perceived for lightweight commands)",
+          "Clear no-args landing behavior",
+          "Immediate hints to core workflows"
+        ]
+      },
+      {
+        "phase": "J1-discovery",
+        "user_intent": "Find the right command and understand arguments.",
+        "ux_requirements": [
+          "Predictable help structure across namespaces",
+          "Examples for each command",
+          "Discoverability for JSON mode and safety flags"
+        ]
+      },
+      {
+        "phase": "J2-validation-and-intent-confirmation",
+        "user_intent": "Know what will happen before changes are made.",
+        "ux_requirements": [
+          "plan/apply semantics where applicable",
+          "Consistent validation error formatting",
+          "Prompt confirmations for destructive operations"
+        ]
+      },
+      {
+        "phase": "J3-execution",
+        "user_intent": "See reliable progress and current state.",
+        "ux_requirements": [
+          "Uniform progress stream contract",
+          "Human mode: concise staged feedback",
+          "JSON mode: deterministic progress events"
+        ]
+      },
+      {
+        "phase": "J4-result-and-receipt",
+        "user_intent": "Understand outcome and what changed.",
+        "ux_requirements": [
+          "Standard success envelope",
+          "Mutation receipts with operation metadata",
+          "Actionable next-step suggestions"
+        ]
+      },
+      {
+        "phase": "J5-recovery-and-iteration",
+        "user_intent": "Recover from failures quickly and rerun safely.",
+        "ux_requirements": [
+          "Structured errors with code + suggestion + retryability",
+          "Conflict details for optimistic concurrency",
+          "One-command retry guidance"
+        ]
+      }
+    ],
+    "acceptance_criteria": [
+      "A published CLI UX contract exists and is applied to all top10 commands.",
+      "All top10 commands support human mode + strict JSON mode with consistent envelope semantics.",
+      "A shared output/prompt utility layer is introduced and used by top10 commands.",
+      "Color semantics are documented and enforced for success/warn/error/info/muted.",
+      "The no-args startup path is redesigned and validated with at least 5 realistic user scenarios.",
+      "Child issues for top40 adoption are created and linked to this epic."
+    ],
+    "dependencies": [
+      "response-envelopes.schema.json",
+      "backend-mapping.top40.json",
+      "workspace core schemas"
+    ],
+    "milestones": [
+      {
+        "name": "M1-journey-and-contract-freeze",
+        "deliverables": [
+          "User journey map",
+          "UX output contract",
+          "Package strategy decision"
+        ]
+      },
+      {
+        "name": "M2-top10-ux-adoption",
+        "deliverables": [
+          "Top10 commands migrated to shared UX layer",
+          "Regression tests for text/json envelopes"
+        ]
+      },
+      {
+        "name": "M3-top40-rollout",
+        "deliverables": [
+          "Top40 commands aligned to UX system",
+          "CLI style guide complete"
+        ]
+      }
+    ],
+    "child_issue_seed": [
+      {
+        "id": "CLI-UX-01",
+        "title": "Create shared output renderer (human + json envelopes)",
+        "priority": "P0"
+      },
+      {
+        "id": "CLI-UX-02",
+        "title": "Define terminal color/semantic token system",
+        "priority": "P0"
+      },
+      {
+        "id": "CLI-UX-03",
+        "title": "Redesign no-args startup and help journey",
+        "priority": "P0"
+      },
+      {
+        "id": "CLI-UX-04",
+        "title": "Implement progress/receipt renderer for mutating commands",
+        "priority": "P1"
+      },
+      {
+        "id": "CLI-UX-05",
+        "title": "Top10 command UX migration",
+        "priority": "P0"
+      },
+      {
+        "id": "CLI-UX-06",
+        "title": "Top40 command UX migration",
+        "priority": "P1"
+      },
+      {
+        "id": "CLI-UX-07",
+        "title": "CLI UX snapshot testing framework",
+        "priority": "P1"
+      }
+    ]
+  }
+}

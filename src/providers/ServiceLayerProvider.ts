@@ -244,7 +244,7 @@ export class ServiceLayerProvider extends ServiceProvider {
                     ],
                     examples: [
                         'imajin service health',
-                        'imajin service health --service stripe',
+                        'imajin service health --service github',
                         'imajin service health --json'
                     ]
                 },
@@ -268,7 +268,7 @@ export class ServiceLayerProvider extends ServiceProvider {
                     ],
                     examples: [
                         'imajin factory types',
-                        'imajin factory types --category payment',
+                        'imajin factory types --category integration',
                         'imajin factory types --json'
                     ]
                 }

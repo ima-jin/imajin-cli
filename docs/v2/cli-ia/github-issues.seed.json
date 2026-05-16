@@ -1,0 +1,97 @@
+{
+  "project": "imajin-cli v2 UX",
+  "epics": [
+    {
+      "id": "EPIC-CLI-UX-001",
+      "title": "CLI User Journey + UX/UI Modernization (v2)",
+      "labels": [
+        "epic",
+        "cli-ux",
+        "v2"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "title": "[CLI-UX] Shared output renderer foundation",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "foundation",
+        "p0"
+      ],
+      "milestone": "M1-journey-and-contract-freeze"
+    },
+    {
+      "title": "[CLI-UX] Color token and icon semantics system",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "design-system",
+        "p0"
+      ],
+      "milestone": "M1-journey-and-contract-freeze"
+    },
+    {
+      "title": "[CLI-UX] No-args startup journey redesign",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "journey",
+        "p0"
+      ],
+      "milestone": "M1-journey-and-contract-freeze"
+    },
+    {
+      "title": "[CLI-UX] Implement progress renderer with ora",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "progress",
+        "p1"
+      ],
+      "milestone": "M2-top10-ux-adoption"
+    },
+    {
+      "title": "[CLI-UX] Top3 workspace command migration (get/put/search)",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "workspace",
+        "top3",
+        "p0"
+      ],
+      "milestone": "M2-top10-ux-adoption"
+    },
+    {
+      "title": "[CLI-UX] Top10 command UX migration",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "top10",
+        "p0"
+      ],
+      "milestone": "M2-top10-ux-adoption"
+    },
+    {
+      "title": "[CLI-UX] Snapshot and schema contract test harness",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "testing",
+        "p1"
+      ],
+      "milestone": "M2-top10-ux-adoption"
+    },
+    {
+      "title": "[CLI-UX] Top40 command UX normalization rollout",
+      "epic_id": "EPIC-CLI-UX-001",
+      "labels": [
+        "cli-ux",
+        "top40",
+        "p1"
+      ],
+      "milestone": "M3-top40-rollout"
+    }
+  ]
+}

@@ -32,8 +32,6 @@ import { ImajinConfig, ImajinConfigSchema } from '../types/Config.js';
 import type { LLMResponse, ServiceIntrospection } from '../types/LLM.js';
 import { ErrorHandler } from './ErrorHandler.js';
 import { ErrorRecovery } from './ErrorRecovery.js';
-import { BusinessContextValidator } from '../middleware/BusinessContextValidator.js';
-import { RecipeManager } from '../context/RecipeManager.js';
 
 export class Application {
   public static readonly VERSION = '0.1.0';
@@ -48,7 +46,6 @@ export class Application {
   private commandsRegistered: boolean = false;
   private readonly errorHandler: ErrorHandler;
   private readonly errorRecovery: ErrorRecovery;
-  private readonly businessValidator: BusinessContextValidator;
 
   constructor(config?: Partial<ImajinConfig>) {
     // Initialize container and core services
@@ -76,7 +73,6 @@ export class Application {
     });
 
     this.errorRecovery = new ErrorRecovery();
-    this.businessValidator = new BusinessContextValidator();
 
     // Set up global error handling
     this.setupGlobalErrorHandling();
@@ -133,7 +129,6 @@ export class Application {
     this.container.singleton('container', () => this.container);
     this.container.singleton('errorHandler', () => this.errorHandler);
     this.container.singleton('errorRecovery', () => this.errorRecovery);
-    this.container.singleton('businessValidator', () => this.businessValidator);
     this.container.singleton('eventEmitter', () => new EventEmitter());
 
     // Register CommandManager (needed by PluginManager and other services)
@@ -250,9 +245,6 @@ export class Application {
 
     // Register commands from providers
     this.registerProviderCommands();
-    
-    // Register business context and recipe commands
-    this.registerBusinessContextCommands();
 
     // Register general CLI commands (like markdown)
     await this.registerGeneralCommands();
@@ -283,26 +275,6 @@ export class Application {
     this.commandsRegistered = true;
   }
   
-  /**
-   * Register business context and recipe commands
-   */
-  private registerBusinessContextCommands(): void {
-    // Import and register business context commands
-    import('../commands/generated/BusinessContextCommands.js').then(({ createBusinessContextCommands }) => {
-      this.program.addCommand(createBusinessContextCommands());
-      this.logger.debug('Registered business context commands');
-    }).catch(err => {
-      this.logger.warn('Failed to load business context commands:', err);
-    });
-    
-    // Import and register recipe commands
-    import('../commands/generated/RecipeCommands.js').then(({ createRecipeCommands }) => {
-      this.program.addCommand(createRecipeCommands());
-      this.logger.debug('Registered recipe commands');
-    }).catch(err => {
-      this.logger.warn('Failed to load recipe commands:', err);
-    });
-  }
 
   /**
    * Register general CLI commands (like markdown, etc.)
@@ -444,13 +416,6 @@ export class Application {
       if (process.argv.length <= 2) {
         await this.startInteractiveMode();
       } else {
-        // Validate business context before command execution
-        const commandString = process.argv.slice(2).join(' ');
-        const isValidContext = await this.businessValidator.validateBusinessContext(commandString);
-
-        if (!isValidContext) {
-          process.exit(1);
-        }
 
         await this.program.parseAsync(process.argv);
 
@@ -484,8 +449,6 @@ export class Application {
             choices: [
               { name: '🔍 List available services', value: 'list-services' },
               { name: '📋 Describe a service', value: 'describe' },
-              { name: '📚 Browse available recipes', value: 'browse-recipes' },
-              { name: '📄 Browse recipe details', value: 'browse-recipe-details' },
               { name: '🩺 Run system diagnostics', value: 'diagnose' },
               { name: '❓ Show help', value: 'help' },
               { name: '🚪 Exit', value: 'exit' }
@@ -507,10 +470,6 @@ export class Application {
           await this.handleDescribeServiceInteractive();
         } else if (action === 'list-services') {
           this.handleListServices({});
-        } else if (action === 'browse-recipes') {
-          await this.handleBrowseRecipes();
-        } else if (action === 'browse-recipe-details') {
-          await this.handleBrowseRecipeDetails();
         } else if (action === 'diagnose') {
           console.log(chalk.green('✅ Application initialized successfully'));
           console.log(chalk.blue('📦 Container ready'));
@@ -572,108 +531,6 @@ export class Application {
     }
   }
 
-  /**
-   * Handle interactive recipe browsing
-   */
-  private async handleBrowseRecipes(): Promise<void> {
-    try {
-      const recipeManager = new RecipeManager();
-      const recipes = await recipeManager.listRecipes();
-      
-      if (recipes.length === 0) {
-        console.log(chalk.yellow('⚠️  No recipes available'));
-        return;
-      }
-
-      console.log(chalk.blue('📚 Available Business Recipe Templates:\n'));
-      
-      for (const recipe of recipes) {
-        console.log(chalk.cyan(`  • ${chalk.bold(recipe.businessType)}`));
-        console.log(chalk.gray(`    ${recipe.name} - ${recipe.description}`));
-        console.log(chalk.gray(`    Entities: ${Object.keys(recipe.entities).join(', ')}\n`));
-      }
-      
-      console.log(chalk.yellow('💡 Usage:'));
-      console.log(chalk.gray('   imajin context recipe --type <businessType>'));
-      console.log(chalk.gray('   imajin context recipe --type community-platform'));
-
-    } catch (error) {
-      this.logger.error('Failed to list recipes', error instanceof Error ? error : new Error(String(error)));
-      console.error(chalk.red('❌ Failed to list recipes:'), error);
-    }
-  }
-
-  /**
-   * Handle interactive recipe details browsing
-   */
-  private async handleBrowseRecipeDetails(): Promise<void> {
-    try {
-      const recipeManager = new RecipeManager();
-      const recipes = await recipeManager.listRecipes();
-      
-      if (recipes.length === 0) {
-        console.log(chalk.yellow('⚠️  No recipes available'));
-        return;
-      }
-
-      const choices = recipes.map(recipe => ({
-        name: `${recipe.businessType} - ${recipe.name} (${Object.keys(recipe.entities).length} entities)`,
-        value: recipe.businessType
-      }));
-
-      const { selectedRecipe } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'selectedRecipe',
-          message: '📄 Select a recipe to view details:',
-          choices,
-          pageSize: 10
-        }
-      ]);
-
-      const recipe = await recipeManager.getRecipe(selectedRecipe);
-      if (!recipe) {
-        console.log(chalk.red(`❌ Recipe not found: ${selectedRecipe}`));
-        return;
-      }
-
-      // Display recipe details in a readable format
-      console.log(chalk.blue(`\n📄 Recipe: ${recipe.name}\n`));
-      console.log(chalk.cyan(`Business Type: ${recipe.businessType}`));
-      console.log(chalk.cyan(`Description: ${recipe.description}\n`));
-      
-      console.log(chalk.yellow('📋 Entities:'));
-      for (const [entityName, entityDef] of Object.entries(recipe.entities)) {
-        console.log(chalk.gray(`  • ${entityName}: ${(entityDef).fields?.length || 0} fields`));
-      }
-      
-      if (recipe.workflows && recipe.workflows.length > 0) {
-        console.log(chalk.yellow('\n🔄 Workflows:'));
-        for (const workflow of recipe.workflows) {
-          console.log(chalk.gray(`  • ${workflow.name}: ${workflow.description || 'No description'}`));
-        }
-      }
-
-      // Ask if user wants to see full JSON
-      const { showJson } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'showJson',
-          message: 'Would you like to see the full JSON definition?',
-          default: false
-        }
-      ]);
-
-      if (showJson) {
-        console.log(chalk.blue('\n📄 Full JSON:'));
-        console.log(chalk.gray(JSON.stringify(recipe, null, 2)));
-      }
-
-    } catch (error) {
-      this.logger.error('Failed to show recipe', error instanceof Error ? error : new Error(String(error)));
-      console.error(chalk.red('❌ Failed to show recipe:'), error);
-    }
-  }
 
   /**
    * Bootstrap the application (register providers and boot)
