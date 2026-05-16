@@ -17,9 +17,12 @@
  */
 
 import { AuthCommands } from '../../commands/auth/AuthCommands.js';
+import { IdentityCommands } from '../../commands/identity/IdentityCommands.js';
 import { Container } from '../../container/Container.js';
 import { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
+import { ImajinAiIdentityService } from '../../services/imajin-ai/ImajinAiIdentityService.js';
+import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
 import { CredentialManager } from './CredentialManager.js';
 
 export class CredentialServiceProvider extends ServiceProvider {
@@ -39,6 +42,24 @@ export class CredentialServiceProvider extends ServiceProvider {
             const logger = container.resolve<Logger>('logger');
             return new AuthCommands(credentialManager, logger);
         });
+
+        this.container.singleton('imajinAiSessionService', (container: Container) => {
+            const credentialManager = container.resolve<CredentialManager>('credentialManager');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiSessionService(credentialManager, logger);
+        });
+
+        this.container.singleton('imajinAiIdentityService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiIdentityService(sessionService, logger);
+        });
+
+        this.container.singleton('identityCommands', (container: Container) => {
+            const identityService = container.resolve<ImajinAiIdentityService>('imajinAiIdentityService');
+            const logger = container.resolve<Logger>('logger');
+            return new IdentityCommands(identityService, logger);
+        });
     }
 
     /**
@@ -48,6 +69,8 @@ export class CredentialServiceProvider extends ServiceProvider {
         // Register CLI commands
         const authCommands = this.container.resolve<AuthCommands>('authCommands');
         authCommands.registerCommands(this.program);
+        const identityCommands = this.container.resolve<IdentityCommands>('identityCommands');
+        identityCommands.registerCommands(this.program);
     }
 
     /**
@@ -61,7 +84,13 @@ export class CredentialServiceProvider extends ServiceProvider {
      * Get services provided
      */
     public getServices(): string[] {
-        return ['credentialManager', 'authCommands'];
+        return [
+            'credentialManager',
+            'authCommands',
+            'imajinAiSessionService',
+            'imajinAiIdentityService',
+            'identityCommands'
+        ];
     }
 
     /**

@@ -52,7 +52,7 @@ export class MediaCommand {
             .command('upload')
             .description('Upload media files')
             .argument('<file>', 'File to upload')
-            .option('-p, --provider <provider>', 'Media provider (local, cloudinary)', 'local')
+            .option('-p, --provider <provider>', 'Media provider (local)', 'local')
             .option('-d, --folder <folder>', 'Upload folder')
             .option('--optimize', 'Optimize the uploaded file')
             .action(async (file: string, options: any) => {
@@ -82,7 +82,7 @@ export class MediaCommand {
 Examples:
   $ imajin media upload ./image.jpg --provider local --optimize
   $ imajin media info ./video.mp4
-  $ imajin media list --provider cloudinary --folder vacation
+  $ imajin media list --provider local --folder workspace
         `);
     }
 

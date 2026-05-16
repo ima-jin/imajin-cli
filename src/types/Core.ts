@@ -21,8 +21,25 @@
 
 import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
-import type { BusinessDomainModel } from '../context/BusinessContextProcessor.js';
-import type { BusinessConfiguration } from '../context/BusinessContextManager.js';
+type BusinessDomainModel = {
+    businessType: string;
+    description?: string;
+    entities: Record<string, any>;
+    workflows?: any[];
+    businessRules?: any[];
+    integrations?: any[];
+    commands?: any[];
+};
+
+type BusinessConfiguration = {
+    business: {
+        type: string;
+        description?: string;
+    };
+    entities: Record<string, any>;
+    workflows?: any[];
+    businessRules?: Array<{ rule: string }>;
+};
 
 // =============================================================================
 // BUSINESS CONTEXT TYPE SYSTEM
@@ -228,7 +245,7 @@ export async function initializeBusinessTypeSystem(config?: BusinessConfiguratio
         // Convert config to domain model and register
         const domainModel: BusinessDomainModel = {
             businessType: config.business.type,
-            description: config.business.description,
+            ...(config.business.description ? { description: config.business.description } : {}),
             entities: config.entities,
             workflows: config.workflows || [],
             businessRules: config.businessRules?.map(r => r.rule) || [],
@@ -237,18 +254,8 @@ export async function initializeBusinessTypeSystem(config?: BusinessConfiguratio
         };
         BusinessTypeRegistry.registerBusinessDomain(domainModel);
     } else {
-        // Try to load from BusinessContextManager
-        try {
-            const { BusinessContextManager } = await import('../context/BusinessContextManager.js');
-            const manager = new BusinessContextManager();
-            const businessConfig = await manager.getCurrentConfiguration();
-            const domainModel = await manager.toDomainModel();
-            BusinessTypeRegistry.registerBusinessDomain(domainModel);
-        } catch {
-            // No business context found yet - types will be registered when context is created
-            console.warn('⚠️ No business context found. Business types will be registered when context is created.');
-            return;
-        }
+        // Business context internals were removed; register types only from explicit config.
+        return;
     }
     
     console.log('✅ Business type system initialized');
@@ -259,20 +266,9 @@ export async function initializeBusinessTypeSystem(config?: BusinessConfiguratio
 // =============================================================================
 
 /**
- * Service namespace registry - prevents name collisions
+ * Dynamic service namespace (provider identifiers are discovered/configured at runtime)
  */
-export const ServiceNamespaces = {
-    stripe: 'stripe',
-    salesforce: 'salesforce',
-    hubspot: 'hubspot',
-    mailchimp: 'mailchimp',
-    shopify: 'shopify',
-    notion: 'notion',
-    github: 'github',
-    // Add new services here
-} as const;
-
-export type ServiceNamespace = keyof typeof ServiceNamespaces;
+export type ServiceNamespace = string;
 
 /**
  * Namespaced type utility
@@ -553,13 +549,11 @@ export function createTypeName<T extends ServiceNamespace>(
  * Extract namespace from namespaced type name
  */
 export function extractNamespace(typeName: string): ServiceNamespace | null {
-    const parts = typeName.split(':');
-    if (parts.length !== 2) {
-return null;
-}
-    
-    const namespace = parts[0] as ServiceNamespace;
-    return namespace in ServiceNamespaces ? namespace : null;
+    const separatorIndex = typeName.indexOf(':');
+    if (separatorIndex <= 0 || separatorIndex === typeName.length - 1) {
+        return null;
+    }
+    return typeName.slice(0, separatorIndex);
 }
 
 /**

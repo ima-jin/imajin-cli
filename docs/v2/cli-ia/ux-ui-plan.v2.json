@@ -1,0 +1,224 @@
+{
+  "plan_id": "CLI-UX-PLAN-V2",
+  "title": "CLI UX/UI Implementation Plan v2",
+  "status": "draft",
+  "current_state_audit": {
+    "observations": [
+      "Colorized output exists in many commands via chalk.",
+      "Interactive mode exists in Application with inquirer menus.",
+      "Table rendering is present in Status command via cli-table3.",
+      "ASCII banner is present via figlet.",
+      "JSON mode exists but formatting contracts differ by command."
+    ],
+    "package_usage_detected_in_src": {
+      "chalk": "actively used",
+      "inquirer": "actively used",
+      "cli-table3": "used in status command",
+      "figlet": "used in startup/banner",
+      "ora": "dependency present, not currently imported in src",
+      "boxen": "dependency present, not currently imported in src",
+      "blessed": "dependency present, not currently imported in src"
+    },
+    "ux_gaps": [
+      "No shared renderer contract for text outputs across commands.",
+      "No universal progress pattern for long-running operations.",
+      "No consistent success/error/receipt presentation in human mode.",
+      "No clear startup journey tied to top workflows (workspace/identity/commerce).",
+      "Some logger behavior routes to stderr globally, which can pollute command UX."
+    ]
+  },
+  "design_principles": [
+    "Text-first UX with strict JSON parity.",
+    "Deterministic machine output, expressive human output.",
+    "One output grammar across all namespaces.",
+    "Progressive disclosure: concise by default, detail on demand.",
+    "Errors must be actionable in one rerun."
+  ],
+  "output_system": {
+    "human_mode": {
+      "sections_order": [
+        "header",
+        "summary",
+        "details",
+        "warnings",
+        "next_steps"
+      ],
+      "color_semantics": {
+        "success": "green",
+        "warning": "yellow",
+        "error": "red",
+        "info": "blue",
+        "muted": "gray"
+      },
+      "icon_semantics": {
+        "success": "✅",
+        "warning": "⚠️",
+        "error": "❌",
+        "info": "ℹ️",
+        "progress": "⏳",
+        "done": "🏁"
+      }
+    },
+    "json_mode": {
+      "must_conform_to": "response-envelopes.schema.json",
+      "rules": [
+        "No ANSI codes",
+        "No ad-hoc fields outside envelope",
+        "Stable top-level shape per envelope type"
+      ]
+    },
+    "progress": {
+      "transport": "stdout in human mode, structured events in json mode",
+      "stages": [
+        "queued",
+        "validating",
+        "executing",
+        "finalizing",
+        "completed"
+      ],
+      "heartbeat_interval_ms": 1500
+    }
+  },
+  "startup_and_navigation_ux": {
+    "no_args_behavior": {
+      "target": "show quick action hub with top workflows",
+      "quick_actions": [
+        "workspace quickstart",
+        "identity session/resolve",
+        "commerce checkout/settle",
+        "show recent command examples"
+      ]
+    },
+    "help_pattern": {
+      "command_help_blocks": [
+        "purpose",
+        "syntax",
+        "arguments",
+        "examples",
+        "machine_mode_notes"
+      ]
+    }
+  },
+  "package_strategy": {
+    "keep": [
+      {
+        "name": "commander",
+        "reason": "core parser and command structure"
+      },
+      {
+        "name": "chalk",
+        "reason": "terminal color semantics already integrated"
+      },
+      {
+        "name": "inquirer",
+        "reason": "interactive prompts already integrated"
+      },
+      {
+        "name": "cli-table3",
+        "reason": "tabular status rendering"
+      }
+    ],
+    "activate_existing": [
+      {
+        "name": "ora",
+        "reason": "standard spinner/progress UX for long-running commands"
+      },
+      {
+        "name": "boxen",
+        "reason": "header/summary cards for startup and key receipts"
+      }
+    ],
+    "defer": [
+      {
+        "name": "blessed",
+        "reason": "full TUI scope deferred outside v2"
+      }
+    ],
+    "avoid_new_dependencies_initially": true
+  },
+  "component_blueprint": [
+    {
+      "component": "OutputRenderer",
+      "responsibility": "render success/error/warnings consistently in human mode"
+    },
+    {
+      "component": "EnvelopeEmitter",
+      "responsibility": "emit schema-compliant JSON envelopes"
+    },
+    {
+      "component": "ProgressRenderer",
+      "responsibility": "stage-based progress display with optional spinner"
+    },
+    {
+      "component": "PromptGuard",
+      "responsibility": "confirmation prompts for destructive/risky operations"
+    },
+    {
+      "component": "HelpRenderer",
+      "responsibility": "consistent help and examples layout"
+    }
+  ],
+  "rollout_plan": [
+    {
+      "phase": "P1-foundation",
+      "targets": [
+        "shared renderers",
+        "color token config",
+        "json envelope compliance checks"
+      ],
+      "definition_of_done": [
+        "Renderer utilities merged",
+        "Top3 commands migrated"
+      ]
+    },
+    {
+      "phase": "P2-top10-migration",
+      "targets": [
+        "identity/session+resolve",
+        "workspace get/put/list/search/diff",
+        "commerce checkout/settle",
+        "chat send"
+      ],
+      "definition_of_done": [
+        "All top10 commands on shared output system",
+        "Snapshot tests passing"
+      ]
+    },
+    {
+      "phase": "P3-top40-migration",
+      "targets": [
+        "all remaining top40 commands",
+        "docs and examples aligned"
+      ],
+      "definition_of_done": [
+        "Top40 output conformity complete",
+        "Backlog closed for UX parity"
+      ]
+    }
+  ],
+  "testing_strategy": {
+    "snapshot_tests": [
+      "human mode golden outputs",
+      "json envelope snapshots"
+    ],
+    "contract_tests": [
+      "response envelope schema validation",
+      "progress stream schema validation"
+    ],
+    "usability_checks": [
+      "no-args startup flow",
+      "error recovery path",
+      "destructive command confirmation flow"
+    ]
+  },
+  "sprint_issue_template": {
+    "title_format": "[CLI-UX] <scope>",
+    "required_fields": [
+      "journey_phase",
+      "command_scope",
+      "output_modes",
+      "acceptance_criteria",
+      "snapshot_fixtures"
+    ]
+  }
+}

@@ -41,9 +41,6 @@ export {
     type StrategySelectionCriteria
 } from './ServiceStrategyManager.js';
 
-// Existing services
-// StripeService export moved to stripe subdirectory
-export { StripeService } from './stripe/StripeService.js';
 
 // Re-export commonly used types for convenience
 export type {

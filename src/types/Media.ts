@@ -125,7 +125,7 @@ export interface TransformationRecord {
 }
 
 /**
- * @deprecated Use BaseService-based services instead (CloudinaryService, LocalFileService)
+ * @deprecated Use service-provider based media services instead (e.g. LocalFileService and imajin-ai backed media flows)
  * This interface will be removed in a future version
  * 
  * Legacy MediaProvider interface - replaced by proper service architecture.
@@ -166,7 +166,7 @@ export interface MediaProcessingConfig {
 }
 
 export interface ProviderConfig {
-    type: 'cloudinary' | 'aws' | 'gcp' | 'local';
+    type: 'aws' | 'gcp' | 'local';
     credentials: Record<string, string>;
     settings: Record<string, any>;
     enabled: boolean;
@@ -241,27 +241,6 @@ export interface MediaProcessingOptions {
     overwrite?: boolean;
 }
 
-/**
- * Cloudinary Upload Response Interface
- */
-export interface CloudinaryUploadResponse {
-    public_id: string;
-    version: number;
-    signature: string;
-    width: number;
-    height: number;
-    format: string;
-    resource_type: string;
-    created_at: string;
-    tags: string[];
-    bytes: number;
-    type: string;
-    etag: string;
-    placeholder: boolean;
-    url: string;
-    secure_url: string;
-    duration?: number; // For video uploads
-}
 
 /**
  * Media Asset Collection with Pagination

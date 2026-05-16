@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "imajin-cli-response-envelopes-v1",
+  "title": "Imajin CLI Response Envelopes v1",
+  "type": "object",
+  "$defs": {
+    "did": {
+      "type": "string",
+      "pattern": "^did:imajin:[A-Za-z0-9:_\\-.]+$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "commandMeta": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "correlationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actorDid": {
+          "$ref": "#/$defs/did"
+        },
+        "principalDid": {
+          "$ref": "#/$defs/did"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "planned": {
+          "type": "boolean"
+        },
+        "applied": {
+          "type": "boolean"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "required": [
+        "command",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "receipt": {
+      "type": "object",
+      "properties": {
+        "operationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "create",
+            "update",
+            "patch",
+            "move",
+            "delete",
+            "snapshot",
+            "revert",
+            "send",
+            "settle",
+            "refund",
+            "transfer"
+          ]
+        },
+        "authorityDecisionId": {
+          "type": "string"
+        },
+        "actorDid": {
+          "$ref": "#/$defs/did"
+        },
+        "principalDid": {
+          "$ref": "#/$defs/did"
+        },
+        "target": {
+          "type": "string"
+        },
+        "before": {
+          "type": "object",
+          "properties": {
+            "etag": {
+              "type": "string"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "after": {
+          "type": "object",
+          "properties": {
+            "etag": {
+              "type": "string"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "signature": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "operationId",
+        "operation",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "errorBody": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "httpStatus": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "suggestion": {
+          "type": "string"
+        },
+        "details": {},
+        "conflict": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "expectedEtag": {
+              "type": "string"
+            },
+            "actualEtag": {
+              "type": "string"
+            },
+            "actualVersion": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "successEnvelope": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "const": true
+        },
+        "meta": {
+          "$ref": "#/$defs/commandMeta"
+        },
+        "data": {},
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "ok",
+        "meta",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "successWithReceiptEnvelope": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/successEnvelope"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "receipt": {
+              "$ref": "#/$defs/receipt"
+            }
+          },
+          "required": [
+            "receipt"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "errorEnvelope": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "const": false
+        },
+        "meta": {
+          "$ref": "#/$defs/commandMeta"
+        },
+        "error": {
+          "$ref": "#/$defs/errorBody"
+        }
+      },
+      "required": [
+        "ok",
+        "meta",
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "progressMessage": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "progress",
+            "log",
+            "result",
+            "error",
+            "receipt",
+            "heartbeat"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "command": {
+          "type": "string"
+        },
+        "correlationId": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting_for_consent",
+            "retrying",
+            "completed",
+            "failed"
+          ]
+        },
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "message": {
+          "type": "string"
+        },
+        "data": {},
+        "receipt": {
+          "$ref": "#/$defs/receipt"
+        },
+        "error": {
+          "$ref": "#/$defs/errorBody"
+        }
+      },
+      "required": [
+        "type",
+        "sequence",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "progressStreamEnvelope": {
+      "type": "object",
+      "properties": {
+        "stream": {
+          "const": true
+        },
+        "meta": {
+          "$ref": "#/$defs/commandMeta"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/progressMessage"
+          }
+        }
+      },
+      "required": [
+        "stream",
+        "meta",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/successEnvelope"
+    },
+    {
+      "$ref": "#/$defs/successWithReceiptEnvelope"
+    },
+    {
+      "$ref": "#/$defs/errorEnvelope"
+    },
+    {
+      "$ref": "#/$defs/progressStreamEnvelope"
+    }
+  ]
+}

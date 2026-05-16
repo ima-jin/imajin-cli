@@ -18,7 +18,10 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { BusinessContextManager } from '../context/BusinessContextManager.js';
+import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
+import * as yaml from 'js-yaml';
 import { TaskLifecycleWorkflow } from '../workflows/TaskLifecycleWorkflow.js';
 import { TaskValidationWorkflow } from '../workflows/TaskValidationWorkflow.js';
 import type { TaskEntity } from './TaskMigrationCommand.js';
@@ -28,18 +31,18 @@ import { CommonOptions } from '../utils/commonOptions.js';
 import { generateTaskId } from '../utils/secureRandom.js';
 
 export class TaskManagementCommands {
-  private readonly contextManager: BusinessContextManager;
+  private readonly contextsDir: string;
   private readonly lifecycleWorkflow: TaskLifecycleWorkflow;
   private readonly validationWorkflow: TaskValidationWorkflow;
   private readonly logger: Logger;
 
   constructor() {
-    this.contextManager = new BusinessContextManager();
+    this.contextsDir = join(homedir(), '.imajin', 'contexts');
     this.lifecycleWorkflow = new TaskLifecycleWorkflow();
     this.validationWorkflow = new TaskValidationWorkflow();
 
     // Inject logger from container
-    const container = globalThis.imajinApp?.container || new Container();
+    const container = (globalThis as any).imajinApp?.container || new Container();
     this.logger = container.resolve('logger') as Logger;
   }
 
@@ -209,7 +212,7 @@ export class TaskManagementCommands {
       }
 
       // Save task
-      await this.contextManager.saveContextEntity(options.context, 'tasks', task);
+      await this.saveTask(options.context, task);
 
       this.logger.info('Task created successfully', { taskId, title: task.title, context: options.context });
       console.log(chalk.green(`✅ Task created: ${task.id}`));
@@ -235,7 +238,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
   }): Promise<void> {
     try {
       this.logger?.debug('Listing tasks', { context: options.context, filters: { status: options.status, priority: options.priority, assignee: options.assignee } });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
 
       // Apply filters
       let filteredTasks = tasks;
@@ -260,7 +263,6 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
       if (options.format === 'json') {
         console.log(JSON.stringify(filteredTasks, null, 2));
       } else if (options.format === 'yaml') {
-        const yaml = await import('js-yaml');
         console.log(yaml.dump(filteredTasks, { indent: 2 }));
       } else {
         // Table format
@@ -288,7 +290,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
   private async updateTaskStatus(taskId: string, status: string, options: { context: string }): Promise<void> {
     try {
       this.logger?.debug('Updating task status', { taskId, status, context: options.context });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
       const task = tasks.find(t => t.id === taskId);
 
       if (!task) {
@@ -325,7 +327,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
         task.completedAt = new Date();
       }
 
-      await this.contextManager.saveContextEntity(options.context, 'tasks', task);
+      await this.saveTask(options.context, task);
 
       this.logger?.info('Task status updated successfully', { taskId, oldStatus, newStatus, context: options.context });
       console.log(chalk.green(`✅ Task ${taskId} status updated: ${oldStatus} → ${newStatus}`));
@@ -340,7 +342,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
   private async validateTask(taskId: string, options: { context: string; enhance: boolean }): Promise<void> {
     try {
       this.logger?.debug('Validating task', { taskId, context: options.context, enhance: options.enhance });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
       const task = tasks.find(t => t.id === taskId);
 
       if (!task) {
@@ -388,7 +390,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
       task.lastValidated = new Date();
       task.enhancementSuggestions = validation.suggestions.map(s => s.description);
 
-      await this.contextManager.saveContextEntity(options.context, 'tasks', task);
+      await this.saveTask(options.context, task);
 
       if (options.enhance && validation.suggestions.length > 0) {
         this.logger?.debug('Applying enhancement suggestions', { taskId, suggestionCount: validation.suggestions.length });
@@ -406,7 +408,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
   private async enhanceTask(taskId: string, options: { context: string; autoUpdate?: boolean }): Promise<void> {
     try {
       this.logger?.debug('Enhancing task', { taskId, context: options.context, autoUpdate: options.autoUpdate });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
       const task = tasks.find(t => t.id === taskId);
 
       if (!task) {
@@ -419,7 +421,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
         autoUpdate: options.autoUpdate || false
       });
 
-      await this.contextManager.saveContextEntity(options.context, 'tasks', enhanced);
+      await this.saveTask(options.context, enhanced);
 
       this.logger?.info('Task enhanced successfully', { taskId, context: options.context, suggestionCount: enhanced.enhancementSuggestions?.length || 0 });
       console.log(chalk.green(`✅ Task ${taskId} enhanced successfully`));
@@ -441,7 +443,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
   private async showTask(taskId: string, options: { context: string; format: string }): Promise<void> {
     try {
       this.logger?.debug('Showing task details', { taskId, context: options.context, format: options.format });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
       const task = tasks.find(t => t.id === taskId);
 
       if (!task) {
@@ -453,7 +455,6 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
       if (options.format === 'json') {
         console.log(JSON.stringify(task, null, 2));
       } else {
-        const yaml = await import('js-yaml');
         console.log(yaml.dump(task, { indent: 2 }));
       }
 
@@ -477,7 +478,7 @@ console.log(chalk.gray(`Assignee: ${task.assignee}`));
   }): Promise<void> {
     try {
       this.logger?.debug('Updating task', { taskId, context: options.context, updates: { title: options.title, priority: options.priority, assignee: options.assignee } });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
       const task = tasks.find(t => t.id === taskId);
 
       if (!task) {
@@ -530,7 +531,7 @@ updates.assignee = options.assignee;
       }
 
       const updatedTask = result.data as TaskEntity;
-      await this.contextManager.saveContextEntity(options.context, 'tasks', updatedTask);
+      await this.saveTask(options.context, updatedTask);
 
       this.logger?.info('Task updated successfully', { taskId, context: options.context, updates });
       console.log(chalk.green(`✅ Task ${taskId} updated successfully`));
@@ -545,7 +546,7 @@ updates.assignee = options.assignee;
   private async validateAllTasks(options: { context: string; format: string }): Promise<void> {
     try {
       this.logger?.debug('Validating all tasks', { context: options.context, format: options.format });
-      const tasks = await this.contextManager.loadContextEntities<TaskEntity>(options.context, 'tasks');
+      const tasks = await this.loadTasks(options.context);
 
       if (tasks.length === 0) {
         this.logger?.info('No tasks found to validate', { context: options.context });
@@ -611,5 +612,116 @@ updates.assignee = options.assignee;
       critical: chalk.red
     };
     return colors[priority] || chalk.white;
+  }
+
+  private getTaskEntitiesPath(contextName: string): string {
+    return join(this.contextsDir, contextName, 'entities', 'tasks');
+  }
+
+  private async loadTasks(contextName: string): Promise<TaskEntity[]> {
+    const taskPath = this.getTaskEntitiesPath(contextName);
+
+    let taskFiles: string[] = [];
+    try {
+      taskFiles = await readdir(taskPath);
+    } catch {
+      return [];
+    }
+
+    const tasks: TaskEntity[] = [];
+
+    for (const file of taskFiles) {
+      if (!file.endsWith('.yaml') && !file.endsWith('.yml')) {
+        continue;
+      }
+
+      const fullPath = join(taskPath, file);
+      try {
+        const content = await readFile(fullPath, 'utf-8');
+        const parsed = yaml.load(content);
+        if (parsed && typeof parsed === 'object') {
+          tasks.push(this.normalizeTaskEntity(parsed as Record<string, any>));
+        }
+      } catch (error) {
+        this.logger?.warn('Skipping unreadable task file', {
+          file: fullPath,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    return tasks;
+  }
+
+  private async saveTask(contextName: string, task: TaskEntity): Promise<void> {
+    const taskPath = this.getTaskEntitiesPath(contextName);
+    await mkdir(taskPath, { recursive: true });
+
+    const serializedTask = {
+      ...task,
+      createdAt: task.createdAt instanceof Date ? task.createdAt.toISOString() : task.createdAt,
+      updatedAt: task.updatedAt instanceof Date ? task.updatedAt.toISOString() : task.updatedAt,
+      completedAt: task.completedAt instanceof Date ? task.completedAt.toISOString() : task.completedAt,
+      lastValidated: task.lastValidated instanceof Date ? task.lastValidated.toISOString() : task.lastValidated
+    };
+
+    const filePath = join(taskPath, `${task.id}.yaml`);
+    await writeFile(filePath, yaml.dump(serializedTask, { indent: 2 }), 'utf-8');
+  }
+
+  private normalizeTaskEntity(task: Record<string, any>): TaskEntity {
+    const normalized: TaskEntity = {
+      id: String(task.id || ''),
+      title: String(task.title || ''),
+      status: (task.status as TaskEntity['status']) || 'planned',
+      priority: (task.priority as TaskEntity['priority']) || 'medium',
+      type: (task.type as TaskEntity['type']) || 'feature',
+      description: String(task.description || ''),
+      dependencies: Array.isArray(task.dependencies) ? task.dependencies.map(dep => String(dep)) : [],
+      architectureImpact: String(task.architectureImpact || ''),
+      assignee: String(task.assignee || ''),
+      createdAt: this.toDate(task.createdAt),
+      updatedAt: this.toDate(task.updatedAt),
+      validationStatus: (task.validationStatus as TaskEntity['validationStatus']) || 'not_validated',
+    };
+
+    if (Array.isArray(task.blockedBy)) {
+      normalized.blockedBy = task.blockedBy.map(dep => String(dep));
+    }
+    if (task.estimatedEffort) {
+      normalized.estimatedEffort = String(task.estimatedEffort);
+    }
+    if (task.actualEffort) {
+      normalized.actualEffort = String(task.actualEffort);
+    }
+    if (Array.isArray(task.tags)) {
+      normalized.tags = task.tags.map(tag => String(tag));
+    }
+    if (task.completedAt) {
+      normalized.completedAt = this.toDate(task.completedAt);
+    }
+    if (task.lastValidated) {
+      normalized.lastValidated = this.toDate(task.lastValidated);
+    }
+    if (Array.isArray(task.enhancementSuggestions)) {
+      normalized.enhancementSuggestions = task.enhancementSuggestions.map(s => String(s));
+    }
+
+    return normalized;
+  }
+
+  private toDate(value: unknown): Date {
+    if (value instanceof Date) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    return new Date();
   }
 }

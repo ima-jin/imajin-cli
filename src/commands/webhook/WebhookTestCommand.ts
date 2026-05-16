@@ -155,9 +155,6 @@ export class WebhookTestCommand extends BaseCommand {
             case 'github':
                 return this.generateGitHubPayload(eventType);
 
-            case 'stripe':
-                return this.generateStripePayload(eventType);
-
             case 'shopify':
                 return this.generateShopifyPayload(eventType);
 
@@ -190,10 +187,6 @@ export class WebhookTestCommand extends BaseCommand {
             case 'github':
                 headers['x-github-event'] = 'push';
                 headers['x-github-delivery'] = `test_${Date.now()}`;
-                break;
-
-            case 'stripe':
-                headers['stripe-signature'] = 'test_signature';
                 break;
 
             case 'shopify':
@@ -248,32 +241,6 @@ export class WebhookTestCommand extends BaseCommand {
         };
     }
 
-    /**
-     * Generate Stripe test payload
-     */
-    private generateStripePayload(_eventType: string): any {
-        return {
-            id: `evt_test_${Date.now()}`,
-            object: 'event',
-            api_version: '2020-08-27',
-            created: Math.floor(Date.now() / 1000),
-            data: {
-                object: {
-                    id: `cus_test_${Date.now()}`,
-                    object: 'customer',
-                    email: WebhookTestCommand.TEST_EMAIL,
-                    created: Math.floor(Date.now() / 1000)
-                }
-            },
-            livemode: false,
-            pending_webhooks: 1,
-            request: {
-                id: `req_test_${Date.now()}`,
-                idempotency_key: null
-            },
-            type: _eventType || 'customer.created'
-        };
-    }
 
     /**
      * Generate Shopify test payload

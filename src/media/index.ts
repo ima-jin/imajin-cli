@@ -15,7 +15,6 @@
 export { MediaProcessor } from './MediaProcessor.js';
 
 // Providers
-export { CloudinaryProvider } from './providers/CloudinaryProvider.js';
 export { LocalMediaProvider } from './providers/LocalMediaProvider.js';
 
 // Transformations

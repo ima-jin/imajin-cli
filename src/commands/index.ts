@@ -23,7 +23,6 @@ import { StatusCommand } from './StatusCommand.js';
 import { createCommandLimiterCommands } from './system/CommandLimiterCommands.js';
 import { TaskMigrationCommand } from './TaskMigrationCommand.js';
 import { TaskManagementCommands } from './TaskManagementCommands.js';
-import { ContextCommands } from './ContextCommands.js';
 
 // =============================================================================
 // COMMAND REGISTRATION
@@ -57,10 +56,6 @@ export function registerCommands(program: Command): void {
     const taskManagementCommands = new TaskManagementCommands();
     taskManagementCommands.register(program);
     
-    // Context management commands (Task-011 implementation)
-    const contextCommands = new ContextCommands();
-    contextCommands.register(program);
-    
     // Add other command groups here as they're implemented
     // registerServiceCommands(program);
     // registerGenerateCommands(program);
@@ -78,7 +73,6 @@ export function getAvailableCommandGroups(): string[] {
         'status',
         'command-limiter',
         'task',
-        'context',
         // Add other groups as implemented
         // 'services',
         // 'generate',
@@ -101,8 +95,6 @@ export function getCommandGroupDescription(group: string): string {
             return 'Git command filtering and security management';
         case 'task':
             return 'Task management, migration, and lifecycle commands';
-        case 'context':
-            return 'Business context management and switching commands';
         case 'services':
             return 'Service integration and management commands';
         default:

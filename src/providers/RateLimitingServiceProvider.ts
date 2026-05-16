@@ -97,13 +97,13 @@ export class RateLimitingServiceProvider extends ServiceProvider {
      * Configure default rate limits for common services
      */
     private configureDefaultRateLimits(rateLimiter: RateLimiter): void {
-        // Stripe API rate limits
+        // imajin-ai API rate limits
         rateLimiter.configure({
-            serviceId: 'stripe',
+            serviceId: 'imajin-ai',
             strategy: 'token-bucket',
-            limit: 100,
+            limit: 60,
             window: 1000, // 1 second
-            burst: 120,
+            burst: 80,
             enabled: true
         });
 
@@ -148,9 +148,9 @@ export class RateLimitingServiceProvider extends ServiceProvider {
             enabled: true
         };
 
-        // Stripe circuit breaker
+        // imajin-ai circuit breaker
         circuitBreaker.configure({
-            serviceId: 'stripe',
+            serviceId: 'imajin-ai',
             ...highAvailabilityConfig
         });
 
@@ -182,11 +182,11 @@ export class RateLimitingServiceProvider extends ServiceProvider {
      * Setup default fallback functions
      */
     private setupDefaultFallbacks(circuitBreaker: CircuitBreaker): void {
-        // Stripe fallback - use cached data or queue operation
-        circuitBreaker.setFallback('stripe', async (error, serviceId) => {
+        // imajin-ai fallback
+        circuitBreaker.setFallback('imajin-ai', async (error, serviceId) => {
             return {
                 success: false,
-                error: `Stripe service temporarily unavailable: ${error.message}`,
+                error: `imajin-ai service temporarily unavailable: ${error.message}`,
                 fallback: true,
                 serviceId
             };

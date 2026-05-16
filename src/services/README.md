@@ -13,35 +13,21 @@ The services layer provides a robust architecture for managing external integrat
 
 ## Current Services
 
-### ✅ Contentful Service
-**Status**: ✅ COMPLIANT - Fully BaseService compliant  
-**Purpose**: Content management system integration  
-**Features**: Universal content management, real-time updates, business context mapping
-
-### ✅ Stripe Service
-**Status**: ✅ COMPLIANT - Recently upgraded to BaseService compliance  
-**Purpose**: Payment processing and subscription management  
-**Features**: Customer management, payment processing, subscription handling, business context mapping
-- Health checks and API connectivity monitoring
-- Metrics tracking for all operations
-- Event-driven coordination
-- Structured error handling with recovery
-
-### ✅ Cloudinary Service  
-**Status**: ✅ COMPLIANT - New BaseService implementation  
-**Purpose**: Cloud-based media management and transformation  
-**Features**: Media upload, advanced transformations, CDN delivery, metadata extraction
-- Auto-optimization and format conversion
-- Real-time progress tracking
-- Health monitoring and diagnostics
-
 ### ✅ LocalFile Service
-**Status**: ✅ COMPLIANT - New BaseService implementation  
-**Purpose**: Local filesystem media storage and management  
-**Features**: Local storage, basic transformations, URL generation
-- Filesystem health checks
-- Directory management and file validation
-- Cross-platform compatibility
+**Status**: ✅ ACTIVE  
+**Purpose**: Local filesystem media staging and management for CLI workflows  
+**Features**:
+- Local storage and retrieval
+- Basic transformation pipeline support
+- Filesystem health checks and validation
+
+### ✅ Imajin AI Session/Identity Services
+**Status**: ✅ ACTIVE  
+**Purpose**: Auth/session lifecycle and identity command transport for `imajin-ai`  
+**Features**:
+- Challenge/login/session lifecycle
+- Shared authenticated request transport
+- Deterministic JSON response envelopes for orchestrator use
 
 ## Service Interfaces
 
@@ -58,13 +44,13 @@ Core contracts in `./interfaces/`:
 import { ServiceRegistry, ServiceFactory } from './services';
 
 const registry = new ServiceRegistry();
-registry.register('stripe', factory.create('stripe', config));
+registry.register('local-media', factory.create('local-media', config));
 ```
 
 ### Basic Operations
 ```typescript
 // Get service instance
-const contentfulService = registry.get('contentful');
+const mediaService = registry.get('local-media');
 
 // Health monitoring
 const healthStatus = await registry.checkHealth();
@@ -80,8 +66,8 @@ imajin services list
 imajin services health
 
 # Service-specific operations
-imajin stripe customers list
-imajin contentful content search "events"
+imajin identity session get --json
+imajin media list --provider local
 ```
 
 ## Configuration
@@ -116,8 +102,7 @@ Abstract current connectors into a modular plugin structure for:
 **✅ COMPLETED**: All active services now comply with BaseService architecture
 
 ### Migration Summary
-- **StripeService**: Migrated from EventEmitter to BaseService pattern
-- **MediaProviders**: Converted CloudinaryProvider/LocalMediaProvider to proper services
+- **MediaProviders**: Converted local media provider flows to service-provider/container wiring
 - **Service Registration**: Updated all service providers for container-based dependency injection
 - **Health Checks**: Implemented across all services for monitoring
 - **Metrics Tracking**: Added operation tracking and performance monitoring
