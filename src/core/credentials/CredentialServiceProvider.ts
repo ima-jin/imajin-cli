@@ -23,6 +23,7 @@ import { EventsCommands } from '../../commands/events/EventsCommands.js';
 import { IdentityCommands } from '../../commands/identity/IdentityCommands.js';
 import { LearnCommands } from '../../commands/learn/LearnCommands.js';
 import { MarketCommands } from '../../commands/market/MarketCommands.js';
+import { MediaCommands } from '../../commands/media/MediaCommands.js';
 import { NotifyCommands } from '../../commands/notify/NotifyCommands.js';
 import { TrustCommands } from '../../commands/trust/TrustCommands.js';
 import { WorkspaceCommands } from '../../commands/workspace/WorkspaceCommands.js';
@@ -35,6 +36,7 @@ import { ImajinAiEventsService } from '../../services/imajin-ai/ImajinAiEventsSe
 import { ImajinAiIdentityService } from '../../services/imajin-ai/ImajinAiIdentityService.js';
 import { ImajinAiLearnService } from '../../services/imajin-ai/ImajinAiLearnService.js';
 import { ImajinAiMarketService } from '../../services/imajin-ai/ImajinAiMarketService.js';
+import { ImajinAiMediaService } from '../../services/imajin-ai/ImajinAiMediaService.js';
 import { ImajinAiNotifyService } from '../../services/imajin-ai/ImajinAiNotifyService.js';
 import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
 import { ImajinAiTrustService } from '../../services/imajin-ai/ImajinAiTrustService.js';
@@ -172,6 +174,18 @@ export class CredentialServiceProvider extends ServiceProvider {
             const logger = container.resolve<Logger>('logger');
             return new LearnCommands(learnService, logger);
         });
+
+        this.container.singleton('imajinAiMediaService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiMediaService(sessionService, logger);
+        });
+
+        this.container.singleton('mediaCommands', (container: Container) => {
+            const mediaService = container.resolve<ImajinAiMediaService>('imajinAiMediaService');
+            const logger = container.resolve<Logger>('logger');
+            return new MediaCommands(mediaService, logger);
+        });
     }
 
     /**
@@ -199,6 +213,8 @@ export class CredentialServiceProvider extends ServiceProvider {
         marketCommands.registerCommands(this.program);
         const learnCommands = this.container.resolve<LearnCommands>('learnCommands');
         learnCommands.registerCommands(this.program);
+        const mediaCommands = this.container.resolve<MediaCommands>('mediaCommands');
+        mediaCommands.registerCommands(this.program);
     }
 
     /**
@@ -233,7 +249,9 @@ export class CredentialServiceProvider extends ServiceProvider {
             'imajinAiMarketService',
             'marketCommands',
             'imajinAiLearnService',
-            'learnCommands'
+            'learnCommands',
+            'imajinAiMediaService',
+            'mediaCommands'
         ];
     }
 

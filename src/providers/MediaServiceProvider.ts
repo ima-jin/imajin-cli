@@ -22,8 +22,6 @@
 // eslint-disable-next-line deprecation/deprecation
 import type { MediaProcessingConfig, MediaProvider } from '../types/Media.js';
 
-import { MediaUploadCommand } from '../commands/media/MediaUploadCommand.js';
-import { MediaCommand } from '../commands/media/MediaCommand.js';
 import type { Logger } from '../logging/Logger.js';
 import { MediaProcessor } from '../media/MediaProcessor.js';
 import { LocalMediaProvider } from '../media/providers/LocalMediaProvider.js';
@@ -61,16 +59,6 @@ export class MediaServiceProvider extends ServiceProvider {
             });
             return provider;
         });
-
-
-        // Register commands
-        this.container.singleton('MediaUploadCommand', () => {
-            return new MediaUploadCommand(this.container);
-        });
-
-        this.container.singleton('MediaCommand', () => {
-            return new MediaCommand(this.container);
-        });
     }
 
     /**
@@ -94,9 +82,7 @@ export class MediaServiceProvider extends ServiceProvider {
     public getServices(): string[] {
         return [
             'MediaProcessor',
-            'LocalMediaProvider',
-            'MediaUploadCommand',
-            'MediaCommand'
+            'LocalMediaProvider'
         ];
     }
 
@@ -113,13 +99,7 @@ export class MediaServiceProvider extends ServiceProvider {
     /**
      * Register CLI commands
      */
-    public registerCommands(): void {
-        const uploadCommand = this.container.resolve<MediaUploadCommand>('MediaUploadCommand');
-        uploadCommand.register(this.program);
-
-        const mediaCommand = this.container.resolve<MediaCommand>('MediaCommand');
-        mediaCommand.register(this.program);
-    }
+    public registerCommands(): void {}
 
     /**
      * Get media processing configuration
