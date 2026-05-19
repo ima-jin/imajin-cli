@@ -13,6 +13,15 @@ export class EventsCommands {
         const eventsCommand = program
             .command('events')
             .description('Event operations backed by imajin-ai');
+        eventsCommand
+            .command('list')
+            .option('--status <status>', 'Filter by event status')
+            .option('--limit <n>', 'Optional result limit')
+            .option('--course-slug <slug>', 'Filter by course slug')
+            .option('--upcoming', 'Only include upcoming events')
+            .option('--json', 'Output as JSON')
+            .description('List events')
+            .action((options, command) => this.handleList(this.getCommandOptions(options, command)));
 
         eventsCommand
             .command('create')
@@ -25,8 +34,46 @@ export class EventsCommands {
             .option('--json', 'Output as JSON')
             .description('Create event')
             .action((options, command) => this.handleCreate(this.getCommandOptions(options, command)));
+
+        const ticketCommand = eventsCommand
+            .command('ticket')
+            .description('Event ticket operations');
+
+        ticketCommand
+            .command('buy')
+            .requiredOption('--event-id <id>', 'Event id')
+            .requiredOption('--ticket-type-id <id>', 'Ticket type id')
+            .option('--quantity <n>', 'Optional ticket quantity')
+            .option('--email <email>', 'Optional buyer email')
+            .option('--invite <token>', 'Optional invite token')
+            .option('--json', 'Output as JSON')
+            .description('Buy event ticket')
+            .action((options, command) => this.handleTicketBuy(this.getCommandOptions(options, command)));
+
+        eventsCommand
+            .command('rsvp')
+            .requiredOption('--event-id <id>', 'Event id')
+            .requiredOption('--ticket-type-id <id>', 'Free ticket type id')
+            .option('--email <email>', 'Optional attendee email')
+            .option('--name <text>', 'Optional attendee name')
+            .option('--invite <token>', 'Optional invite token')
+            .option('--json', 'Output as JSON')
+            .description('RSVP to a free event')
+            .action((options, command) => this.handleRsvp(this.getCommandOptions(options, command)));
     }
 
+    private async handleList(options: any): Promise<void> {
+        await this.execute(
+            'list',
+            options,
+            async () => this.eventsService.listEvents({
+                ...(options.status ? { status: String(options.status).trim() } : {}),
+                ...(options.limit ? { limit: this.parsePositiveInt(options.limit, '--limit') } : {}),
+                ...(options.courseSlug ? { courseSlug: String(options.courseSlug).trim() } : {}),
+                ...(options.upcoming !== undefined ? { upcoming: !!options.upcoming } : {})
+            })
+        );
+    }
     private async handleCreate(options: any): Promise<void> {
         await this.execute(
             'create',
@@ -41,12 +88,47 @@ export class EventsCommands {
             })
         );
     }
+    private async handleTicketBuy(options: any): Promise<void> {
+        await this.execute(
+            'ticket.buy',
+            options,
+            async () => this.eventsService.buyTicket({
+                eventId: this.requiredString(options.eventId, '--event-id'),
+                ticketTypeId: this.requiredString(options.ticketTypeId, '--ticket-type-id'),
+                ...(options.quantity ? { quantity: this.parsePositiveInt(options.quantity, '--quantity') } : {}),
+                ...(options.email ? { email: String(options.email).trim() } : {}),
+                ...(options.invite ? { invite: String(options.invite).trim() } : {})
+            })
+        );
+    }
+
+    private async handleRsvp(options: any): Promise<void> {
+        await this.execute(
+            'rsvp',
+            options,
+            async () => this.eventsService.rsvp({
+                eventId: this.requiredString(options.eventId, '--event-id'),
+                ticketTypeId: this.requiredString(options.ticketTypeId, '--ticket-type-id'),
+                ...(options.email ? { email: String(options.email).trim() } : {}),
+                ...(options.name ? { name: String(options.name).trim() } : {}),
+                ...(options.invite ? { invite: String(options.invite).trim() } : {})
+            })
+        );
+    }
 
     private requiredString(value: unknown, optionName: string): string {
         if (typeof value !== 'string' || !value.trim()) {
             throw new Error(`${optionName} is required`);
         }
         return value.trim();
+    }
+
+    private parsePositiveInt(value: unknown, optionName: string): number {
+        const parsed = Number.parseInt(this.requiredString(value, optionName), 10);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+            throw new Error(`${optionName} must be a positive integer`);
+        }
+        return parsed;
     }
 
     private getCommandOptions(optionsOrCommand: any, possibleCommand?: any): any {
