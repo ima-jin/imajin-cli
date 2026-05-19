@@ -19,7 +19,10 @@
 import { AuthCommands } from '../../commands/auth/AuthCommands.js';
 import { ChatCommands } from '../../commands/chat/ChatCommands.js';
 import { CommerceCommands } from '../../commands/commerce/CommerceCommands.js';
+import { EventsCommands } from '../../commands/events/EventsCommands.js';
 import { IdentityCommands } from '../../commands/identity/IdentityCommands.js';
+import { LearnCommands } from '../../commands/learn/LearnCommands.js';
+import { MarketCommands } from '../../commands/market/MarketCommands.js';
 import { NotifyCommands } from '../../commands/notify/NotifyCommands.js';
 import { TrustCommands } from '../../commands/trust/TrustCommands.js';
 import { WorkspaceCommands } from '../../commands/workspace/WorkspaceCommands.js';
@@ -28,7 +31,10 @@ import { Logger } from '../../logging/Logger.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import { ImajinAiChatService } from '../../services/imajin-ai/ImajinAiChatService.js';
 import { ImajinAiCommerceService } from '../../services/imajin-ai/ImajinAiCommerceService.js';
+import { ImajinAiEventsService } from '../../services/imajin-ai/ImajinAiEventsService.js';
 import { ImajinAiIdentityService } from '../../services/imajin-ai/ImajinAiIdentityService.js';
+import { ImajinAiLearnService } from '../../services/imajin-ai/ImajinAiLearnService.js';
+import { ImajinAiMarketService } from '../../services/imajin-ai/ImajinAiMarketService.js';
 import { ImajinAiNotifyService } from '../../services/imajin-ai/ImajinAiNotifyService.js';
 import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
 import { ImajinAiTrustService } from '../../services/imajin-ai/ImajinAiTrustService.js';
@@ -130,6 +136,42 @@ export class CredentialServiceProvider extends ServiceProvider {
             const logger = container.resolve<Logger>('logger');
             return new TrustCommands(trustService, logger);
         });
+
+        this.container.singleton('imajinAiEventsService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiEventsService(sessionService, logger);
+        });
+
+        this.container.singleton('eventsCommands', (container: Container) => {
+            const eventsService = container.resolve<ImajinAiEventsService>('imajinAiEventsService');
+            const logger = container.resolve<Logger>('logger');
+            return new EventsCommands(eventsService, logger);
+        });
+
+        this.container.singleton('imajinAiMarketService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiMarketService(sessionService, logger);
+        });
+
+        this.container.singleton('marketCommands', (container: Container) => {
+            const marketService = container.resolve<ImajinAiMarketService>('imajinAiMarketService');
+            const logger = container.resolve<Logger>('logger');
+            return new MarketCommands(marketService, logger);
+        });
+
+        this.container.singleton('imajinAiLearnService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiLearnService(sessionService, logger);
+        });
+
+        this.container.singleton('learnCommands', (container: Container) => {
+            const learnService = container.resolve<ImajinAiLearnService>('imajinAiLearnService');
+            const logger = container.resolve<Logger>('logger');
+            return new LearnCommands(learnService, logger);
+        });
     }
 
     /**
@@ -151,6 +193,12 @@ export class CredentialServiceProvider extends ServiceProvider {
         notifyCommands.registerCommands(this.program);
         const trustCommands = this.container.resolve<TrustCommands>('trustCommands');
         trustCommands.registerCommands(this.program);
+        const eventsCommands = this.container.resolve<EventsCommands>('eventsCommands');
+        eventsCommands.registerCommands(this.program);
+        const marketCommands = this.container.resolve<MarketCommands>('marketCommands');
+        marketCommands.registerCommands(this.program);
+        const learnCommands = this.container.resolve<LearnCommands>('learnCommands');
+        learnCommands.registerCommands(this.program);
     }
 
     /**
@@ -179,7 +227,13 @@ export class CredentialServiceProvider extends ServiceProvider {
             'imajinAiNotifyService',
             'notifyCommands',
             'imajinAiTrustService',
-            'trustCommands'
+            'trustCommands',
+            'imajinAiEventsService',
+            'eventsCommands',
+            'imajinAiMarketService',
+            'marketCommands',
+            'imajinAiLearnService',
+            'learnCommands'
         ];
     }
 
