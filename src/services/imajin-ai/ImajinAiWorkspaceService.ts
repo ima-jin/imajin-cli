@@ -22,6 +22,12 @@ export interface WorkspaceListInput {
     type?: 'file' | 'doc' | 'blob' | 'folder';
 }
 
+export interface WorkspaceDeleteInput {
+    path: string;
+    recursive?: boolean;
+    ifMatch?: string;
+}
+
 export interface WorkspaceEntry {
     path: string;
     type?: string;
@@ -69,6 +75,20 @@ export interface WorkspaceSearchResult {
     scanned: number;
     matches: WorkspaceSearchMatch[];
     rawList: unknown;
+}
+
+export interface WorkspaceListResult {
+    entries: WorkspaceEntry[];
+    cursor?: string;
+    raw: unknown;
+}
+
+export interface WorkspaceDeleteResult {
+    path: string;
+    deleted: boolean;
+    version?: number;
+    etag?: string;
+    raw: unknown;
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -184,7 +204,7 @@ export class ImajinAiWorkspaceService {
         };
     }
 
-    public async list(input: WorkspaceListInput = {}): Promise<{ entries: WorkspaceEntry[]; raw: unknown }> {
+    public async list(input: WorkspaceListInput = {}): Promise<WorkspaceListResult> {
         const toolInput: JsonRecord = {};
         if (input.path) {
             toolInput.path = input.path.trim();
@@ -205,7 +225,52 @@ export class ImajinAiWorkspaceService {
         const rawResponse = await this.invokeWorkspaceTool('workspace.list', toolInput);
         const payload = this.unwrapToolPayload(rawResponse);
         const entries = this.normalizeWorkspaceEntries(payload, input.path);
-        return { entries, raw: rawResponse };
+        const result: WorkspaceListResult = { entries, raw: rawResponse };
+        if (this.isRecord(payload)) {
+            const cursor = this.readString(payload, ['cursor', 'nextCursor', 'next_token', 'continuationToken']);
+            if (cursor !== undefined) {
+                result.cursor = cursor;
+            }
+        }
+
+        return result;
+    }
+
+    public async delete(input: WorkspaceDeleteInput): Promise<WorkspaceDeleteResult> {
+        const normalizedPath = this.normalizeRequiredPath(input.path);
+        const toolInput: JsonRecord = { path: normalizedPath };
+        if (input.recursive !== undefined) {
+            toolInput.recursive = input.recursive;
+        }
+        if (input.ifMatch) {
+            toolInput.ifMatch = input.ifMatch;
+        }
+
+        const rawResponse = await this.invokeWorkspaceTool('workspace.rm', toolInput);
+        const payload = this.unwrapToolPayload(rawResponse);
+
+        if (this.isRecord(payload)) {
+            const result: WorkspaceDeleteResult = {
+                path: this.readString(payload, ['path']) ?? normalizedPath,
+                deleted: this.readBoolean(payload, ['deleted', 'ok', 'success']) ?? true,
+                raw: rawResponse
+            };
+            const etag = this.readString(payload, ['etag']);
+            if (etag !== undefined) {
+                result.etag = etag;
+            }
+            const version = this.readNumber(payload, ['version']);
+            if (version !== undefined) {
+                result.version = version;
+            }
+            return result;
+        }
+
+        return {
+            path: normalizedPath,
+            deleted: true,
+            raw: rawResponse
+        };
     }
 
     public async search(input: WorkspaceSearchInput): Promise<WorkspaceSearchResult> {
@@ -452,6 +517,33 @@ export class ImajinAiWorkspaceService {
             const value = source[key];
             if (typeof value === 'string' && value.trim()) {
                 return value.trim();
+            }
+        }
+        return undefined;
+    }
+
+    private readBoolean(source: JsonRecord, keys: string[]): boolean | undefined {
+        for (const key of keys) {
+            const value = source[key];
+            if (typeof value === 'boolean') {
+                return value;
+            }
+            if (typeof value === 'string' && value.trim()) {
+                const normalized = value.trim().toLowerCase();
+                if (normalized === 'true') {
+                    return true;
+                }
+                if (normalized === 'false') {
+                    return false;
+                }
+            }
+            if (typeof value === 'number') {
+                if (value === 1) {
+                    return true;
+                }
+                if (value === 0) {
+                    return false;
+                }
             }
         }
         return undefined;

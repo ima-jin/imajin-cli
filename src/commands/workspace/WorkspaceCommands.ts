@@ -36,6 +36,24 @@ export class WorkspaceCommands {
             .option('--json', 'Output as JSON')
             .description('Write content to workspace')
             .action((options, command) => this.handlePut(this.getCommandOptions(options, command)));
+        workspaceCommand
+            .command('list')
+            .option('--path <path>', 'Workspace path scope')
+            .option('--recursive', 'Recursively list descendants')
+            .option('--limit <n>', 'Maximum number of entries')
+            .option('--cursor <token>', 'Pagination cursor')
+            .option('--json', 'Output as JSON')
+            .description('List workspace entries')
+            .action((options, command) => this.handleList(this.getCommandOptions(options, command)));
+
+        workspaceCommand
+            .command('delete')
+            .requiredOption('--path <path>', 'Workspace path to delete')
+            .option('--recursive', 'Recursively delete descendants')
+            .option('--if-match <etag>', 'Optional etag precondition')
+            .option('--json', 'Output as JSON')
+            .description('Delete workspace content')
+            .action((options, command) => this.handleDelete(this.getCommandOptions(options, command)));
 
         workspaceCommand
             .command('search')
@@ -66,6 +84,28 @@ export class WorkspaceCommands {
                 path,
                 content,
                 ...(options.contentType ? { contentType: String(options.contentType).trim() } : {}),
+                ...(options.ifMatch ? { ifMatch: String(options.ifMatch).trim() } : {})
+            });
+        });
+    }
+
+    private async handleList(options: any): Promise<void> {
+        await this.execute('list', options, async () => {
+            const limit = this.parseOptionalPositiveInt(options.limit, '--limit');
+            return this.workspaceService.list({
+                ...(options.path ? { path: String(options.path).trim() } : {}),
+                ...(options.recursive ? { recursive: true } : {}),
+                ...(limit !== undefined ? { limit } : {}),
+                ...(options.cursor ? { cursor: String(options.cursor).trim() } : {})
+            });
+        });
+    }
+
+    private async handleDelete(options: any): Promise<void> {
+        await this.execute('delete', options, async () => {
+            return this.workspaceService.delete({
+                path: this.requiredString(options.path, '--path'),
+                ...(options.recursive ? { recursive: true } : {}),
                 ...(options.ifMatch ? { ifMatch: String(options.ifMatch).trim() } : {})
             });
         });
@@ -202,6 +242,14 @@ export class WorkspaceCommands {
                 this.renderPutResult(data);
                 return;
             }
+            if (command === 'list') {
+                this.renderListResult(data);
+                return;
+            }
+            if (command === 'delete') {
+                this.renderDeleteResult(data);
+                return;
+            }
             if (command === 'search') {
                 this.renderSearchResult(data);
                 return;
@@ -244,6 +292,42 @@ export class WorkspaceCommands {
 
     private renderPutResult(result: any): void {
         console.log(chalk.green('✅ workspace.put succeeded'));
+        console.log(chalk.gray(`Path: ${result.path ?? '(unknown)'}`));
+        if (result.version !== undefined) {
+            console.log(chalk.gray(`Version: ${result.version}`));
+        }
+        if (result.etag) {
+            console.log(chalk.gray(`ETag: ${result.etag}`));
+        }
+    }
+
+    private renderListResult(result: any): void {
+        const entries = Array.isArray(result.entries) ? result.entries : [];
+        console.log(chalk.green(`✅ workspace.list completed (${entries.length} entr${entries.length === 1 ? 'y' : 'ies'})`));
+        if (result.cursor) {
+            console.log(chalk.gray(`Cursor: ${result.cursor}`));
+        }
+        console.log('');
+
+        if (entries.length === 0) {
+            console.log(chalk.yellow('No entries found.'));
+            return;
+        }
+
+        for (const entry of entries) {
+            const typeLabel = entry.type ? ` (${entry.type})` : '';
+            const sizeLabel = typeof entry.size === 'number' ? ` [${entry.size} B]` : '';
+            console.log(chalk.blue(`• ${entry.path}${typeLabel}${sizeLabel}`));
+        }
+    }
+
+    private renderDeleteResult(result: any): void {
+        const deleted = result.deleted !== false;
+        if (deleted) {
+            console.log(chalk.green('✅ workspace.delete succeeded'));
+        } else {
+            console.log(chalk.yellow('⚠️ workspace.delete completed with no deletion'));
+        }
         console.log(chalk.gray(`Path: ${result.path ?? '(unknown)'}`));
         if (result.version !== undefined) {
             console.log(chalk.gray(`Version: ${result.version}`));

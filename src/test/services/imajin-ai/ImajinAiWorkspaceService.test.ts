@@ -65,6 +65,78 @@ describe('ImajinAiWorkspaceService', () => {
         expect(result.version).toBe(3);
     });
 
+    it('maps workspace.list entries and cursor metadata', async () => {
+        const service = createService();
+        const invokeMock = jest.fn().mockResolvedValue({
+            result: {
+                entries: [
+                    { filename: 'a.txt', type: 'file', size: '12', etag: 'etag-a', version: '4' },
+                    { path: '/docs/folder-b', type: 'folder' }
+                ],
+                cursor: 'next-page-token'
+            }
+        });
+        (service as any).invokeWorkspaceTool = invokeMock;
+
+        const result = await service.list({
+            path: '/docs',
+            recursive: true,
+            limit: 10,
+            cursor: 'start-cursor'
+        });
+
+        expect(invokeMock).toHaveBeenCalledWith('workspace.list', {
+            path: '/docs',
+            recursive: true,
+            limit: 10,
+            cursor: 'start-cursor'
+        });
+        expect(result.cursor).toBe('next-page-token');
+        expect(result.entries).toHaveLength(2);
+        expect(result.entries[0]).toMatchObject({
+            path: '/docs/a.txt',
+            type: 'file',
+            size: 12,
+            etag: 'etag-a',
+            version: 4
+        });
+        expect(result.entries[1]).toMatchObject({
+            path: '/docs/folder-b',
+            type: 'folder'
+        });
+    });
+
+    it('maps workspace.delete tool invocation and response payloads', async () => {
+        const service = createService();
+        const invokeMock = jest.fn().mockResolvedValue({
+            result: {
+                path: '/docs/a.txt',
+                deleted: true,
+                etag: 'etag-3',
+                version: 5
+            }
+        });
+        (service as any).invokeWorkspaceTool = invokeMock;
+
+        const result = await service.delete({
+            path: '/docs/a.txt',
+            recursive: true,
+            ifMatch: 'etag-2'
+        });
+
+        expect(invokeMock).toHaveBeenCalledWith('workspace.rm', {
+            path: '/docs/a.txt',
+            recursive: true,
+            ifMatch: 'etag-2'
+        });
+        expect(result).toMatchObject({
+            path: '/docs/a.txt',
+            deleted: true,
+            etag: 'etag-3',
+            version: 5
+        });
+    });
+
     it('executes adapter search using list + read tool calls', async () => {
         const service = createService();
         const invokeMock = jest.fn(async (tool: string, input: Record<string, unknown>) => {
