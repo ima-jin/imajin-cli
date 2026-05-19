@@ -30,6 +30,13 @@ The CLI remains thin: UX, argument handling, transport, envelopes, and automatio
 ### Target (next implementation)
 Dedicated `imajin-ai` login/session flow in CLI (challenge/session based), so users authenticate to one backend and then orchestrate commands.
 
+## Workspace command examples
+```bash
+imajin workspace get --path /docs/notes/today.md
+imajin workspace put --path /docs/notes/today.md --content-file ./today.md --content-type text/markdown
+imajin workspace search --query "launch checklist" --path /docs --limit 10
+```
+
 ### Explicit non-goal
 Per-service API key exposure in CLI env files (Stripe/Contentful/Anthropic/etc.) is no longer the primary operating model.
 
