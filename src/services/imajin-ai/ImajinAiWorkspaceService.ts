@@ -1,10 +1,12 @@
 import { HttpClientSimple } from '../../http/HttpClientSimple.js';
+import { isDeepStrictEqual } from 'node:util';
 import type { Logger } from '../../logging/Logger.js';
 import { ImajinAiSessionService } from './ImajinAiSessionService.js';
 
 export interface WorkspaceGetInput {
     path: string;
     version?: number;
+    etag?: string;
 }
 
 export interface WorkspacePutInput {
@@ -26,6 +28,24 @@ export interface WorkspaceDeleteInput {
     path: string;
     recursive?: boolean;
     ifMatch?: string;
+}
+
+export interface WorkspacePatchInput {
+    path: string;
+    operations: JsonPatchOperation[];
+    ifMatch?: string;
+}
+
+export interface WorkspaceMoveInput {
+    from: string;
+    to: string;
+    ifMatch?: string;
+}
+
+export interface WorkspaceDiffInput {
+    path: string;
+    from: string;
+    to?: string;
 }
 
 export interface WorkspaceEntry {
@@ -91,7 +111,46 @@ export interface WorkspaceDeleteResult {
     raw: unknown;
 }
 
+export interface WorkspacePatchResult {
+    path: string;
+    operationCount: number;
+    etag?: string;
+    version?: number;
+    raw: unknown;
+}
+
+export interface WorkspaceMoveResult {
+    from: string;
+    to: string;
+    deletedSource: boolean;
+    etag?: string;
+    version?: number;
+    rawWrite: unknown;
+    rawDelete: unknown;
+}
+
+export interface WorkspaceDiffResult {
+    path: string;
+    from: string;
+    to: string;
+    changed: boolean;
+    diff: string;
+    fromVersion?: number;
+    toVersion?: number;
+    fromEtag?: string;
+    toEtag?: string;
+    rawFrom: unknown;
+    rawTo: unknown;
+}
+
 type JsonRecord = Record<string, unknown>;
+
+export interface JsonPatchOperation {
+    op: 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test';
+    path: string;
+    from?: string;
+    value?: unknown;
+}
 
 export class ImajinAiWorkspaceService {
     public static readonly TOOL_ENDPOINT_ENV_KEY = 'IMAJIN_AI_WORKSPACE_TOOL_ENDPOINT';
@@ -106,6 +165,9 @@ export class ImajinAiWorkspaceService {
         const toolInput: JsonRecord = { path: normalizedPath };
         if (input.version !== undefined) {
             toolInput.version = input.version;
+        }
+        if (input.etag !== undefined) {
+            toolInput.etag = input.etag;
         }
 
         const rawResponse = await this.invokeWorkspaceTool('workspace.read', toolInput);
@@ -349,6 +411,98 @@ export class ImajinAiWorkspaceService {
         };
     }
 
+    public async patch(input: WorkspacePatchInput): Promise<WorkspacePatchResult> {
+        const normalizedPath = this.normalizeRequiredPath(input.path);
+        if (!Array.isArray(input.operations) || input.operations.length === 0) {
+            throw new Error('operations must be a non-empty JSON patch array');
+        }
+
+        const current = await this.get({ path: normalizedPath });
+        const currentDoc = this.parseJsonDocument(current.content, normalizedPath);
+        const patchedDoc = this.applyJsonPatch(currentDoc, input.operations);
+        const patchedContent = `${JSON.stringify(patchedDoc, null, 2)}\n`;
+
+        const written = await this.put({
+            path: normalizedPath,
+            content: patchedContent,
+            contentType: current.contentType ?? 'application/json',
+            ...(input.ifMatch ? { ifMatch: input.ifMatch } : {})
+        });
+
+        return {
+            path: written.path,
+            operationCount: input.operations.length,
+            ...(written.etag !== undefined ? { etag: written.etag } : {}),
+            ...(written.version !== undefined ? { version: written.version } : {}),
+            raw: written.raw
+        };
+    }
+
+    public async move(input: WorkspaceMoveInput): Promise<WorkspaceMoveResult> {
+        const from = this.normalizeRequiredPath(input.from);
+        const to = this.normalizeRequiredPath(input.to);
+        if (from === to) {
+            throw new Error('from and to paths must be different');
+        }
+
+        const source = await this.get({ path: from });
+        const written = await this.put({
+            path: to,
+            content: source.content,
+            ...(source.contentType ? { contentType: source.contentType } : {}),
+            ...(input.ifMatch ? { ifMatch: input.ifMatch } : {})
+        });
+        const deleted = await this.delete({
+            path: from,
+            ...(input.ifMatch ? { ifMatch: input.ifMatch } : {})
+        });
+
+        return {
+            from,
+            to: written.path,
+            deletedSource: deleted.deleted,
+            ...(written.etag !== undefined ? { etag: written.etag } : {}),
+            ...(written.version !== undefined ? { version: written.version } : {}),
+            rawWrite: written.raw,
+            rawDelete: deleted.raw
+        };
+    }
+
+    public async diff(input: WorkspaceDiffInput): Promise<WorkspaceDiffResult> {
+        const path = this.normalizeRequiredPath(input.path);
+        const fromRevision = this.normalizeRequiredPath(input.from);
+        const toRevision = input.to?.trim() || 'latest';
+
+        const fromReadInput = this.toGetInputForRevision(path, fromRevision);
+        const toReadInput = toRevision === 'latest'
+            ? { path }
+            : this.toGetInputForRevision(path, toRevision);
+
+        const fromDoc = await this.get(fromReadInput);
+        const toDoc = await this.get(toReadInput);
+        const diffText = this.buildSimpleUnifiedDiff(
+            fromDoc.content,
+            toDoc.content,
+            `${path}@${fromRevision}`,
+            `${path}@${toRevision}`
+        );
+
+        const changed = fromDoc.content !== toDoc.content;
+        return {
+            path,
+            from: fromRevision,
+            to: toRevision,
+            changed,
+            diff: diffText,
+            ...(fromDoc.version !== undefined ? { fromVersion: fromDoc.version } : {}),
+            ...(toDoc.version !== undefined ? { toVersion: toDoc.version } : {}),
+            ...(fromDoc.etag !== undefined ? { fromEtag: fromDoc.etag } : {}),
+            ...(toDoc.etag !== undefined ? { toEtag: toDoc.etag } : {}),
+            rawFrom: fromDoc.raw,
+            rawTo: toDoc.raw
+        };
+    }
+
     private async invokeWorkspaceTool(tool: string, input: JsonRecord): Promise<unknown> {
         const headers = await this.sessionService.getAuthHeadersForRequest();
         const client = this.createClient(headers);
@@ -495,6 +649,278 @@ export class ImajinAiWorkspaceService {
             throw new Error('path is required');
         }
         return pathValue.trim();
+    }
+
+    private toGetInputForRevision(path: string, revision: string): WorkspaceGetInput {
+        if (/^\d+$/.test(revision)) {
+            return { path, version: Number.parseInt(revision, 10) };
+        }
+        return { path, etag: revision };
+    }
+
+    private parseJsonDocument(content: string, path: string): unknown {
+        if (!content.trim()) {
+            throw new Error(`Cannot patch empty document at ${path}`);
+        }
+        try {
+            return JSON.parse(content);
+        } catch (error) {
+            throw new Error(`workspace.patch requires JSON content at ${path}: ${error}`);
+        }
+    }
+
+    private applyJsonPatch(document: unknown, operations: JsonPatchOperation[]): unknown {
+        let current = this.deepClone(document);
+
+        for (const operation of operations) {
+            if (!operation || typeof operation !== 'object') {
+                throw new Error('Invalid patch operation');
+            }
+            const op = operation.op;
+            const path = operation.path;
+            if (!op || !path.startsWith('/')) {
+                throw new Error('Each patch operation requires op and absolute JSON Pointer path');
+            }
+
+            if (op === 'add') {
+                current = this.patchAdd(current, path, operation.value);
+                continue;
+            }
+            if (op === 'remove') {
+                current = this.patchRemove(current, path);
+                continue;
+            }
+            if (op === 'replace') {
+                current = this.patchReplace(current, path, operation.value);
+                continue;
+            }
+            if (op === 'move') {
+                if (!operation.from) {
+                    throw new Error('move operation requires from');
+                }
+                const value = this.pointerGet(current, operation.from);
+                current = this.patchRemove(current, operation.from);
+                current = this.patchAdd(current, path, value);
+                continue;
+            }
+            if (op === 'copy') {
+                if (!operation.from) {
+                    throw new Error('copy operation requires from');
+                }
+                const value = this.pointerGet(current, operation.from);
+                current = this.patchAdd(current, path, value);
+                continue;
+            }
+            if (op === 'test') {
+                const value = this.pointerGet(current, path);
+                if (!isDeepStrictEqual(value, operation.value)) {
+                    throw new Error(`test operation failed at ${path}`);
+                }
+                continue;
+            }
+
+            throw new Error(`Unsupported patch op: ${op}`);
+        }
+
+        return current;
+    }
+
+    private patchAdd(document: unknown, pointer: string, value: unknown): unknown {
+        if (pointer === '') {
+            return this.deepClone(value);
+        }
+        const { parent, key } = this.pointerGetParent(document, pointer);
+        const cloneValue = this.deepClone(value);
+
+        if (Array.isArray(parent)) {
+            if (key === '-') {
+                parent.push(cloneValue);
+                return document;
+            }
+            const index = this.parseArrayIndex(key, parent.length, true);
+            parent.splice(index, 0, cloneValue);
+            return document;
+        }
+
+        parent[key] = cloneValue;
+        return document;
+    }
+
+    private patchRemove(document: unknown, pointer: string): unknown {
+        if (pointer === '') {
+            throw new Error('Cannot remove the root document');
+        }
+        const { parent, key } = this.pointerGetParent(document, pointer);
+
+        if (Array.isArray(parent)) {
+            const index = this.parseArrayIndex(key, parent.length - 1, false);
+            parent.splice(index, 1);
+            return document;
+        }
+
+        if (!(key in parent)) {
+            throw new Error(`Path not found: ${pointer}`);
+        }
+        delete parent[key];
+        return document;
+    }
+
+    private patchReplace(document: unknown, pointer: string, value: unknown): unknown {
+        if (pointer === '') {
+            return this.deepClone(value);
+        }
+        const { parent, key } = this.pointerGetParent(document, pointer);
+        const cloneValue = this.deepClone(value);
+
+        if (Array.isArray(parent)) {
+            const index = this.parseArrayIndex(key, parent.length - 1, false);
+            parent[index] = cloneValue;
+            return document;
+        }
+
+        if (!(key in parent)) {
+            throw new Error(`Path not found: ${pointer}`);
+        }
+        parent[key] = cloneValue;
+        return document;
+    }
+
+    private pointerGet(document: unknown, pointer: string): unknown {
+        if (pointer === '') {
+            return document;
+        }
+
+        const tokens = this.pointerTokens(pointer);
+        let current = document;
+        for (const token of tokens) {
+            if (Array.isArray(current)) {
+                const index = this.parseArrayIndex(token, current.length - 1, false);
+                current = current[index];
+                continue;
+            }
+            if (this.isRecord(current)) {
+                if (!(token in current)) {
+                    throw new Error(`Path not found: ${pointer}`);
+                }
+                current = current[token];
+                continue;
+            }
+            throw new Error(`Path not found: ${pointer}`);
+        }
+
+        return this.deepClone(current);
+    }
+
+    private pointerGetParent(document: unknown, pointer: string): { parent: JsonRecord | unknown[]; key: string } {
+        const tokens = this.pointerTokens(pointer);
+        if (tokens.length === 0) {
+            throw new Error('Path cannot be root');
+        }
+        const key = tokens[tokens.length - 1]!;
+
+        let current = document;
+        for (const token of tokens.slice(0, -1)) {
+            if (Array.isArray(current)) {
+                const index = this.parseArrayIndex(token, current.length - 1, false);
+                current = current[index];
+                continue;
+            }
+            if (this.isRecord(current)) {
+                if (!(token in current)) {
+                    throw new Error(`Path not found: ${pointer}`);
+                }
+                current = current[token];
+                continue;
+            }
+            throw new Error(`Path not found: ${pointer}`);
+        }
+
+        if (!Array.isArray(current) && !this.isRecord(current)) {
+            throw new Error(`Path not found: ${pointer}`);
+        }
+
+        return { parent: current, key };
+    }
+
+    private pointerTokens(pointer: string): string[] {
+        if (pointer === '') {
+            return [];
+        }
+        if (!pointer.startsWith('/')) {
+            throw new Error(`Invalid JSON pointer: ${pointer}`);
+        }
+        return pointer
+            .slice(1)
+            .split('/')
+            .map((token) => token.replaceAll('~1', '/').replaceAll('~0', '~'));
+    }
+
+    private parseArrayIndex(token: string, maxIndex: number, allowAppend: boolean): number {
+        if (allowAppend && token === '-') {
+            return maxIndex + 1;
+        }
+        const parsed = Number.parseInt(token, 10);
+        if (Number.isNaN(parsed) || parsed < 0 || parsed > maxIndex) {
+            throw new Error(`Invalid array index: ${token}`);
+        }
+        return parsed;
+    }
+
+    private deepClone<T>(value: T): T {
+        return JSON.parse(JSON.stringify(value)) as T;
+    }
+
+    private buildSimpleUnifiedDiff(fromContent: string, toContent: string, fromLabel: string, toLabel: string): string {
+        const fromLines = fromContent.replaceAll('\r\n', '\n').split('\n');
+        const toLines = toContent.replaceAll('\r\n', '\n').split('\n');
+        const out: string[] = [`--- ${fromLabel}`, `+++ ${toLabel}`];
+
+        let i = 0;
+        let j = 0;
+        while (i < fromLines.length || j < toLines.length) {
+            const left = i < fromLines.length ? fromLines[i] : undefined;
+            const right = j < toLines.length ? toLines[j] : undefined;
+
+            if (left !== undefined && right !== undefined && left === right) {
+                out.push(` ${left}`);
+                i += 1;
+                j += 1;
+                continue;
+            }
+
+            if (
+                left !== undefined &&
+                right !== undefined &&
+                i + 1 < fromLines.length &&
+                fromLines[i + 1] === right
+            ) {
+                out.push(`-${left}`);
+                i += 1;
+                continue;
+            }
+
+            if (
+                left !== undefined &&
+                right !== undefined &&
+                j + 1 < toLines.length &&
+                toLines[j + 1] === left
+            ) {
+                out.push(`+${right}`);
+                j += 1;
+                continue;
+            }
+
+            if (left !== undefined) {
+                out.push(`-${left}`);
+                i += 1;
+            }
+            if (right !== undefined) {
+                out.push(`+${right}`);
+                j += 1;
+            }
+        }
+
+        return out.join('\n');
     }
 
     private createClient(headers: Record<string, string>): HttpClientSimple {
