@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import type { Logger } from '../../logging/Logger.js';
-import type { WorkspaceSearchInput } from '../../services/imajin-ai/ImajinAiWorkspaceService.js';
+import type { JsonPatchOperation, WorkspaceSearchInput } from '../../services/imajin-ai/ImajinAiWorkspaceService.js';
 import { ImajinAiWorkspaceService } from '../../services/imajin-ai/ImajinAiWorkspaceService.js';
 
 export class WorkspaceCommands {
@@ -54,6 +54,33 @@ export class WorkspaceCommands {
             .option('--json', 'Output as JSON')
             .description('Delete workspace content')
             .action((options, command) => this.handleDelete(this.getCommandOptions(options, command)));
+
+        workspaceCommand
+            .command('patch')
+            .requiredOption('--path <path>', 'Workspace path to patch')
+            .requiredOption('--ops-file <path>', 'Path to a JSON patch operations file')
+            .option('--if-match <etag>', 'Optional etag precondition')
+            .option('--json', 'Output as JSON')
+            .description('Apply JSON Patch operations to workspace JSON content')
+            .action((options, command) => this.handlePatch(this.getCommandOptions(options, command)));
+
+        workspaceCommand
+            .command('move')
+            .requiredOption('--from <path>', 'Source workspace path')
+            .requiredOption('--to <path>', 'Destination workspace path')
+            .option('--if-match <etag>', 'Optional etag precondition')
+            .option('--json', 'Output as JSON')
+            .description('Move content from one workspace path to another')
+            .action((options, command) => this.handleMove(this.getCommandOptions(options, command)));
+
+        workspaceCommand
+            .command('diff')
+            .requiredOption('--path <path>', 'Workspace path to diff')
+            .requiredOption('--from <version|etag>', 'Base revision (version or etag)')
+            .option('--to <version|etag>', 'Target revision (defaults to latest)')
+            .option('--json', 'Output as JSON')
+            .description('Diff workspace content between revisions')
+            .action((options, command) => this.handleDiff(this.getCommandOptions(options, command)));
 
         workspaceCommand
             .command('search')
@@ -107,6 +134,37 @@ export class WorkspaceCommands {
                 path: this.requiredString(options.path, '--path'),
                 ...(options.recursive ? { recursive: true } : {}),
                 ...(options.ifMatch ? { ifMatch: String(options.ifMatch).trim() } : {})
+            });
+        });
+    }
+
+    private async handlePatch(options: any): Promise<void> {
+        await this.execute('patch', options, async () => {
+            const operations = this.readPatchOperations(this.requiredString(options.opsFile, '--ops-file'));
+            return this.workspaceService.patch({
+                path: this.requiredString(options.path, '--path'),
+                operations,
+                ...(options.ifMatch ? { ifMatch: String(options.ifMatch).trim() } : {})
+            });
+        });
+    }
+
+    private async handleMove(options: any): Promise<void> {
+        await this.execute('move', options, async () => {
+            return this.workspaceService.move({
+                from: this.requiredString(options.from, '--from'),
+                to: this.requiredString(options.to, '--to'),
+                ...(options.ifMatch ? { ifMatch: String(options.ifMatch).trim() } : {})
+            });
+        });
+    }
+
+    private async handleDiff(options: any): Promise<void> {
+        await this.execute('diff', options, async () => {
+            return this.workspaceService.diff({
+                path: this.requiredString(options.path, '--path'),
+                from: this.requiredString(options.from, '--from'),
+                ...(options.to ? { to: String(options.to).trim() } : {})
             });
         });
     }
@@ -167,6 +225,41 @@ export class WorkspaceCommands {
         }
 
         throw new Error('No content input was provided');
+    }
+
+    private readPatchOperations(filePath: string): JsonPatchOperation[] {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(raw);
+        } catch (error) {
+            throw new Error(`Invalid JSON in --ops-file: ${error}`);
+        }
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            throw new Error('--ops-file must contain a non-empty JSON array of patch operations');
+        }
+
+        const operations: JsonPatchOperation[] = [];
+        for (const op of parsed) {
+            if (typeof op !== 'object' || op === null || Array.isArray(op)) {
+                throw new Error('--ops-file contains an invalid patch operation object');
+            }
+
+            const record = op as Record<string, unknown>;
+            if (typeof record.op !== 'string' || typeof record.path !== 'string') {
+                throw new Error('Each patch operation must include string fields: op and path');
+            }
+
+            operations.push({
+                op: record.op as JsonPatchOperation['op'],
+                path: record.path,
+                ...(typeof record.from === 'string' ? { from: record.from } : {}),
+                ...(record.value !== undefined ? { value: record.value } : {})
+            });
+        }
+
+        return operations;
     }
 
     private parseOptionalPositiveInt(value: unknown, optionName: string): number | undefined {
@@ -248,6 +341,18 @@ export class WorkspaceCommands {
             }
             if (command === 'delete') {
                 this.renderDeleteResult(data);
+                return;
+            }
+            if (command === 'patch') {
+                this.renderPatchResult(data);
+                return;
+            }
+            if (command === 'move') {
+                this.renderMoveResult(data);
+                return;
+            }
+            if (command === 'diff') {
+                this.renderDiffResult(data);
                 return;
             }
             if (command === 'search') {
@@ -335,6 +440,48 @@ export class WorkspaceCommands {
         if (result.etag) {
             console.log(chalk.gray(`ETag: ${result.etag}`));
         }
+    }
+
+    private renderPatchResult(result: any): void {
+        console.log(chalk.green('✅ workspace.patch succeeded'));
+        console.log(chalk.gray(`Path: ${result.path ?? '(unknown)'}`));
+        console.log(chalk.gray(`Operations: ${result.operationCount ?? 0}`));
+        if (result.version !== undefined) {
+            console.log(chalk.gray(`Version: ${result.version}`));
+        }
+        if (result.etag) {
+            console.log(chalk.gray(`ETag: ${result.etag}`));
+        }
+    }
+
+    private renderMoveResult(result: any): void {
+        const deleted = result.deletedSource !== false;
+        console.log(chalk.green('✅ workspace.move succeeded'));
+        console.log(chalk.gray(`From: ${result.from ?? '(unknown)'}`));
+        console.log(chalk.gray(`To: ${result.to ?? '(unknown)'}`));
+        console.log(chalk.gray(`Deleted source: ${deleted ? 'yes' : 'no'}`));
+        if (result.version !== undefined) {
+            console.log(chalk.gray(`Version: ${result.version}`));
+        }
+        if (result.etag) {
+            console.log(chalk.gray(`ETag: ${result.etag}`));
+        }
+    }
+
+    private renderDiffResult(result: any): void {
+        const changed = result.changed === true;
+        console.log(chalk.green(`✅ workspace.diff completed (${changed ? 'changed' : 'no changes'})`));
+        console.log(chalk.gray(`Path: ${result.path ?? '(unknown)'}`));
+        console.log(chalk.gray(`From: ${result.from ?? ''}`));
+        console.log(chalk.gray(`To: ${result.to ?? ''}`));
+        if (result.fromVersion !== undefined || result.toVersion !== undefined) {
+            console.log(chalk.gray(`Versions: ${result.fromVersion ?? '-'} -> ${result.toVersion ?? '-'}`));
+        }
+        if (result.fromEtag || result.toEtag) {
+            console.log(chalk.gray(`ETags: ${result.fromEtag ?? '-'} -> ${result.toEtag ?? '-'}`));
+        }
+        console.log('');
+        console.log(result.diff ?? '');
     }
 
     private renderSearchResult(result: any): void {
