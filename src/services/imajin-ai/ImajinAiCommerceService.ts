@@ -22,6 +22,35 @@ export interface CommerceSettleCreateInput {
     reference?: string;
 }
 
+export interface CommerceChargeCreateInput {
+    paymentMethod: string;
+    amount: string;
+    currency: string;
+    customerDid?: string;
+}
+
+export interface CommerceRefundCreateInput {
+    transactionId: string;
+    amount?: string;
+    reason?: string;
+}
+
+export interface CommerceTransferCreateInput {
+    fromDid: string;
+    toDid: string;
+    amount: string;
+    currency: string;
+    memo?: string;
+}
+
+export interface CommerceTransactionsListInput {
+    did: string;
+    limit?: number;
+    cursor?: string;
+    from?: string;
+    to?: string;
+}
+
 export class ImajinAiCommerceService {
     constructor(
         private readonly sessionService: ImajinAiSessionService,
@@ -80,6 +109,90 @@ export class ImajinAiCommerceService {
         const headers = await this.sessionService.getAuthHeadersForRequest();
         const client = this.createClient(headers);
         const response = await client.post('/api/settle', payload);
+        return response.data;
+    }
+
+    public async createCharge(input: CommerceChargeCreateInput): Promise<any> {
+        const paymentMethod = this.requiredString(input.paymentMethod, 'paymentMethod');
+        const amount = this.requiredAmount(input.amount, 'amount');
+        const currency = this.requiredString(input.currency, 'currency').toUpperCase();
+
+        const payload: Record<string, unknown> = {
+            payment_method: paymentMethod,
+            amount,
+            currency
+        };
+        if (input.customerDid) {
+            payload.customer_did = this.requiredString(input.customerDid, 'customerDid');
+        }
+
+        const headers = await this.sessionService.getAuthHeadersForRequest();
+        const client = this.createClient(headers);
+        const response = await client.post('/api/charge', payload);
+        return response.data;
+    }
+
+    public async createRefund(input: CommerceRefundCreateInput): Promise<any> {
+        const transactionId = this.requiredString(input.transactionId, 'transactionId');
+        const payload: Record<string, unknown> = {
+            transaction_id: transactionId
+        };
+        if (input.amount) {
+            payload.amount = this.requiredAmount(input.amount, 'amount');
+        }
+        if (input.reason) {
+            payload.reason = this.requiredString(input.reason, 'reason');
+        }
+
+        const headers = await this.sessionService.getAuthHeadersForRequest();
+        const client = this.createClient(headers);
+        const response = await client.post('/api/refund', payload);
+        return response.data;
+    }
+
+    public async createTransfer(input: CommerceTransferCreateInput): Promise<any> {
+        const fromDid = this.requiredString(input.fromDid, 'fromDid');
+        const toDid = this.requiredString(input.toDid, 'toDid');
+        const amount = this.requiredAmount(input.amount, 'amount');
+        const currency = this.requiredString(input.currency, 'currency').toUpperCase();
+
+        const payload: Record<string, unknown> = {
+            from_did: fromDid,
+            to_did: toDid,
+            amount,
+            currency
+        };
+        if (input.memo) {
+            payload.memo = this.requiredString(input.memo, 'memo');
+        }
+
+        const headers = await this.sessionService.getAuthHeadersForRequest();
+        const client = this.createClient(headers);
+        const response = await client.post('/api/balance/transfer', payload);
+        return response.data;
+    }
+
+    public async listTransactions(input: CommerceTransactionsListInput): Promise<any> {
+        const did = this.requiredString(input.did, 'did');
+        const params = new URLSearchParams();
+        if (input.limit !== undefined) {
+            params.set('limit', String(input.limit));
+        }
+        if (input.cursor) {
+            params.set('cursor', this.requiredString(input.cursor, 'cursor'));
+        }
+        if (input.from) {
+            params.set('from', this.requiredString(input.from, 'from'));
+        }
+        if (input.to) {
+            params.set('to', this.requiredString(input.to, 'to'));
+        }
+
+        const query = params.toString();
+        const path = `/api/transactions/${encodeURIComponent(did)}${query ? `?${query}` : ''}`;
+        const headers = await this.sessionService.getAuthHeadersForRequest();
+        const client = this.createClient(headers);
+        const response = await client.get(path);
         return response.data;
     }
 
