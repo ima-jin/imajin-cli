@@ -20,6 +20,7 @@ import { AuthCommands } from '../../commands/auth/AuthCommands.js';
 import { ChatCommands } from '../../commands/chat/ChatCommands.js';
 import { CommerceCommands } from '../../commands/commerce/CommerceCommands.js';
 import { IdentityCommands } from '../../commands/identity/IdentityCommands.js';
+import { NotifyCommands } from '../../commands/notify/NotifyCommands.js';
 import { WorkspaceCommands } from '../../commands/workspace/WorkspaceCommands.js';
 import { Container } from '../../container/Container.js';
 import { Logger } from '../../logging/Logger.js';
@@ -27,6 +28,7 @@ import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import { ImajinAiChatService } from '../../services/imajin-ai/ImajinAiChatService.js';
 import { ImajinAiCommerceService } from '../../services/imajin-ai/ImajinAiCommerceService.js';
 import { ImajinAiIdentityService } from '../../services/imajin-ai/ImajinAiIdentityService.js';
+import { ImajinAiNotifyService } from '../../services/imajin-ai/ImajinAiNotifyService.js';
 import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
 import { ImajinAiWorkspaceService } from '../../services/imajin-ai/ImajinAiWorkspaceService.js';
 import { CredentialManager } from './CredentialManager.js';
@@ -102,6 +104,18 @@ export class CredentialServiceProvider extends ServiceProvider {
             const logger = container.resolve<Logger>('logger');
             return new ChatCommands(chatService, logger);
         });
+
+        this.container.singleton('imajinAiNotifyService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiNotifyService(sessionService, logger);
+        });
+
+        this.container.singleton('notifyCommands', (container: Container) => {
+            const notifyService = container.resolve<ImajinAiNotifyService>('imajinAiNotifyService');
+            const logger = container.resolve<Logger>('logger');
+            return new NotifyCommands(notifyService, logger);
+        });
     }
 
     /**
@@ -119,6 +133,8 @@ export class CredentialServiceProvider extends ServiceProvider {
         commerceCommands.registerCommands(this.program);
         const chatCommands = this.container.resolve<ChatCommands>('chatCommands');
         chatCommands.registerCommands(this.program);
+        const notifyCommands = this.container.resolve<NotifyCommands>('notifyCommands');
+        notifyCommands.registerCommands(this.program);
     }
 
     /**
@@ -143,7 +159,9 @@ export class CredentialServiceProvider extends ServiceProvider {
             'imajinAiCommerceService',
             'commerceCommands',
             'imajinAiChatService',
-            'chatCommands'
+            'chatCommands',
+            'imajinAiNotifyService',
+            'notifyCommands'
         ];
     }
 
