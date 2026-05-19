@@ -21,6 +21,7 @@ import { ChatCommands } from '../../commands/chat/ChatCommands.js';
 import { CommerceCommands } from '../../commands/commerce/CommerceCommands.js';
 import { IdentityCommands } from '../../commands/identity/IdentityCommands.js';
 import { NotifyCommands } from '../../commands/notify/NotifyCommands.js';
+import { TrustCommands } from '../../commands/trust/TrustCommands.js';
 import { WorkspaceCommands } from '../../commands/workspace/WorkspaceCommands.js';
 import { Container } from '../../container/Container.js';
 import { Logger } from '../../logging/Logger.js';
@@ -30,6 +31,7 @@ import { ImajinAiCommerceService } from '../../services/imajin-ai/ImajinAiCommer
 import { ImajinAiIdentityService } from '../../services/imajin-ai/ImajinAiIdentityService.js';
 import { ImajinAiNotifyService } from '../../services/imajin-ai/ImajinAiNotifyService.js';
 import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
+import { ImajinAiTrustService } from '../../services/imajin-ai/ImajinAiTrustService.js';
 import { ImajinAiWorkspaceService } from '../../services/imajin-ai/ImajinAiWorkspaceService.js';
 import { CredentialManager } from './CredentialManager.js';
 
@@ -116,6 +118,18 @@ export class CredentialServiceProvider extends ServiceProvider {
             const logger = container.resolve<Logger>('logger');
             return new NotifyCommands(notifyService, logger);
         });
+
+        this.container.singleton('imajinAiTrustService', (container: Container) => {
+            const sessionService = container.resolve<ImajinAiSessionService>('imajinAiSessionService');
+            const logger = container.resolve<Logger>('logger');
+            return new ImajinAiTrustService(sessionService, logger);
+        });
+
+        this.container.singleton('trustCommands', (container: Container) => {
+            const trustService = container.resolve<ImajinAiTrustService>('imajinAiTrustService');
+            const logger = container.resolve<Logger>('logger');
+            return new TrustCommands(trustService, logger);
+        });
     }
 
     /**
@@ -135,6 +149,8 @@ export class CredentialServiceProvider extends ServiceProvider {
         chatCommands.registerCommands(this.program);
         const notifyCommands = this.container.resolve<NotifyCommands>('notifyCommands');
         notifyCommands.registerCommands(this.program);
+        const trustCommands = this.container.resolve<TrustCommands>('trustCommands');
+        trustCommands.registerCommands(this.program);
     }
 
     /**
@@ -161,7 +177,9 @@ export class CredentialServiceProvider extends ServiceProvider {
             'imajinAiChatService',
             'chatCommands',
             'imajinAiNotifyService',
-            'notifyCommands'
+            'notifyCommands',
+            'imajinAiTrustService',
+            'trustCommands'
         ];
     }
 
