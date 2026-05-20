@@ -208,14 +208,12 @@ export class Application {
   }
 
   /**
-   * Create and register a service provider
+   * Create a service provider instance
    */
   public createProvider<T extends ServiceProvider>(
     ProviderClass: new (container: Container, program: Command) => T
   ): T {
-    const provider = new ProviderClass(this.container, this.program);
-    this.registerProvider(provider);
-    return provider;
+    return new ProviderClass(this.container, this.program);
   }
 
   /**
@@ -234,13 +232,21 @@ export class Application {
     // Registration phase
     for (const provider of this.providers) {
       this.logger.debug(`Registering provider: ${provider.getName()}`);
-      await provider.register();
+      try {
+        await provider.register();
+      } catch (error) {
+        this.logger.error(`Provider registration failed: ${provider.getName()}`, error as Error);
+      }
     }
 
     // Boot phase
     for (const provider of this.providers) {
       this.logger.debug(`Booting provider: ${provider.getName()}`);
-      await provider.boot();
+      try {
+        await provider.boot();
+      } catch (error) {
+        this.logger.error(`Provider boot failed: ${provider.getName()}`, error as Error);
+      }
     }
 
     // Register commands from providers

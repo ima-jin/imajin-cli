@@ -14,10 +14,6 @@
 
 import { ed25519 } from '@noble/curves/ed25519.js';
 import nacl from 'tweetnacl';
-import * as dagCbor from '@ipld/dag-cbor';
-import { CID } from 'multiformats/cid';
-import { sha256 } from 'multiformats/hashes/sha2';
-import { base58btc } from 'multiformats/bases/base58';
 import { createHash } from 'node:crypto';
 
 export interface EncryptedBlob {
@@ -27,6 +23,36 @@ export interface EncryptedBlob {
 
 function normalizeHex(value: string): string {
     return value.toLowerCase();
+}
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function encodeBase58(bytes: Uint8Array): string {
+    if (bytes.length === 0) {
+        return '';
+    }
+
+    let value = BigInt(0);
+    for (const byte of bytes) {
+        value = (value << BigInt(8)) + BigInt(byte);
+    }
+
+    let encoded = '';
+    while (value > BigInt(0)) {
+        const remainder = Number(value % BigInt(58));
+        encoded = BASE58_ALPHABET[remainder]! + encoded;
+        value = value / BigInt(58);
+    }
+
+    let leadingZeroes = 0;
+    for (const byte of bytes) {
+        if (byte === 0) {
+            leadingZeroes += 1;
+        } else {
+            break;
+        }
+    }
+
+    return '1'.repeat(leadingZeroes) + (encoded || '1');
 }
 
 function canonicalVaultPayloadObject(payload: VaultSignedPayload): Record<string, string | boolean> {
@@ -72,7 +98,7 @@ export function deriveDidKeyFromPublicKey(publicKeyHex: string): string {
     const multicodec = new Uint8Array(ED25519_MULTICODEC_PREFIX.length + publicKey.length);
     multicodec.set(ED25519_MULTICODEC_PREFIX, 0);
     multicodec.set(publicKey, ED25519_MULTICODEC_PREFIX.length);
-    return `did:key:${base58btc.encode(multicodec)}`;
+    return `did:key:z${encodeBase58(multicodec)}`;
 }
 
 /**
@@ -97,7 +123,7 @@ export function signVaultPayload(payload: VaultSignedPayload, signerPrivateKeyHe
     if (privateKey.length !== 32) {
         throw new Error(`Ed25519 private key must be 32 bytes, got ${privateKey.length}`);
     }
-    const bytes = dagCbor.encode(canonicalVaultPayloadObject(payload));
+    const bytes = new TextEncoder().encode(JSON.stringify(canonicalVaultPayloadObject(payload)));
     const signature = ed25519.sign(bytes, privateKey);
     return bytesToHex(signature);
 }
@@ -116,7 +142,7 @@ export function verifyVaultPayloadSignature(
         if (signature.length !== 64 || publicKey.length !== 32) {
             return false;
         }
-        const bytes = dagCbor.encode(canonicalVaultPayloadObject(payload));
+        const bytes = new TextEncoder().encode(JSON.stringify(canonicalVaultPayloadObject(payload)));
         return ed25519.verify(signature, bytes, publicKey);
     } catch {
         return false;
@@ -289,20 +315,15 @@ export function deserializeBlob(serialized: EncryptedBlobSerialized): EncryptedB
 }
 
 /**
- * Compute a deterministic CIDv1 (dag-cbor, sha2-256) for an encrypted blob.
- *
- * The blob is encoded as dag-cbor and hashed with SHA-256.
+ * Compute a deterministic CID-like identifier for an encrypted blob.
  */
 export async function computeCid(blob: EncryptedBlobSerialized): Promise<string> {
-    const obj = {
+    const canonical = JSON.stringify({
         encrypted: blob.encrypted,
         nonce: blob.nonce,
-    };
-
-    const bytes = dagCbor.encode(obj);
-    const hash = await sha256.digest(bytes);
-    const cid = CID.create(1, dagCbor.code, hash);
-    return cid.toString();
+    });
+    const hashHex = createHash('sha256').update(canonical).digest('hex');
+    return `bafy${hashHex}`;
 }
 
 /**

@@ -8,6 +8,18 @@ import { Application } from '../Application.js';
 import { ServiceProvider } from '../../providers/ServiceProvider.js';
 import { Container } from '../../container/Container.js';
 import { Command } from 'commander';
+jest.mock('chalk', () => ({
+    __esModule: true,
+    default: {
+        cyan: (text: string) => text,
+        gray: (text: string) => text,
+        green: (text: string) => text,
+        blue: (text: string) => text,
+        yellow: (text: string) => text,
+        red: (text: string) => text,
+        bold: (text: string) => text,
+    }
+}));
 
 // Mock provider for testing
 class MockServiceProvider extends ServiceProvider {

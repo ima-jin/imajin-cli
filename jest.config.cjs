@@ -26,8 +26,16 @@ module.exports = {
         '/node_modules/',
         '/dist/'
     ],
+    transformIgnorePatterns: [
+        '/node_modules/(?!(@noble|@ipld|multiformats|chalk)/)'
+    ],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^@noble/curves/ed25519\\.js$': '<rootDir>/src/test/mocks/noble-ed25519.mock.ts',
+        '^@ipld/dag-cbor$': '<rootDir>/node_modules/@ipld/dag-cbor/src/index.js',
+        '^multiformats/cid$': '<rootDir>/node_modules/multiformats/src/cid.js',
+        '^multiformats/hashes/sha2$': '<rootDir>/node_modules/multiformats/src/hashes/sha2.js',
+        '^multiformats/bases/base58$': '<rootDir>/node_modules/multiformats/src/bases/base58.js',
         '^(\\.{1,2}/.*)\\.js$': '$1'
     },
     verbose: true,
