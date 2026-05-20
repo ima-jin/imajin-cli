@@ -37,6 +37,16 @@ imajin workspace put --path /docs/notes/today.md --content-file ./today.md --con
 imajin workspace search --query "launch checklist" --path /docs --limit 10
 ```
 
+## Profile command examples
+```bash
+imajin profile get --id did:imajin:alice
+imajin profile search --query "alice" --limit 10
+imajin profile create --handle alice --display-name "Alice" --bio "Traveler profile"
+imajin profile update --id alice --bio "Updated bio"
+imajin profile handle check --handle alice
+imajin profile inference toggle --enabled true
+```
+
 ### Explicit non-goal
 Per-service API key exposure in CLI env files (Stripe/Contentful/Anthropic/etc.) is no longer the primary operating model.
 
