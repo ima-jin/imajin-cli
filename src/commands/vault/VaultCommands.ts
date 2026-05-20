@@ -40,6 +40,7 @@ interface IdentityConfig {
 }
 
 export class VaultCommands {
+    private static readonly STDIN_TIMEOUT_MS = 30000;
     private readonly vaultStore: VaultStore;
 
     constructor(
@@ -59,7 +60,7 @@ export class VaultCommands {
             .description('Encrypt a value and store it in the vault')
             .option('--value <text>', 'Secret value (warning: may leak via shell history)')
             .option('--value-file <path>', 'Read secret value from file path')
-            .option('--stdin', 'Read secret value from stdin')
+            .option('--stdin', 'Read secret value from stdin (times out after 30 seconds)')
             .option('--node-pubkey <hex>', 'Ed25519 public key of the target node (hex)')
             .option('--sender-did <did>', 'Sender DID (defaults to identity.json did)')
             .option('--sender-privkey <hex>', 'Sender Ed25519 private key for encryption (defaults to identity.json)')
@@ -139,16 +140,37 @@ export class VaultCommands {
         return bytesToHex(pubkey);
     }
     private async readValueFromStdin(): Promise<string> {
+        if (process.stdin.isTTY) {
+            throw new Error('No stdin input detected. Pipe a value into --stdin or use --value-file.');
+        }
         return new Promise((resolve, reject) => {
             let data = '';
-            process.stdin.setEncoding('utf8');
-            process.stdin.on('data', (chunk: string) => {
+            const onData = (chunk: string): void => {
                 data += chunk;
-            });
-            process.stdin.on('end', () => {
+            };
+            const onEnd = (): void => {
+                cleanup();
                 resolve(data.replace(/\r?\n$/, ''));
-            });
-            process.stdin.on('error', reject);
+            };
+            const onError = (error: Error): void => {
+                cleanup();
+                reject(error);
+            };
+            const timer = setTimeout(() => {
+                cleanup();
+                reject(new Error(`Timed out waiting for stdin input after ${VaultCommands.STDIN_TIMEOUT_MS / 1000} seconds`));
+            }, VaultCommands.STDIN_TIMEOUT_MS);
+            const cleanup = (): void => {
+                clearTimeout(timer);
+                process.stdin.off('data', onData);
+                process.stdin.off('end', onEnd);
+                process.stdin.off('error', onError);
+            };
+            process.stdin.setEncoding('utf8');
+            process.stdin.on('data', onData);
+            process.stdin.on('end', onEnd);
+            process.stdin.on('error', onError);
+            process.stdin.resume();
         });
     }
 

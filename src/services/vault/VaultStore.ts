@@ -23,6 +23,7 @@ export interface VaultEntry {
     senderPubkey?: string; // Ed25519 public key of the sender (hex)
     timestamp: string; // ISO 8601
     previousCid?: string;
+    deleted?: boolean;
 }
 
 export interface VaultFile {
@@ -110,7 +111,11 @@ export class VaultStore {
      */
     public get(field: string): VaultEntry | undefined {
         const vault = this.readVault();
-        return this.getLatestEntry(vault.entries, field);
+        const latest = this.getLatestEntry(vault.entries, field);
+        if (!latest || latest.deleted === true) {
+            return undefined;
+        }
+        return latest;
     }
 
     /**
@@ -125,7 +130,7 @@ export class VaultStore {
                 latestByField.set(entry.field, entry);
             }
         }
-        return Array.from(latestByField.values());
+        return Array.from(latestByField.values()).filter(entry => entry.deleted !== true);
     }
 
     /**
@@ -153,13 +158,26 @@ export class VaultStore {
      */
     public remove(field: string): boolean {
         const vault = this.readVault();
-        const initialLength = vault.entries.length;
-        vault.entries = vault.entries.filter((e) => e.field !== field);
-        if (vault.entries.length !== initialLength) {
-            this.writeVault(vault);
-            return true;
+        const latest = this.getLatestEntry(vault.entries, field);
+        if (!latest || latest.deleted === true) {
+            return false;
         }
-        return false;
+
+        const timestamp = new Date().toISOString();
+        const tombstone: VaultEntry = {
+            field,
+            cid: `tombstone:${field}:${timestamp}`,
+            encrypted: '',
+            nonce: '',
+            sender: 'did:imajin:system:vault',
+            timestamp,
+            previousCid: latest.cid,
+            deleted: true,
+        };
+
+        vault.entries.push(tombstone);
+        this.writeVault(vault);
+        return true;
     }
 
     private getLatestEntry(entries: VaultEntry[], field: string): VaultEntry | undefined {
