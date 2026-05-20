@@ -23,6 +23,7 @@ import { StatusCommand } from './StatusCommand.js';
 import { createCommandLimiterCommands } from './system/CommandLimiterCommands.js';
 import { TaskMigrationCommand } from './TaskMigrationCommand.js';
 import { TaskManagementCommands } from './TaskManagementCommands.js';
+import { VaultCommands } from './vault/VaultCommands.js';
 
 // =============================================================================
 // COMMAND REGISTRATION
@@ -56,6 +57,12 @@ export function registerCommands(program: Command): void {
     const taskManagementCommands = new TaskManagementCommands();
     taskManagementCommands.register(program);
     
+    // Vault commands (encrypted secrets store)
+    if (logger) {
+        const vaultCommands = new VaultCommands(logger);
+        vaultCommands.registerCommands(program);
+    }
+    
     // Add other command groups here as they're implemented
     // registerServiceCommands(program);
     // registerGenerateCommands(program);
@@ -73,6 +80,7 @@ export function getAvailableCommandGroups(): string[] {
         'status',
         'command-limiter',
         'task',
+        'vault',
         // Add other groups as implemented
         // 'services',
         // 'generate',
@@ -95,6 +103,8 @@ export function getCommandGroupDescription(group: string): string {
             return 'Git command filtering and security management';
         case 'task':
             return 'Task management, migration, and lifecycle commands';
+        case 'vault':
+            return 'Encrypted config/secrets store for Imajin nodes';
         case 'services':
             return 'Service integration and management commands';
         default:
