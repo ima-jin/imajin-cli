@@ -4,6 +4,10 @@ jest.mock('../../../crypto/vault-crypto.js', () => ({
     deserializeBlob: jest.fn(),
     serializeBlob: jest.fn(),
     computeCid: jest.fn(),
+    deriveKeyId: jest.fn(),
+    deriveDidKeyFromPublicKey: jest.fn(),
+    verifyDidKeyBinding: jest.fn(),
+    signVaultPayload: jest.fn(),
     hexToBytes: jest.fn(),
     bytesToHex: jest.fn()
 }));

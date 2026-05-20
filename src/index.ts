@@ -102,14 +102,9 @@ async function main(): Promise<void> {
 
     // Register service providers
     const { CredentialServiceProvider } = await import('./core/credentials/CredentialServiceProvider.js');
-    const { ServiceLayerProvider } = await import('./providers/ServiceLayerProvider.js');
-    const { MediaServiceProvider } = await import('./providers/MediaServiceProvider.js');
-    const { MonitoringServiceProvider } = await import('./providers/MonitoringServiceProvider.js');
 
-    app.createProvider(CredentialServiceProvider);
-    app.createProvider(ServiceLayerProvider);
-    app.createProvider(MediaServiceProvider);
-    app.createProvider(MonitoringServiceProvider);
+    const credentialProvider = app.createProvider(CredentialServiceProvider);
+    app.registerProvider(credentialProvider);
 
     // Boot the application (register and initialize services)
     await app.boot();

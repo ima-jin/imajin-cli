@@ -17,6 +17,11 @@ import {
     bytesToBase64,
     ed25519ToX25519Keys,
     ed25519PublicToX25519,
+    deriveKeyId,
+    deriveDidKeyFromPublicKey,
+    verifyDidKeyBinding,
+    signVaultPayload,
+    verifyVaultPayloadSignature,
 } from '../vault-crypto.js';
 
 describe('vault-crypto', () => {
@@ -170,6 +175,75 @@ describe('vault-crypto', () => {
             const cid2 = await computeCid(serializeBlob(encrypted2));
 
             expect(cid1).not.toBe(cid2);
+        });
+    });
+
+    describe('vault signing and metadata helpers', () => {
+        it('derives deterministic key IDs for sender public keys', () => {
+            const sender = generateKeypair();
+            const keyIdA = deriveKeyId(sender.publicKey);
+            const keyIdB = deriveKeyId(sender.publicKey);
+            expect(keyIdA).toBe(keyIdB);
+            expect(keyIdA.startsWith('ed25519:')).toBe(true);
+        });
+
+        it('derives and verifies did:key binding from public key', () => {
+            const sender = generateKeypair();
+            const did = deriveDidKeyFromPublicKey(sender.publicKey);
+            expect(did.startsWith('did:key:z')).toBe(true);
+            expect(verifyDidKeyBinding(did, sender.publicKey)).toBe(true);
+        });
+
+        it('rejects did:key binding checks for mismatched keys', () => {
+            const sender = generateKeypair();
+            const other = generateKeypair();
+            const did = deriveDidKeyFromPublicKey(sender.publicKey);
+            expect(verifyDidKeyBinding(did, other.publicKey)).toBe(false);
+        });
+
+        it('signs and verifies canonical vault payloads', async () => {
+            const sender = generateKeypair();
+            const recipient = generateKeypair();
+            const encrypted = encrypt('signed secret', recipient.publicKey, sender.privateKey);
+            const serialized = serializeBlob(encrypted);
+            const cid = await computeCid(serialized);
+            const keyId = deriveKeyId(sender.publicKey);
+            const payload = {
+                field: 'API_KEY',
+                cid,
+                encrypted: serialized.encrypted,
+                nonce: serialized.nonce,
+                sender: deriveDidKeyFromPublicKey(sender.publicKey),
+                senderPubkey: sender.publicKey,
+                keyId,
+                timestamp: new Date().toISOString(),
+            };
+
+            const signature = signVaultPayload(payload, sender.privateKey);
+            expect(verifyVaultPayloadSignature(payload, signature, sender.publicKey)).toBe(true);
+        });
+
+        it('fails signature verification when payload is tampered', async () => {
+            const sender = generateKeypair();
+            const recipient = generateKeypair();
+            const encrypted = encrypt('signed secret', recipient.publicKey, sender.privateKey);
+            const serialized = serializeBlob(encrypted);
+            const cid = await computeCid(serialized);
+            const keyId = deriveKeyId(sender.publicKey);
+            const payload = {
+                field: 'API_KEY',
+                cid,
+                encrypted: serialized.encrypted,
+                nonce: serialized.nonce,
+                sender: deriveDidKeyFromPublicKey(sender.publicKey),
+                senderPubkey: sender.publicKey,
+                keyId,
+                timestamp: new Date().toISOString(),
+            };
+
+            const signature = signVaultPayload(payload, sender.privateKey);
+            const tampered = { ...payload, field: 'OTHER_KEY' };
+            expect(verifyVaultPayloadSignature(tampered, signature, sender.publicKey)).toBe(false);
         });
     });
 });

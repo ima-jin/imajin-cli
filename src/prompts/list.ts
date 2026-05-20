@@ -11,7 +11,6 @@
  * @updated      2025-07-03
  */
 
-import { ModelFactory } from '../etl/graphs/models.js';
 
 export interface PromptDefinition {
     id: string;
@@ -40,11 +39,6 @@ export class PromptRegistry {
     public registerPrompt(definition: PromptDefinition): void {
         if (!definition.id || !definition.modelType || !definition.modelVersion) {
             throw new Error('Invalid prompt definition: id, modelType, and modelVersion are required');
-        }
-
-        // Verify that the model exists
-        if (!ModelFactory.isModelRegistered(definition.modelType, definition.modelVersion)) {
-            throw new Error(`Model ${definition.modelType}@${definition.modelVersion} not found`);
         }
 
         this.prompts.set(definition.id, definition);

@@ -13,6 +13,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import {
+    computeCid,
+    deriveKeyId,
+    verifyDidKeyBinding,
+    verifyVaultPayloadSignature,
+    type VaultSignedPayload,
+} from '../../crypto/vault-crypto.js';
 
 export interface VaultEntry {
     field: string;
@@ -21,6 +28,8 @@ export interface VaultEntry {
     nonce: string;     // base64 nonce
     sender: string;    // DID string of the sender
     senderPubkey?: string; // Ed25519 public key of the sender (hex)
+    keyId?: string;
+    signature?: string;
     timestamp: string; // ISO 8601
     previousCid?: string;
     deleted?: boolean;
@@ -32,10 +41,15 @@ export interface VaultFile {
 }
 
 export class VaultStore {
+    private static readonly LOCK_ACQUIRE_TIMEOUT_MS = 10000;
+    private static readonly LOCK_STALE_MS = 30000;
+    private static readonly LOCK_RETRY_INTERVAL_MS = 50;
     private readonly vaultPath: string;
+    private readonly lockPath: string;
 
     constructor(vaultPath?: string) {
         this.vaultPath = vaultPath ?? path.join(os.homedir(), '.imajin', 'vault.json');
+        this.lockPath = `${this.vaultPath}.lock`;
     }
 
     /**
@@ -92,36 +106,73 @@ export class VaultStore {
      * Store a new encrypted blob for a field.
      * If the field already exists, the old entry is kept as history (previousCid).
      */
-    public set(entry: Omit<VaultEntry, 'previousCid'> & { previousCid?: string }): VaultEntry {
-        const vault = this.readVault();
-        const previousCid = this.getLatestEntry(vault.entries, entry.field)?.cid ?? entry.previousCid;
+    public async set(entry: Omit<VaultEntry, 'previousCid'> & { previousCid?: string }): Promise<VaultEntry> {
+        return this.withWriteLock(async () => {
+            const vault = this.readVault();
+            const previousCid = this.getLatestEntry(vault.entries, entry.field)?.cid ?? entry.previousCid;
 
-        const newEntry: VaultEntry = {
-            ...entry,
-            ...(previousCid !== undefined ? { previousCid } : {}),
-        };
+            const newEntry: VaultEntry = {
+                ...entry,
+                ...(previousCid !== undefined ? { previousCid } : {}),
+            };
 
-        vault.entries.push(newEntry);
-        this.writeVault(vault);
-        return newEntry;
+            vault.entries.push(newEntry);
+            this.writeVault(vault);
+            return newEntry;
+        });
+    }
+
+    /**
+     * Store a new encrypted blob and sign it after previousCid resolution under lock.
+     */
+    public async setSigned(
+        entry: Omit<VaultEntry, 'previousCid' | 'signature'> & { previousCid?: string },
+        signer: (payload: VaultSignedPayload) => string
+    ): Promise<VaultEntry> {
+        return this.withWriteLock(async () => {
+            const vault = this.readVault();
+            const previousCid = this.getLatestEntry(vault.entries, entry.field)?.cid ?? entry.previousCid;
+            const payload: VaultSignedPayload = {
+                field: entry.field,
+                cid: entry.cid,
+                encrypted: entry.encrypted,
+                nonce: entry.nonce,
+                sender: entry.sender,
+                senderPubkey: entry.senderPubkey ?? '',
+                keyId: entry.keyId ?? '',
+                timestamp: entry.timestamp,
+                ...(previousCid !== undefined ? { previousCid } : {}),
+                ...(entry.deleted !== undefined ? { deleted: entry.deleted } : {}),
+            };
+            const signature = signer(payload);
+            const newEntry: VaultEntry = {
+                ...payload,
+                signature,
+            };
+
+            vault.entries.push(newEntry);
+            this.writeVault(vault);
+            return newEntry;
+        });
     }
 
     /**
      * Get the latest entry for a field.
      */
-    public get(field: string): VaultEntry | undefined {
+    public async get(field: string): Promise<VaultEntry | undefined> {
         const vault = this.readVault();
         const latest = this.getLatestEntry(vault.entries, field);
         if (!latest || latest.deleted === true) {
             return undefined;
         }
+        await this.assertEntryIntegrity(latest);
         return latest;
     }
 
     /**
      * List all entries in the vault.
      */
-    public list(): VaultEntry[] {
+    public async list(): Promise<VaultEntry[]> {
         const vault = this.readVault();
         const latestByField = new Map<string, VaultEntry>();
         for (let i = vault.entries.length - 1; i >= 0; i -= 1) {
@@ -130,19 +181,26 @@ export class VaultStore {
                 latestByField.set(entry.field, entry);
             }
         }
-        return Array.from(latestByField.values()).filter(entry => entry.deleted !== true);
+        const entries = Array.from(latestByField.values()).filter(entry => entry.deleted !== true);
+        for (const entry of entries) {
+            await this.assertEntryIntegrity(entry);
+        }
+        return entries;
     }
 
     /**
      * Follow the previousCid chain for a field to reconstruct history.
      * Returns entries from newest to oldest.
      */
-    public getHistory(field: string): VaultEntry[] {
+    public async getHistory(field: string): Promise<VaultEntry[]> {
         const vault = this.readVault();
         const history: VaultEntry[] = [];
         let current = this.getLatestEntry(vault.entries, field);
 
         while (current) {
+            if (current.deleted !== true) {
+                await this.assertEntryIntegrity(current);
+            }
             history.push(current);
             if (!current.previousCid) {
                 break;
@@ -156,28 +214,30 @@ export class VaultStore {
     /**
      * Remove a field from the vault.
      */
-    public remove(field: string): boolean {
-        const vault = this.readVault();
-        const latest = this.getLatestEntry(vault.entries, field);
-        if (!latest || latest.deleted === true) {
-            return false;
-        }
+    public async remove(field: string): Promise<boolean> {
+        return this.withWriteLock(async () => {
+            const vault = this.readVault();
+            const latest = this.getLatestEntry(vault.entries, field);
+            if (!latest || latest.deleted === true) {
+                return false;
+            }
 
-        const timestamp = new Date().toISOString();
-        const tombstone: VaultEntry = {
-            field,
-            cid: `tombstone:${field}:${timestamp}`,
-            encrypted: '',
-            nonce: '',
-            sender: 'did:imajin:system:vault',
-            timestamp,
-            previousCid: latest.cid,
-            deleted: true,
-        };
+            const timestamp = new Date().toISOString();
+            const tombstone: VaultEntry = {
+                field,
+                cid: `tombstone:${field}:${timestamp}`,
+                encrypted: '',
+                nonce: '',
+                sender: 'did:imajin:system:vault',
+                timestamp,
+                previousCid: latest.cid,
+                deleted: true,
+            };
 
-        vault.entries.push(tombstone);
-        this.writeVault(vault);
-        return true;
+            vault.entries.push(tombstone);
+            this.writeVault(vault);
+            return true;
+        });
     }
 
     private getLatestEntry(entries: VaultEntry[], field: string): VaultEntry | undefined {
@@ -188,5 +248,105 @@ export class VaultStore {
             }
         }
         return undefined;
+    }
+
+    private async assertEntryIntegrity(entry: VaultEntry): Promise<void> {
+        const fieldLabel = entry.field || '<unknown>';
+
+        if (!entry.senderPubkey) {
+            throw new Error(`Vault entry '${fieldLabel}' missing senderPubkey`);
+        }
+        if (!entry.keyId) {
+            throw new Error(`Vault entry '${fieldLabel}' missing keyId`);
+        }
+        if (!entry.signature) {
+            throw new Error(`Vault entry '${fieldLabel}' missing signature`);
+        }
+        if (!verifyDidKeyBinding(entry.sender, entry.senderPubkey)) {
+            throw new Error(`Vault entry '${fieldLabel}' has unverified DID-to-key binding`);
+        }
+        const derivedKeyId = deriveKeyId(entry.senderPubkey);
+        if (entry.keyId !== derivedKeyId) {
+            throw new Error(`Vault entry '${fieldLabel}' keyId mismatch`);
+        }
+        const expectedCid = await computeCid({
+            encrypted: entry.encrypted,
+            nonce: entry.nonce,
+        });
+        if (expectedCid !== entry.cid) {
+            throw new Error(`Vault entry '${fieldLabel}' CID mismatch`);
+        }
+        const payload: VaultSignedPayload = {
+            field: entry.field,
+            cid: entry.cid,
+            encrypted: entry.encrypted,
+            nonce: entry.nonce,
+            sender: entry.sender,
+            senderPubkey: entry.senderPubkey,
+            keyId: entry.keyId,
+            timestamp: entry.timestamp,
+            ...(entry.previousCid !== undefined ? { previousCid: entry.previousCid } : {}),
+            ...(entry.deleted !== undefined ? { deleted: entry.deleted } : {}),
+        };
+        const signatureValid = verifyVaultPayloadSignature(payload, entry.signature, entry.senderPubkey);
+        if (!signatureValid) {
+            throw new Error(`Vault entry '${fieldLabel}' signature verification failed`);
+        }
+    }
+
+    private async withWriteLock<T>(operation: () => Promise<T> | T): Promise<T> {
+        const lockFd = await this.acquireLock();
+        try {
+            return await operation();
+        } finally {
+            try {
+                fs.closeSync(lockFd);
+            } catch {
+                // Ignore close errors during unlock cleanup.
+            }
+            try {
+                fs.unlinkSync(this.lockPath);
+            } catch {
+                // Ignore unlock failures (best effort).
+            }
+        }
+    }
+
+    private async acquireLock(): Promise<number> {
+        const startedAt = Date.now();
+        while (true) {
+            try {
+                const fd = fs.openSync(this.lockPath, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_RDWR, 0o600);
+                fs.writeFileSync(fd, `${process.pid}:${Date.now()}`);
+                return fd;
+            } catch (error: any) {
+                if (error?.code !== 'EEXIST') {
+                    throw error;
+                }
+                this.clearStaleLockIfNeeded();
+                if (Date.now() - startedAt > VaultStore.LOCK_ACQUIRE_TIMEOUT_MS) {
+                    throw new Error(`Timed out acquiring vault lock after ${VaultStore.LOCK_ACQUIRE_TIMEOUT_MS}ms`);
+                }
+                await this.sleep(VaultStore.LOCK_RETRY_INTERVAL_MS);
+            }
+        }
+    }
+
+    private clearStaleLockIfNeeded(): void {
+        try {
+            const stats = fs.statSync(this.lockPath);
+            const ageMs = Date.now() - stats.mtimeMs;
+            if (ageMs > VaultStore.LOCK_STALE_MS) {
+                fs.unlinkSync(this.lockPath);
+            }
+        } catch {
+            // Ignore stale-lock check failures.
+        }
+    }
+
+    private async sleep(ms: number): Promise<void> {
+        await new Promise<void>(resolve => {
+            setTimeout(resolve, ms);
+        });
     }
 }

@@ -75,6 +75,7 @@ export class RateLimiter extends EventEmitter {
     private readonly strategies = new Map<string, RateLimitStrategy>();
     private readonly configs = new Map<string, RateLimitConfig>();
     private readonly violations = new Map<string, RateLimitViolation[]>();
+    private readonly warningStates = new Map<string, boolean>();
 
     constructor() {
         super();
@@ -90,10 +91,12 @@ export class RateLimiter extends EventEmitter {
         if (config.enabled) {
             const strategy = this.createStrategy(config);
             this.strategies.set(config.serviceId, strategy);
+            this.warningStates.set(config.serviceId, false);
 
             this.emit('strategy-changed', config.serviceId, config.strategy);
         } else {
             this.strategies.delete(config.serviceId);
+            this.warningStates.delete(config.serviceId);
         }
     }
 
@@ -125,8 +128,12 @@ export class RateLimiter extends EventEmitter {
 
             // Check if we're approaching the limit
             const status = strategy.getStatus(serviceId);
-            if (status.remainingRequests <= 5 && status.remainingRequests > 0) {
+            const warningArmed = this.warningStates.get(serviceId) ?? false;
+            if (status.remainingRequests <= 5 && status.remainingRequests > 0 && !warningArmed) {
                 this.emit('rate-limit-warning', serviceId, status.remainingRequests);
+                this.warningStates.set(serviceId, true);
+            } else if (status.remainingRequests > 5 && warningArmed) {
+                this.warningStates.set(serviceId, false);
             }
         }
     }
@@ -176,6 +183,7 @@ export class RateLimiter extends EventEmitter {
         const strategy = this.strategies.get(serviceId);
         if (strategy && 'reset' in strategy) {
             (strategy as any).reset(serviceId);
+            this.warningStates.set(serviceId, false);
             this.emit('rate-limit-reset', serviceId);
         }
     }

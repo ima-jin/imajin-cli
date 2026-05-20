@@ -14,19 +14,159 @@
 
 import { ed25519 } from '@noble/curves/ed25519.js';
 import nacl from 'tweetnacl';
-import * as dagCbor from '@ipld/dag-cbor';
-import { CID } from 'multiformats/cid';
-import { sha256 } from 'multiformats/hashes/sha2';
+import { createHash } from 'node:crypto';
 
 export interface EncryptedBlob {
     ciphertext: Uint8Array;
     nonce: Uint8Array;
 }
 
+function normalizeHex(value: string): string {
+    return value.toLowerCase();
+}
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function encodeBase58(bytes: Uint8Array): string {
+    if (bytes.length === 0) {
+        return '';
+    }
+
+    let value = BigInt(0);
+    for (const byte of bytes) {
+        value = (value << BigInt(8)) + BigInt(byte);
+    }
+
+    let encoded = '';
+    while (value > BigInt(0)) {
+        const remainder = Number(value % BigInt(58));
+        encoded = BASE58_ALPHABET[remainder]! + encoded;
+        value = value / BigInt(58);
+    }
+
+    let leadingZeroes = 0;
+    for (const byte of bytes) {
+        if (byte === 0) {
+            leadingZeroes += 1;
+        } else {
+            break;
+        }
+    }
+
+    return '1'.repeat(leadingZeroes) + (encoded || '1');
+}
+
+function canonicalVaultPayloadObject(payload: VaultSignedPayload): Record<string, string | boolean> {
+    const canonical: Record<string, string | boolean> = {
+        field: payload.field,
+        cid: payload.cid,
+        encrypted: payload.encrypted,
+        nonce: payload.nonce,
+        sender: payload.sender,
+        senderPubkey: normalizeHex(payload.senderPubkey),
+        keyId: payload.keyId,
+        timestamp: payload.timestamp,
+    };
+    if (payload.previousCid !== undefined) {
+        canonical.previousCid = payload.previousCid;
+    }
+    if (payload.deleted !== undefined) {
+        canonical.deleted = payload.deleted;
+    }
+    return canonical;
+}
+
+/**
+ * Compute a deterministic key ID for an Ed25519 public key.
+ */
+export function deriveKeyId(publicKeyHex: string): string {
+    const publicKey = hexToBytes(publicKeyHex);
+    if (publicKey.length !== 32) {
+        throw new Error(`Ed25519 public key must be 32 bytes, got ${publicKey.length}`);
+    }
+    const digest = createHash('sha256').update(Buffer.from(publicKey)).digest('hex');
+    return `ed25519:${digest.slice(0, 32)}`;
+}
+
+/**
+ * Build a did:key DID for an Ed25519 public key.
+ */
+export function deriveDidKeyFromPublicKey(publicKeyHex: string): string {
+    const publicKey = hexToBytes(publicKeyHex);
+    if (publicKey.length !== 32) {
+        throw new Error(`Ed25519 public key must be 32 bytes, got ${publicKey.length}`);
+    }
+    const multicodec = new Uint8Array(ED25519_MULTICODEC_PREFIX.length + publicKey.length);
+    multicodec.set(ED25519_MULTICODEC_PREFIX, 0);
+    multicodec.set(publicKey, ED25519_MULTICODEC_PREFIX.length);
+    return `did:key:z${encodeBase58(multicodec)}`;
+}
+
+/**
+ * Verify that a DID matches an Ed25519 public key. Currently supports did:key.
+ */
+export function verifyDidKeyBinding(did: string, publicKeyHex: string): boolean {
+    if (!did.startsWith('did:key:')) {
+        return false;
+    }
+    try {
+        return deriveDidKeyFromPublicKey(publicKeyHex) === did;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Sign a canonical vault entry payload with Ed25519.
+ */
+export function signVaultPayload(payload: VaultSignedPayload, signerPrivateKeyHex: string): string {
+    const privateKey = hexToBytes(signerPrivateKeyHex);
+    if (privateKey.length !== 32) {
+        throw new Error(`Ed25519 private key must be 32 bytes, got ${privateKey.length}`);
+    }
+    const bytes = new TextEncoder().encode(JSON.stringify(canonicalVaultPayloadObject(payload)));
+    const signature = ed25519.sign(bytes, privateKey);
+    return bytesToHex(signature);
+}
+
+/**
+ * Verify a signed canonical vault entry payload.
+ */
+export function verifyVaultPayloadSignature(
+    payload: VaultSignedPayload,
+    signatureHex: string,
+    signerPublicKeyHex: string
+): boolean {
+    try {
+        const signature = hexToBytes(signatureHex);
+        const publicKey = hexToBytes(signerPublicKeyHex);
+        if (signature.length !== 64 || publicKey.length !== 32) {
+            return false;
+        }
+        const bytes = new TextEncoder().encode(JSON.stringify(canonicalVaultPayloadObject(payload)));
+        return ed25519.verify(signature, bytes, publicKey);
+    } catch {
+        return false;
+    }
+}
+
 export interface EncryptedBlobSerialized {
     encrypted: string; // base64
     nonce: string;     // base64
 }
+export interface VaultSignedPayload {
+    field: string;
+    cid: string;
+    encrypted: string;
+    nonce: string;
+    sender: string;
+    senderPubkey: string;
+    keyId: string;
+    timestamp: string;
+    previousCid?: string;
+    deleted?: boolean;
+}
+
+const ED25519_MULTICODEC_PREFIX = new Uint8Array([0xed, 0x01]);
 
 /**
  * Convert a hex string to a Uint8Array.
@@ -175,20 +315,15 @@ export function deserializeBlob(serialized: EncryptedBlobSerialized): EncryptedB
 }
 
 /**
- * Compute a deterministic CIDv1 (dag-cbor, sha2-256) for an encrypted blob.
- *
- * The blob is encoded as dag-cbor and hashed with SHA-256.
+ * Compute a deterministic CID-like identifier for an encrypted blob.
  */
 export async function computeCid(blob: EncryptedBlobSerialized): Promise<string> {
-    const obj = {
+    const canonical = JSON.stringify({
         encrypted: blob.encrypted,
         nonce: blob.nonce,
-    };
-
-    const bytes = dagCbor.encode(obj);
-    const hash = await sha256.digest(bytes);
-    const cid = CID.create(1, dagCbor.code, hash);
-    return cid.toString();
+    });
+    const hashHex = createHash('sha256').update(canonical).digest('hex');
+    return `bafy${hashHex}`;
 }
 
 /**
