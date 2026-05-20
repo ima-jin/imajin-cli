@@ -36,6 +36,29 @@ import { ErrorRecovery } from './ErrorRecovery.js';
 export class Application {
   public static readonly VERSION = '0.1.0';
   public static readonly NAME = 'Imajin CLI';
+  private static globalErrorHandlersRegistered: boolean = false;
+  private static globalErrorHandlerApp: Application | null = null;
+  private static readonly unhandledRejectionHandler = (reason: unknown, promise: Promise<unknown>): void => {
+    const app = Application.globalErrorHandlerApp;
+    if (!app) {
+      return;
+    }
+    void app.handleUnhandledRejection(reason, promise);
+  };
+  private static readonly uncaughtExceptionHandler = (error: Error): void => {
+    const app = Application.globalErrorHandlerApp;
+    if (!app) {
+      return;
+    }
+    void app.handleUncaughtException(error);
+  };
+  private static readonly sigintHandler = (): void => {
+    const app = Application.globalErrorHandlerApp;
+    if (!app) {
+      return;
+    }
+    app.handleSigint();
+  };
 
   private readonly container: Container;
   private readonly program: Command;
@@ -86,40 +109,49 @@ export class Application {
    * Set up global error handling for unhandled errors
    */
   private setupGlobalErrorHandling(): void {
-    // Handle unhandled promise rejections
-    process.on('unhandledRejection', (reason, promise) => {
-      void (async () => {
-        const error = ExceptionUtils.normalize(reason, {
-          source: 'unhandledRejection',
-          promise
-        });
+    Application.globalErrorHandlerApp = this;
 
-        this.logger.error('Unhandled promise rejection', error, { promise });
-        await this.errorHandler.handleError(error);
-      })().catch(err => {
-        this.logger.error('Failed to handle unhandled rejection', err instanceof Error ? err : new Error(String(err)));
-      });
+    if (Application.globalErrorHandlersRegistered) {
+      return;
+    }
+
+    process.on('unhandledRejection', Application.unhandledRejectionHandler);
+    process.on('uncaughtException', Application.uncaughtExceptionHandler);
+    process.on('SIGINT', Application.sigintHandler);
+
+    Application.globalErrorHandlersRegistered = true;
+  }
+
+  private async handleUnhandledRejection(reason: unknown, promise: Promise<unknown>): Promise<void> {
+    const error = ExceptionUtils.normalize(reason, {
+      source: 'unhandledRejection',
+      promise
     });
 
-    // Handle uncaught exceptions
-    process.on('uncaughtException', (error) => {
-      void (async () => {
-        const normalizedError = ExceptionUtils.normalize(error, {
-          source: 'uncaughtException'
-        });
+    this.logger.error('Unhandled promise rejection', error, { promise });
+    try {
+      await this.errorHandler.handleError(error);
+    } catch (err) {
+      this.logger.error('Failed to handle unhandled rejection', err instanceof Error ? err : new Error(String(err)));
+    }
+  }
 
-        this.logger.error('Uncaught exception', normalizedError);
-        await this.errorHandler.handleError(normalizedError);
-      })().catch(err => {
-        this.logger.error('Failed to handle uncaught exception', err instanceof Error ? err : new Error(String(err)));
-      });
+  private async handleUncaughtException(error: Error): Promise<void> {
+    const normalizedError = ExceptionUtils.normalize(error, {
+      source: 'uncaughtException'
     });
 
-    // Handle SIGINT (Ctrl+C) gracefully
-    process.on('SIGINT', () => {
-      console.log('\n👋 Gracefully shutting down...');
-      process.exit(0);
-    });
+    this.logger.error('Uncaught exception', normalizedError);
+    try {
+      await this.errorHandler.handleError(normalizedError);
+    } catch (err) {
+      this.logger.error('Failed to handle uncaught exception', err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  private handleSigint(): void {
+    console.log('\n👋 Gracefully shutting down...');
+    process.exit(0);
   }
 
   private registerCoreServices(): void {
