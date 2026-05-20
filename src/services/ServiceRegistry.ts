@@ -31,6 +31,22 @@ import {
 } from './interfaces/ServiceInterface.js';
 
 export class ServiceRegistry implements IServiceRegistry {
+    private static signalHandlersRegistered: boolean = false;
+    private static activeRegistry: ServiceRegistry | null = null;
+    private static readonly sigintHandler = (): void => {
+        const registry = ServiceRegistry.activeRegistry;
+        if (!registry) {
+            return;
+        }
+        void registry.gracefulShutdown();
+    };
+    private static readonly sigtermHandler = (): void => {
+        const registry = ServiceRegistry.activeRegistry;
+        if (!registry) {
+            return;
+        }
+        void registry.gracefulShutdown();
+    };
     private readonly services: Map<string, IService> = new Map();
     private readonly serviceOptions: Map<string, ServiceRegistrationOptions> = new Map();
     private readonly dependencyGraph: Map<string, string[]> = new Map();
@@ -44,14 +60,16 @@ export class ServiceRegistry implements IServiceRegistry {
         this.container = container;
         this.logger = container.resolve<Logger>('logger');
         this.eventEmitter = container.resolve<EventEmitter>('eventEmitter');
+        ServiceRegistry.activeRegistry = this;
+
+        if (ServiceRegistry.signalHandlersRegistered) {
+            return;
+        }
 
         // Set up cleanup on process termination
-        process.on('SIGINT', () => {
- void this.gracefulShutdown(); 
-});
-        process.on('SIGTERM', () => {
- void this.gracefulShutdown(); 
-});
+        process.on('SIGINT', ServiceRegistry.sigintHandler);
+        process.on('SIGTERM', ServiceRegistry.sigtermHandler);
+        ServiceRegistry.signalHandlersRegistered = true;
     }
 
     /**
