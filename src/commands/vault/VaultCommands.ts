@@ -7,7 +7,7 @@
  * @version     0.1.0
  *
  * Commands:
- *   imajin vault set <KEY> <VALUE>   Encrypt and store a secret
+ *   imajin vault set <KEY>            Encrypt and store a secret
  *   imajin vault get <KEY>           Retrieve and decrypt a secret
  *   imajin vault list                List all stored secrets
  */
@@ -26,8 +26,6 @@ import {
     serializeBlob,
     computeCid,
     hexToBytes,
-    ed25519ToX25519Keys,
-    generateKeypair,
     bytesToHex,
 } from '../../crypto/vault-crypto.js';
 import { ed25519 } from '@noble/curves/ed25519.js';
@@ -57,15 +55,18 @@ export class VaultCommands {
             .description('Encrypted config/secrets store for Imajin nodes');
 
         vaultCommand
-            .command('set <key> <value>')
+            .command('set <key>')
             .description('Encrypt a value and store it in the vault')
+            .option('--value <text>', 'Secret value (warning: may leak via shell history)')
+            .option('--value-file <path>', 'Read secret value from file path')
+            .option('--stdin', 'Read secret value from stdin')
             .option('--node-pubkey <hex>', 'Ed25519 public key of the target node (hex)')
             .option('--sender-did <did>', 'Sender DID (defaults to identity.json did)')
             .option('--sender-privkey <hex>', 'Sender Ed25519 private key for encryption (defaults to identity.json)')
             .option('--json', 'Output as JSON')
-            .action((key: string, value: string, options: any, command: Command) => {
+            .action((key: string, options: any, command: Command) => {
                 const opts = this.getCommandOptions(options, command);
-                void this.handleSet(key, value, opts);
+                void this.handleSet(key, opts);
             });
 
         vaultCommand
@@ -137,11 +138,48 @@ export class VaultCommands {
         const pubkey = ed25519.getPublicKey(secret);
         return bytesToHex(pubkey);
     }
+    private async readValueFromStdin(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let data = '';
+            process.stdin.setEncoding('utf8');
+            process.stdin.on('data', (chunk: string) => {
+                data += chunk;
+            });
+            process.stdin.on('end', () => {
+                resolve(data.replace(/\r?\n$/, ''));
+            });
+            process.stdin.on('error', reject);
+        });
+    }
 
-    private async handleSet(key: string, value: string, options: any): Promise<void> {
+    private async resolveSecretValue(options: any): Promise<string> {
+        const hasValue = typeof options.value === 'string';
+        const hasValueFile = typeof options.valueFile === 'string';
+        const hasStdin = options.stdin === true;
+        const sourceCount = [hasValue, hasValueFile, hasStdin].filter(Boolean).length;
+
+        if (sourceCount === 0) {
+            throw new Error('Secret value required. Provide one of --value, --value-file, or --stdin');
+        }
+        if (sourceCount > 1) {
+            throw new Error('Specify only one value source: --value, --value-file, or --stdin');
+        }
+
+        if (hasValue) {
+            return String(options.value);
+        }
+        if (hasValueFile) {
+            const valuePath = String(options.valueFile);
+            return fs.readFileSync(valuePath, 'utf8').replace(/\r?\n$/, '');
+        }
+        return this.readValueFromStdin();
+    }
+
+    private async handleSet(key: string, options: any): Promise<void> {
         try {
             const nodeConfig = this.loadNodeConfig();
             const identityConfig = this.loadIdentityConfig();
+            const value = await this.resolveSecretValue(options);
 
             const nodePubkey = (options.nodePubkey as string | undefined)
                 ?? nodeConfig.publicKey;
@@ -197,6 +235,10 @@ export class VaultCommands {
                     },
                 }, null, 2));
                 return;
+            }
+
+            if (typeof options.value === 'string') {
+                console.log(chalk.yellow('⚠️  Passing secrets via --value may expose them in shell history; prefer --stdin or --value-file.'));
             }
 
             console.log(chalk.green('✅ Secret stored'));

@@ -43,7 +43,12 @@ export class VaultStore {
     private ensureDir(): void {
         const dir = path.dirname(this.vaultPath);
         if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+            fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+        }
+        try {
+            fs.chmodSync(dir, 0o700);
+        } catch {
+            // Best-effort hardening; chmod can fail on some filesystems/platforms.
         }
     }
 
@@ -73,8 +78,13 @@ export class VaultStore {
     private writeVault(vault: VaultFile): void {
         this.ensureDir();
         const tmpPath = `${this.vaultPath}.tmp`;
-        fs.writeFileSync(tmpPath, JSON.stringify(vault, null, 2), 'utf8');
+        fs.writeFileSync(tmpPath, JSON.stringify(vault, null, 2), { encoding: 'utf8', mode: 0o600 });
         fs.renameSync(tmpPath, this.vaultPath);
+        try {
+            fs.chmodSync(this.vaultPath, 0o600);
+        } catch {
+            // Best-effort hardening; chmod can fail on some filesystems/platforms.
+        }
     }
 
     /**
@@ -83,14 +93,7 @@ export class VaultStore {
      */
     public set(entry: Omit<VaultEntry, 'previousCid'> & { previousCid?: string }): VaultEntry {
         const vault = this.readVault();
-
-        const existingIndex = vault.entries.findIndex((e) => e.field === entry.field);
-        let previousCid: string | undefined;
-
-        if (existingIndex !== -1) {
-            previousCid = vault.entries[existingIndex]!.cid;
-            vault.entries.splice(existingIndex, 1);
-        }
+        const previousCid = this.getLatestEntry(vault.entries, entry.field)?.cid ?? entry.previousCid;
 
         const newEntry: VaultEntry = {
             ...entry,
@@ -107,7 +110,7 @@ export class VaultStore {
      */
     public get(field: string): VaultEntry | undefined {
         const vault = this.readVault();
-        return vault.entries.find((e) => e.field === field);
+        return this.getLatestEntry(vault.entries, field);
     }
 
     /**
@@ -115,7 +118,14 @@ export class VaultStore {
      */
     public list(): VaultEntry[] {
         const vault = this.readVault();
-        return [...vault.entries];
+        const latestByField = new Map<string, VaultEntry>();
+        for (let i = vault.entries.length - 1; i >= 0; i -= 1) {
+            const entry = vault.entries[i]!;
+            if (!latestByField.has(entry.field)) {
+                latestByField.set(entry.field, entry);
+            }
+        }
+        return Array.from(latestByField.values());
     }
 
     /**
@@ -125,7 +135,7 @@ export class VaultStore {
     public getHistory(field: string): VaultEntry[] {
         const vault = this.readVault();
         const history: VaultEntry[] = [];
-        let current = vault.entries.find((e) => e.field === field);
+        let current = this.getLatestEntry(vault.entries, field);
 
         while (current) {
             history.push(current);
@@ -150,5 +160,15 @@ export class VaultStore {
             return true;
         }
         return false;
+    }
+
+    private getLatestEntry(entries: VaultEntry[], field: string): VaultEntry | undefined {
+        for (let i = entries.length - 1; i >= 0; i -= 1) {
+            const entry = entries[i]!;
+            if (entry.field === field) {
+                return entry;
+            }
+        }
+        return undefined;
     }
 }
