@@ -25,6 +25,10 @@ import {
     deserializeBlob,
     serializeBlob,
     computeCid,
+    deriveKeyId,
+    deriveDidKeyFromPublicKey,
+    verifyDidKeyBinding,
+    signVaultPayload,
     hexToBytes,
     bytesToHex,
 } from '../../crypto/vault-crypto.js';
@@ -221,28 +225,33 @@ export class VaultCommands {
                 );
             }
 
-            const senderDid = (options.senderDid as string | undefined)
-                ?? identityConfig.did
-                ?? 'did:imajin:unknown';
 
             // Validate keys are valid hex
             hexToBytes(nodePubkey);
             hexToBytes(senderPrivkey);
 
             const senderPubkey = this.deriveSenderPubkey(senderPrivkey);
+            const senderDid = (options.senderDid as string | undefined)
+                ?? identityConfig.did
+                ?? deriveDidKeyFromPublicKey(senderPubkey);
+            if (!verifyDidKeyBinding(senderDid, senderPubkey)) {
+                throw new Error('Sender DID must be a did:key matching the sender keypair');
+            }
             const encryptedBlob = encrypt(value, nodePubkey, senderPrivkey);
             const serialized = serializeBlob(encryptedBlob);
             const cid = await computeCid(serialized);
+            const keyId = deriveKeyId(senderPubkey);
 
-            const entry = this.vaultStore.set({
+            const entry = await this.vaultStore.setSigned({
                 field: key,
                 cid,
                 encrypted: serialized.encrypted,
                 nonce: serialized.nonce,
                 sender: senderDid,
                 senderPubkey,
+                keyId,
                 timestamp: new Date().toISOString(),
-            });
+            }, payload => signVaultPayload(payload, senderPrivkey));
 
             if (options.json) {
                 console.log(JSON.stringify({
@@ -252,6 +261,7 @@ export class VaultCommands {
                         cid: entry.cid,
                         sender: entry.sender,
                         senderPubkey: entry.senderPubkey,
+                        keyId: entry.keyId,
                         timestamp: entry.timestamp,
                         previousCid: entry.previousCid ?? null,
                     },
@@ -271,6 +281,7 @@ export class VaultCommands {
             if (entry.previousCid) {
                 console.log(chalk.gray(`  Previous CID: ${entry.previousCid}`));
             }
+            console.log(chalk.gray(`  Key ID: ${entry.keyId}`));
         } catch (error) {
             this.logger.error('vault set failed', error as Error, { key });
             if (options.json) {
@@ -284,7 +295,7 @@ export class VaultCommands {
 
     private async handleGet(key: string, options: any): Promise<void> {
         try {
-            const entry = this.vaultStore.get(key);
+            const entry = await this.vaultStore.get(key);
             if (!entry) {
                 if (options.json) {
                     console.log(JSON.stringify({ success: false, error: `Key '${key}' not found in vault` }, null, 2));
@@ -355,7 +366,7 @@ export class VaultCommands {
 
     private async handleList(options: any): Promise<void> {
         try {
-            const entries = this.vaultStore.list();
+            const entries = await this.vaultStore.list();
             const identityConfig = this.loadIdentityConfig();
             const privateKey = (options.privateKey as string | undefined)
                 ?? identityConfig.privateKey;
@@ -367,6 +378,7 @@ export class VaultCommands {
                         field: e.field,
                         cid: e.cid,
                         sender: e.sender,
+                        keyId: e.keyId ?? null,
                         timestamp: e.timestamp,
                         hint: privateKey && e.senderPubkey
                             ? this.tryGetHint(e, privateKey)
@@ -392,6 +404,7 @@ export class VaultCommands {
                 console.log(`  ${chalk.cyan(entry.field)}`);
                 console.log(chalk.gray(`    CID:   ${entry.cid}`));
                 console.log(chalk.gray(`    Sender: ${entry.sender}`));
+                console.log(chalk.gray(`    Key ID: ${entry.keyId}`));
                 console.log(chalk.gray(`    Time:  ${entry.timestamp}`));
                 if (hint !== undefined) {
                     console.log(chalk.gray(`    Hint:  ${hint}`));

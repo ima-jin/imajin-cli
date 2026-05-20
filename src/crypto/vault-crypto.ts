@@ -17,16 +17,130 @@ import nacl from 'tweetnacl';
 import * as dagCbor from '@ipld/dag-cbor';
 import { CID } from 'multiformats/cid';
 import { sha256 } from 'multiformats/hashes/sha2';
+import { base58btc } from 'multiformats/bases/base58';
+import { createHash } from 'node:crypto';
 
 export interface EncryptedBlob {
     ciphertext: Uint8Array;
     nonce: Uint8Array;
 }
 
+function normalizeHex(value: string): string {
+    return value.toLowerCase();
+}
+
+function canonicalVaultPayloadObject(payload: VaultSignedPayload): Record<string, string | boolean> {
+    const canonical: Record<string, string | boolean> = {
+        field: payload.field,
+        cid: payload.cid,
+        encrypted: payload.encrypted,
+        nonce: payload.nonce,
+        sender: payload.sender,
+        senderPubkey: normalizeHex(payload.senderPubkey),
+        keyId: payload.keyId,
+        timestamp: payload.timestamp,
+    };
+    if (payload.previousCid !== undefined) {
+        canonical.previousCid = payload.previousCid;
+    }
+    if (payload.deleted !== undefined) {
+        canonical.deleted = payload.deleted;
+    }
+    return canonical;
+}
+
+/**
+ * Compute a deterministic key ID for an Ed25519 public key.
+ */
+export function deriveKeyId(publicKeyHex: string): string {
+    const publicKey = hexToBytes(publicKeyHex);
+    if (publicKey.length !== 32) {
+        throw new Error(`Ed25519 public key must be 32 bytes, got ${publicKey.length}`);
+    }
+    const digest = createHash('sha256').update(Buffer.from(publicKey)).digest('hex');
+    return `ed25519:${digest.slice(0, 32)}`;
+}
+
+/**
+ * Build a did:key DID for an Ed25519 public key.
+ */
+export function deriveDidKeyFromPublicKey(publicKeyHex: string): string {
+    const publicKey = hexToBytes(publicKeyHex);
+    if (publicKey.length !== 32) {
+        throw new Error(`Ed25519 public key must be 32 bytes, got ${publicKey.length}`);
+    }
+    const multicodec = new Uint8Array(ED25519_MULTICODEC_PREFIX.length + publicKey.length);
+    multicodec.set(ED25519_MULTICODEC_PREFIX, 0);
+    multicodec.set(publicKey, ED25519_MULTICODEC_PREFIX.length);
+    return `did:key:${base58btc.encode(multicodec)}`;
+}
+
+/**
+ * Verify that a DID matches an Ed25519 public key. Currently supports did:key.
+ */
+export function verifyDidKeyBinding(did: string, publicKeyHex: string): boolean {
+    if (!did.startsWith('did:key:')) {
+        return false;
+    }
+    try {
+        return deriveDidKeyFromPublicKey(publicKeyHex) === did;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Sign a canonical vault entry payload with Ed25519.
+ */
+export function signVaultPayload(payload: VaultSignedPayload, signerPrivateKeyHex: string): string {
+    const privateKey = hexToBytes(signerPrivateKeyHex);
+    if (privateKey.length !== 32) {
+        throw new Error(`Ed25519 private key must be 32 bytes, got ${privateKey.length}`);
+    }
+    const bytes = dagCbor.encode(canonicalVaultPayloadObject(payload));
+    const signature = ed25519.sign(bytes, privateKey);
+    return bytesToHex(signature);
+}
+
+/**
+ * Verify a signed canonical vault entry payload.
+ */
+export function verifyVaultPayloadSignature(
+    payload: VaultSignedPayload,
+    signatureHex: string,
+    signerPublicKeyHex: string
+): boolean {
+    try {
+        const signature = hexToBytes(signatureHex);
+        const publicKey = hexToBytes(signerPublicKeyHex);
+        if (signature.length !== 64 || publicKey.length !== 32) {
+            return false;
+        }
+        const bytes = dagCbor.encode(canonicalVaultPayloadObject(payload));
+        return ed25519.verify(signature, bytes, publicKey);
+    } catch {
+        return false;
+    }
+}
+
 export interface EncryptedBlobSerialized {
     encrypted: string; // base64
     nonce: string;     // base64
 }
+export interface VaultSignedPayload {
+    field: string;
+    cid: string;
+    encrypted: string;
+    nonce: string;
+    sender: string;
+    senderPubkey: string;
+    keyId: string;
+    timestamp: string;
+    previousCid?: string;
+    deleted?: boolean;
+}
+
+const ED25519_MULTICODEC_PREFIX = new Uint8Array([0xed, 0x01]);
 
 /**
  * Convert a hex string to a Uint8Array.
