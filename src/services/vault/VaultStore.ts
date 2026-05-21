@@ -14,6 +14,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {
+    assertEntryIntegrity as assertVaultCoreEntryIntegrity,
+    type VaultIntegrityAdapters,
+} from '@imajin/vault-core';
+import {
     computeCid,
     deriveKeyId,
     verifyDidKeyBinding,
@@ -262,36 +266,40 @@ export class VaultStore {
         if (!entry.signature) {
             throw new Error(`Vault entry '${fieldLabel}' missing signature`);
         }
-        if (!verifyDidKeyBinding(entry.sender, entry.senderPubkey)) {
-            throw new Error(`Vault entry '${fieldLabel}' has unverified DID-to-key binding`);
-        }
-        const derivedKeyId = deriveKeyId(entry.senderPubkey);
-        if (entry.keyId !== derivedKeyId) {
-            throw new Error(`Vault entry '${fieldLabel}' keyId mismatch`);
-        }
-        const expectedCid = await computeCid({
-            encrypted: entry.encrypted,
-            nonce: entry.nonce,
-        });
-        if (expectedCid !== entry.cid) {
-            throw new Error(`Vault entry '${fieldLabel}' CID mismatch`);
-        }
-        const payload: VaultSignedPayload = {
+        const adapters: VaultIntegrityAdapters = {
+            computeCid,
+            deriveKeyId,
+            verifyDidKeyBinding,
+            verifySignature: (payload, signature, senderPubkey) => {
+                const localPayload: VaultSignedPayload = {
+                    field: payload.field,
+                    cid: payload.cid,
+                    encrypted: payload.encrypted,
+                    nonce: payload.nonce,
+                    sender: payload.senderDid,
+                    senderPubkey: payload.senderPubkey,
+                    keyId: payload.keyId,
+                    timestamp: payload.timestamp,
+                    ...(payload.previousCid !== undefined ? { previousCid: payload.previousCid } : {}),
+                    ...(payload.deleted !== undefined ? { deleted: payload.deleted } : {}),
+                };
+                return verifyVaultPayloadSignature(localPayload, signature, senderPubkey);
+            },
+        };
+        await assertVaultCoreEntryIntegrity({
+            version: 1,
             field: entry.field,
             cid: entry.cid,
             encrypted: entry.encrypted,
             nonce: entry.nonce,
-            sender: entry.sender,
+            senderDid: entry.sender,
             senderPubkey: entry.senderPubkey,
             keyId: entry.keyId,
+            signature: entry.signature,
             timestamp: entry.timestamp,
             ...(entry.previousCid !== undefined ? { previousCid: entry.previousCid } : {}),
             ...(entry.deleted !== undefined ? { deleted: entry.deleted } : {}),
-        };
-        const signatureValid = verifyVaultPayloadSignature(payload, entry.signature, entry.senderPubkey);
-        if (!signatureValid) {
-            throw new Error(`Vault entry '${fieldLabel}' signature verification failed`);
-        }
+        }, adapters);
     }
 
     private async withWriteLock<T>(operation: () => Promise<T> | T): Promise<T> {

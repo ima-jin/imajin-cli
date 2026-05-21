@@ -52,6 +52,7 @@
   "license": ".fair LICENSING AGREEMENT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",
+    "@imajin/vault-core": "file:../imajin-ai/packages/vault-core",
     "@ipld/dag-cbor": "^10.0.1",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
