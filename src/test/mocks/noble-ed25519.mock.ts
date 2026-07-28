@@ -12,6 +12,16 @@ function digestSignature(publicKey: Uint8Array, message: Uint8Array): Uint8Array
     return new Uint8Array(hash.digest());
 }
 
+export const x25519 = {
+    /** Curve25519 scalar-mult with base point (matches @noble/curves/ed25519 x25519 export). */
+    getPublicKey(secretKey: Uint8Array): Uint8Array {
+        return nacl.box.keyPair.fromSecretKey(toBytes(secretKey)).publicKey;
+    },
+    getSharedSecret(secretKey: Uint8Array, publicKey: Uint8Array): Uint8Array {
+        return nacl.scalarMult(toBytes(secretKey), toBytes(publicKey));
+    },
+};
+
 export const ed25519 = {
     utils: {
         randomSecretKey(): Uint8Array {

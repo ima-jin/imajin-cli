@@ -10,6 +10,7 @@
  *   imajin vault set <KEY>            Encrypt and store a secret
  *   imajin vault get <KEY>           Retrieve and decrypt a secret
  *   imajin vault list                List all stored secrets
+ *   imajin vault pubkey               Print owner vault public keys for Tier 1 setup
  */
 
 import fs from 'node:fs';
@@ -19,6 +20,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import type { Logger } from '../../logging/Logger.js';
 import { VaultStore } from '../../services/vault/VaultStore.js';
+import { VaultKeyStore } from '../../services/vault/VaultKeyStore.js';
 import {
     encrypt,
     decrypt,
@@ -46,12 +48,15 @@ interface IdentityConfig {
 export class VaultCommands {
     private static readonly STDIN_TIMEOUT_MS = 30000;
     private readonly vaultStore: VaultStore;
+    private readonly vaultKeyStore: VaultKeyStore;
 
     constructor(
         private readonly logger: Logger,
-        vaultStore?: VaultStore
+        vaultStore?: VaultStore,
+        vaultKeyStore?: VaultKeyStore
     ) {
         this.vaultStore = vaultStore ?? new VaultStore();
+        this.vaultKeyStore = vaultKeyStore ?? new VaultKeyStore();
     }
 
     public registerCommands(program: Command): void {
@@ -92,6 +97,19 @@ export class VaultCommands {
             .action((options: any, command: Command) => {
                 const opts = this.getCommandOptions(options, command);
                 void this.handleList(opts);
+            });
+
+        vaultCommand
+            .command('pubkey')
+            .description(
+                'Print the owner vault public keys for Tier 1 custody setup.\n' +
+                'Run once, then set on the kernel:\n' +
+                '  VAULT_OWNER_X_PUB=<ownerXPub>  VAULT_OWNER_ED_PUB=<ownerEdPub>'
+            )
+            .option('--json', 'Output as JSON')
+            .action((options: any, command: Command) => {
+                const opts = this.getCommandOptions(options, command);
+                void this.handlePubkey(opts);
             });
     }
 
@@ -418,6 +436,41 @@ export class VaultCommands {
                 process.exit(1);
             }
             console.error(chalk.red(`❌ vault list failed: ${error}`));
+            process.exit(1);
+        }
+    }
+
+    private async handlePubkey(options: any): Promise<void> {
+        try {
+            const kp = await this.vaultKeyStore.getOrCreate();
+
+            if (options.json) {
+                console.log(JSON.stringify({
+                    success: true,
+                    data: {
+                        ownerXPub: kp.xPub,
+                        ownerEdPub: kp.edPub,
+                    },
+                }, null, 2));
+                return;
+            }
+
+            console.log(chalk.blue('🔑 Owner vault public keys (Tier 1 custody setup)'));
+            console.log();
+            console.log(chalk.gray('  Set these environment variables on the kernel to activate Tier 1:'));
+            console.log();
+            console.log(`  ${chalk.cyan('VAULT_OWNER_X_PUB')}=${chalk.white(kp.xPub)}`);
+            console.log(`  ${chalk.cyan('VAULT_OWNER_ED_PUB')}=${chalk.white(kp.edPub)}`);
+            console.log();
+            console.log(chalk.gray('  Once set, run `imajin vault serve` to process grant requests.'));
+            console.log(chalk.yellow('  ⚠️  Back up your key before storing production secrets: imajin vault backup'));
+        } catch (error) {
+            this.logger.error('vault pubkey failed', error as Error);
+            if (options.json) {
+                console.log(JSON.stringify({ success: false, error: String(error) }, null, 2));
+                process.exit(1);
+            }
+            console.error(chalk.red(`❌ vault pubkey failed: ${error}`));
             process.exit(1);
         }
     }
