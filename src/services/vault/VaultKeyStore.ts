@@ -96,6 +96,32 @@ export class VaultKeyStore {
     }
 
     /**
+     * Restore the owner vault keypair from a Shamir-reconstructed seed.
+     *
+     * Overwrites any existing seed in the keychain with the provided value.
+     * Use this after `imajin vault restore` to write back a recovered seed.
+     */
+    public async restoreFromSeed(seedHex: string): Promise<OwnerKeypair> {
+        // Validate before writing
+        const kp = deriveKeypair(seedHex);
+
+        let keychainOk = false;
+        try {
+            await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_SEED, seedHex);
+            keychainOk = true;
+        } catch {
+            // Keytar not available; fall through to file.
+        }
+
+        if (!keychainOk) {
+            ensureDir(path.dirname(FALLBACK_KEY_PATH));
+            fs.writeFileSync(FALLBACK_KEY_PATH, seedHex, { encoding: 'utf8', mode: 0o600 });
+        }
+
+        return kp;
+    }
+
+    /**
      * Delete the owner vault keypair from the OS keychain and fallback file.
      *
      * WARNING: After deletion, any vault fields sealed under Tier 1 using
