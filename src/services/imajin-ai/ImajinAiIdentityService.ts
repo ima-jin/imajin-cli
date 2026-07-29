@@ -92,7 +92,7 @@ export class ImajinAiIdentityService {
             payload.author_jws = input.authorJws;
         }
 
-        const response = await client.post('/api/attestations', payload);
+        const response = await client.post('/auth/api/attestations', payload);
         return response.data;
     }
 
