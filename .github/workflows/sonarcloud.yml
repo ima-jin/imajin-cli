@@ -82,6 +82,7 @@ jobs:
             -Dsonar.tests=src/test
             -Dsonar.test.inclusions=src/**/__tests__/**,src/test/**/*.test.ts,src/**/*.test.ts
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.test.ts,**/__tests__/**
+            -Dsonar.coverage.exclusions=src/commands/**
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
           projectBaseDir: .
