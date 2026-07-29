@@ -27,7 +27,7 @@ module.exports = {
         '/dist/'
     ],
     transformIgnorePatterns: [
-        '/node_modules/(?!(@noble|@ipld|multiformats|chalk|@imajin/vault-core)/)'
+        '/node_modules/(?!(@noble|@ipld|multiformats|chalk|@imajin/vault-core|shamirs-secret-sharing)/)'
     ],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
