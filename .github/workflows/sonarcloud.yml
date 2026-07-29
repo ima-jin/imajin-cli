@@ -61,6 +61,12 @@ jobs:
         run: npm run test:coverage
         continue-on-error: true  # Continue even if some tests fail
 
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Analyze with SonarCloud
         # You can pin the exact commit or the version.
         # uses: SonarSource/sonarcloud-github-action@v2.2.0
