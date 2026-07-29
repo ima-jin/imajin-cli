@@ -11,6 +11,7 @@
  *   imajin vault get <KEY>           Retrieve and decrypt a secret
  *   imajin vault list                List all stored secrets
  *   imajin vault pubkey               Print owner vault public keys for Tier 1 setup
+ *   imajin vault serve                Run the Tier 1 owner agent grant-issuance daemon
  */
 
 import fs from 'node:fs';
@@ -22,6 +23,16 @@ import type { Logger } from '../../logging/Logger.js';
 import { VaultStore } from '../../services/vault/VaultStore.js';
 import { VaultKeyStore } from '../../services/vault/VaultKeyStore.js';
 import { VaultShareStore } from '../../services/vault/VaultShareStore.js';
+import type { OwnerKeypair } from '../../services/vault/VaultKeyStore.js';
+import { VaultGrantService } from '../../services/vault/VaultGrantService.js';
+import type { PendingGrantRequest } from '../../services/vault/VaultGrantService.js';
+import {
+    wrapFieldKey,
+    unwrapFieldKey,
+    canonicalizeGrantPayload,
+    signCanonical,
+    deriveDid,
+} from '../../crypto/vault-delegation.js';
 import {
     encrypt,
     decrypt,
@@ -114,6 +125,23 @@ export class VaultCommands {
             .action((options: any, command: Command) => {
                 const opts = this.getCommandOptions(options, command);
                 void this.handlePubkey(opts);
+            });
+
+        vaultCommand
+            .command('serve')
+            .description(
+                'Run the Tier 1 owner agent daemon.\n' +
+                'Polls the kernel for pending vault grant requests, issues signed\n' +
+                'delegation grants, and writes them back to the kernel.'
+            )
+            .option('--url <url>', 'Kernel base URL (env: IMAJIN_NODE_URL)', process.env.IMAJIN_NODE_URL)
+            .option('--token <token>', 'Admin Bearer token (env: IMAJIN_ADMIN_TOKEN)', process.env.IMAJIN_ADMIN_TOKEN)
+            .option('--node-did <did>', 'Node DID (derived from publicKey in ~/.imajin/node.json if omitted)')
+            .option('--interval <seconds>', 'Poll interval in seconds', '5')
+            .option('--auto-approve', 'Approve all grant requests without prompting')
+            .action((options: any, command: Command) => {
+                const opts = this.getCommandOptions(options, command);
+                void this.handleServe(opts);
             });
 
         vaultCommand
@@ -463,6 +491,21 @@ export class VaultCommands {
         }
     }
 
+    private async handleServe(options: any): Promise<void> {
+        const nodeUrl = String(options.url ?? '');
+        const adminToken = String(options.token ?? '');
+        const pollInterval = Math.max(1, Number.parseInt(String(options.interval ?? '5'), 10));
+        const autoApprove = options.autoApprove === true;
+
+        if (!nodeUrl) {
+            console.error(chalk.red('\u274c Kernel URL required. Pass --url or set IMAJIN_NODE_URL.'));
+            process.exit(1);
+        }
+        if (!adminToken) {
+            console.error(chalk.red('\u274c Admin token required. Pass --token or set IMAJIN_ADMIN_TOKEN.'));
+        }
+    }
+  
     private async handleBackup(options: any): Promise<void> {
         const shares = Number.parseInt(String(options.shares ?? '3'), 10);
         const threshold = Number.parseInt(String(options.threshold ?? '2'), 10);
@@ -483,6 +526,143 @@ export class VaultCommands {
             process.exit(1);
         }
 
+        // Resolve nodeDid: prefer --node-did, then node.json publicKey, then fail.
+        let nodeDid: string;
+        if (options.nodeDid && typeof options.nodeDid === 'string') {
+            nodeDid = options.nodeDid;
+        } else {
+            const nodeConfig = this.loadNodeConfig();
+            if (!nodeConfig.publicKey) {
+                console.error(
+                    chalk.red('\u274c Cannot determine node DID.') + '\n' +
+                    chalk.gray('  Pass --node-did, or set publicKey in ~/.imajin/node.json.')
+                );
+                process.exit(1);
+            }
+            nodeDid = `did:imajin:${nodeConfig.publicKey.slice(0, 16)}`;
+        }
+
+        const ownerDid = deriveDid(keypair.edPub);
+        const grantService = new VaultGrantService(nodeUrl, adminToken);
+
+        console.log(chalk.blue('\ud83d\udd10 Vault owner agent started (Tier 1)'));
+        console.log(chalk.gray(`   ownerDid   : ${ownerDid}`));
+        console.log(chalk.gray(`   fingerprint: ${keypair.xPub.slice(0, 8)}...`));
+        console.log(chalk.gray(`   nodeDid    : ${nodeDid}`));
+        console.log(chalk.gray(`   kernel     : ${nodeUrl}`));
+        console.log(chalk.gray(`   poll       : ${pollInterval}s  |  auto-approve: ${autoApprove}`));
+        console.log();
+        console.log(chalk.yellow('Waiting for grant requests... (Ctrl+C to stop)'));
+        console.log();
+
+        const poll = async (): Promise<void> => {
+            let requests: PendingGrantRequest[];
+            try {
+                requests = await grantService.fetchPendingGrants();
+            } catch (err) {
+                console.error(chalk.yellow(`\u26a0\ufe0f  Poll error: ${err}`));
+                return;
+            }
+
+            for (const req of requests) {
+                await this.processGrantRequest(req, keypair, nodeDid, ownerDid, grantService, autoApprove);
+            }
+        };
+
+        await poll();
+        const intervalId = setInterval(() => { void poll(); }, pollInterval * 1_000);
+
+        const shutdown = (): void => {
+            clearInterval(intervalId);
+            console.log();
+            console.log(chalk.yellow('Vault owner agent stopped.'));
+            process.exit(0);
+        };
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
+    }
+
+    private async processGrantRequest(
+        req: PendingGrantRequest,
+        keypair: OwnerKeypair,
+        nodeDid: string,
+        ownerDid: string,
+        grantService: VaultGrantService,
+        autoApprove: boolean,
+    ): Promise<void> {
+        // Guard: request must be addressed to our key.
+        if (req.ownerXPub !== keypair.xPub) {
+            console.warn(chalk.yellow(
+                `\u26a0\ufe0f  Skipping ${req.field} (requestId: ${req.requestId.slice(0, 8)}...): ` +
+                `ownerXPub mismatch (expected ${keypair.xPub.slice(0, 8)}, got ${req.ownerXPub.slice(0, 8)})`
+            ));
+            return;
+        }
+
+        console.log(chalk.gray(`\n   Grant request: field='${req.field}' requestId=${req.requestId.slice(0, 8)}...`));
+
+        if (!autoApprove) {
+            const { default: inquirer } = await import('inquirer');
+            const { approve } = await inquirer.prompt([{
+                type: 'confirm',
+                name: 'approve',
+                message: `Issue delegation grant for field '${chalk.cyan(req.field)}'?`,
+                default: true,
+            }]) as { approve: boolean };
+
+            if (!approve) {
+                console.log(chalk.yellow('  Skipped.'));
+                return;
+            }
+        }
+
+        try {
+            // Step 1: Recover the field key.
+            // The kernel wrapped it nodeXPriv → ownerXPub for secure delivery.
+            // We unwrap using ownerXPriv + nodeXPub.
+            const fieldKey = unwrapFieldKey(
+                { encryptedKey: req.wrappedFieldKey, nonce: req.wrappedFieldKeyNonce },
+                req.nodeXPub,
+                keypair.xPriv,
+            );
+
+            // Step 2: Wrap the field key as the canonical delegation grant.
+            // Owner signs and wraps ownerXPriv → nodeXPub.
+            const wrapped = wrapFieldKey(fieldKey, req.nodeXPub, keypair.xPriv);
+
+            const expiresAt = req.expiresAt ? new Date(req.expiresAt) : null;
+
+            // Step 3: Sign the canonical grant payload.
+            const canonical = canonicalizeGrantPayload({
+                subject: ownerDid,
+                grantedTo: nodeDid,
+                field: req.field,
+                ownerXPub: keypair.xPub,
+                wrappedKey: wrapped.encryptedKey,
+                wrappedNonce: wrapped.nonce,
+                keyId: req.keyId,
+                expiresAt,
+            });
+            const ownerSignature = signCanonical(canonical, keypair.edPriv);
+
+            // Step 4: Submit to kernel.
+            const result = await grantService.submitGrant({
+                requestId: req.requestId,
+                subject: ownerDid,
+                grantedTo: nodeDid,
+                field: req.field,
+                ownerXPub: keypair.xPub,
+                wrappedKey: wrapped.encryptedKey,
+                wrappedNonce: wrapped.nonce,
+                keyId: req.keyId,
+                ownerSignature,
+                expiresAt: expiresAt?.toISOString() ?? null,
+            });
+
+            console.log(chalk.green(`\u2705 Grant issued: field='${result.field}' grantId=${result.grantId.slice(0, 16)}...`));
+        } catch (err) {
+            console.error(chalk.red(`\u274c Failed to process grant for '${req.field}': ${err}`));
+        }
         console.log(chalk.blue('\ud83d\udd10 Creating Shamir vault backup...'));
         console.log(chalk.gray(`   Key fingerprint : ${keypair.xPub.slice(0, 8)}`));
         console.log(chalk.gray(`   Shares          : ${shares}  |  Threshold: ${threshold}`));
