@@ -94,6 +94,32 @@ If you need to restore the key on a new machine (or after reinstalling):
 
 ---
 
+## Keeping the agent alive under expiring grants
+
+If the kernel has `VAULT_GRANT_TTL_DAYS` set, delegation grants expire, and expiry **crypto-erases** the wrapped field key on the kernel side. An expired grant is not a soft failure — the node cannot read that field again until the owner agent issues a fresh grant. `vault serve` handles this automatically by polling for grants that are missing or nearing expiry, alongside its usual poll for new grant requests.
+
+**Flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--renew-policy <prompt\|auto\|never>` | `prompt` | Approval policy for renewals. See below. |
+| `--renew-within <days>` | `7` | Treat a grant as renewable this many days before it expires. Keep this comfortably above `--interval` so a briefly-offline agent isn't treated as an outage. |
+| `--grant-ttl-days <days>` | none (no expiry) | TTL applied to a *renewed* grant. See the caveat below before relying on this. |
+
+**`--renew-policy` is separate from `--auto-approve` on purpose.** Approving a *new* grant request costs little: the node already holds the plaintext it just sealed, and it cannot fabricate a request for a field it cannot read. Approving a *renewal* is different — it extends the node's access to a secret it may no longer legitimately need, on a recurring schedule, with no human in the loop. `--auto-approve` never implies `--renew-policy auto`; unattended renewal requires asking for it explicitly:
+
+```bash
+imajin vault serve --auto-approve --renew-policy auto
+```
+
+Running with `--renew-policy prompt` (the default) means an offline/unattended agent will stall waiting for a renewal confirmation the first time a grant needs renewing. If you want the agent to survive expiry with nobody watching, you need `--renew-policy auto`; `--renew-policy never` disables renewal entirely and leaves a lapsed grant as a lockout until you run `vault serve` interactively.
+
+Every renewal (and every skip or failure) is reported on stdout, so a silently-failing renewal is visible before it takes down a connector.
+
+**`--grant-ttl-days` is a known-imperfect stopgap.** The actual expiry policy (`VAULT_GRANT_TTL_DAYS`) lives on the kernel, and the CLI currently has no way to read it — this flag is a *second, unenforced* copy of that setting. Nothing checks that the two agree. If you set `VAULT_GRANT_TTL_DAYS` on the kernel, set a matching `--grant-ttl-days` here, or renewed grants will stop expiring after their first renewal (silently ending TTL rotation for that field, which is worse than never enabling it, since it looks like rotation is still happening). Track ima-jin/imajin-ai#1558 for a kernel-advertised TTL that would remove this requirement.
+
+---
+
 ## What happens if fewer than M shares are available
 
 If you have fewer than M shares (or if their passphrases are lost):

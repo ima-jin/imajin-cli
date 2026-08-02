@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VaultCommands - CLI commands for the Imajin encrypted vault
  *
  * @package     @imajin/cli
@@ -25,7 +25,7 @@ import { VaultKeyStore } from '../../services/vault/VaultKeyStore.js';
 import { VaultShareStore } from '../../services/vault/VaultShareStore.js';
 import type { OwnerKeypair } from '../../services/vault/VaultKeyStore.js';
 import { VaultGrantService } from '../../services/vault/VaultGrantService.js';
-import type { PendingGrantRequest } from '../../services/vault/VaultGrantService.js';
+import type { PendingGrantRequest, RenewableGrant } from '../../services/vault/VaultGrantService.js';
 import {
     wrapFieldKey,
     unwrapFieldKey,
@@ -56,6 +56,14 @@ interface IdentityConfig {
     privateKey?: string;
     did?: string;
 }
+
+/**
+ * See the --renew-policy help text (registerCommands) for the full rationale.
+ * Summary: 'prompt' asks before renewing (default); 'auto' renews unattended
+ * and is the only way a long-running agent survives grant expiry unattended;
+ * 'never' disables renewal entirely.
+ */
+type RenewPolicy = 'prompt' | 'auto' | 'never';
 
 export class VaultCommands {
     private static readonly STDIN_TIMEOUT_MS = 30000;
@@ -132,13 +140,35 @@ export class VaultCommands {
             .description(
                 'Run the Tier 1 owner agent daemon.\n' +
                 'Polls the kernel for pending vault grant requests, issues signed\n' +
-                'delegation grants, and writes them back to the kernel.'
+                'delegation grants, and writes them back to the kernel. Also polls\n' +
+                'for grants nearing expiry and renews them per --renew-policy.'
             )
             .option('--url <url>', 'Kernel base URL (env: IMAJIN_NODE_URL)', process.env.IMAJIN_NODE_URL)
             .option('--token <token>', 'Admin Bearer token (env: IMAJIN_ADMIN_TOKEN)', process.env.IMAJIN_ADMIN_TOKEN)
             .option('--node-did <did>', 'Node DID (derived from publicKey in ~/.imajin/node.json if omitted)')
             .option('--interval <seconds>', 'Poll interval in seconds', '5')
-            .option('--auto-approve', 'Approve all grant requests without prompting')
+            .option('--auto-approve', 'Approve all NEW grant requests without prompting (does not affect renewals ΓÇö see --renew-policy)')
+            .option(
+                '--renew-policy <policy>',
+                'Renewal approval policy for grants nearing expiry: prompt|auto|never.\n' +
+                '  prompt (default): ask before renewing, same as new grants.\n' +
+                '  auto: renew without prompting ΓÇö required for unattended operation.\n' +
+                '  never: never renew; a lapsed grant stays a lockout until you run\n' +
+                '         `vault serve` interactively or renew manually.\n' +
+                'Deliberately separate from --auto-approve: approving a seal costs\n' +
+                'little (the node already holds the plaintext it just sealed), but\n' +
+                'approving a renewal extends access to a secret the node may no\n' +
+                'longer need, on a schedule, with no human in the loop ΓÇö that should\n' +
+                'be an explicit opt-in, not a side effect of --auto-approve.',
+                'prompt'
+            )
+            .option('--renew-within <days>', 'Renew grants expiring within this many days (keep well above --interval)', '7')
+            .option(
+                '--grant-ttl-days <days>',
+                'TTL, in days, applied to renewed grants. Omit for no expiry ΓÇö but if\n' +
+                'the kernel has VAULT_GRANT_TTL_DAYS set, mirror it here or renewed\n' +
+                'grants will stop expiring after one renewal cycle.'
+            )
             .action((options: any, command: Command) => {
                 const opts = this.getCommandOptions(options, command);
                 void this.handleServe(opts);
@@ -339,10 +369,10 @@ export class VaultCommands {
             }
 
             if (typeof options.value === 'string') {
-                console.log(chalk.yellow('⚠️  Passing secrets via --value may expose them in shell history; prefer --stdin or --value-file.'));
+                console.log(chalk.yellow('ΓÜá∩╕Å  Passing secrets via --value may expose them in shell history; prefer --stdin or --value-file.'));
             }
 
-            console.log(chalk.green('✅ Secret stored'));
+            console.log(chalk.green('Γ£à Secret stored'));
             console.log(chalk.gray(`  Field: ${entry.field}`));
             console.log(chalk.gray(`  CID:   ${entry.cid}`));
             console.log(chalk.gray(`  Sender: ${entry.sender}`));
@@ -357,7 +387,7 @@ export class VaultCommands {
                 console.log(JSON.stringify({ success: false, error: String(error) }, null, 2));
                 process.exit(1);
             }
-            console.error(chalk.red(`❌ vault set failed: ${error}`));
+            console.error(chalk.red(`Γ¥î vault set failed: ${error}`));
             process.exit(1);
         }
     }
@@ -370,7 +400,7 @@ export class VaultCommands {
                     console.log(JSON.stringify({ success: false, error: `Key '${key}' not found in vault` }, null, 2));
                     process.exit(1);
                 }
-                console.error(chalk.red(`❌ Key '${key}' not found in vault`));
+                console.error(chalk.red(`Γ¥î Key '${key}' not found in vault`));
                 process.exit(1);
             }
 
@@ -387,13 +417,13 @@ export class VaultCommands {
                     process.exit(1);
                 }
                 console.error(
-                    chalk.red('❌ Private key required for decryption. Pass --private-key or set it in ~/.imajin/identity.json')
+                    chalk.red('Γ¥î Private key required for decryption. Pass --private-key or set it in ~/.imajin/identity.json')
                 );
                 process.exit(1);
             }
 
             if (!entry.senderPubkey) {
-                throw new Error('Vault entry missing sender public key — cannot decrypt');
+                throw new Error('Vault entry missing sender public key ΓÇö cannot decrypt');
             }
 
             // Validate key
@@ -416,7 +446,7 @@ export class VaultCommands {
                 return;
             }
 
-            console.log(chalk.green('✅ Secret retrieved'));
+            console.log(chalk.green('Γ£à Secret retrieved'));
             console.log(chalk.gray(`  Field: ${entry.field}`));
             console.log(chalk.gray(`  Value: ${plaintext}`));
             console.log(chalk.gray(`  CID:   ${entry.cid}`));
@@ -428,7 +458,7 @@ export class VaultCommands {
                 console.log(JSON.stringify({ success: false, error: String(error) }, null, 2));
                 process.exit(1);
             }
-            console.error(chalk.red(`❌ vault get failed: ${error}`));
+            console.error(chalk.red(`Γ¥î vault get failed: ${error}`));
             process.exit(1);
         }
     }
@@ -462,7 +492,7 @@ export class VaultCommands {
                 return;
             }
 
-            console.log(chalk.blue(`🔐 Vault Entries (${entries.length})`));
+            console.log(chalk.blue(`≡ƒöÉ Vault Entries (${entries.length})`));
             console.log();
 
             for (const entry of entries) {
@@ -486,7 +516,7 @@ export class VaultCommands {
                 console.log(JSON.stringify({ success: false, error: String(error) }, null, 2));
                 process.exit(1);
             }
-            console.error(chalk.red(`❌ vault list failed: ${error}`));
+            console.error(chalk.red(`Γ¥î vault list failed: ${error}`));
             process.exit(1);
         }
     }
@@ -496,6 +526,11 @@ export class VaultCommands {
         const adminToken = String(options.token ?? '');
         const pollInterval = Math.max(1, Number.parseInt(String(options.interval ?? '5'), 10));
         const autoApprove = options.autoApprove === true;
+        const renewPolicy = this.parseRenewPolicy(options.renewPolicy);
+        const renewWithinDays = this.parsePositiveNumber(options.renewWithin ?? '7', '--renew-within');
+        const grantTtlDays = options.grantTtlDays === undefined
+            ? null
+            : this.parsePositiveNumber(options.grantTtlDays, '--grant-ttl-days');
 
         if (!nodeUrl) {
             console.error(chalk.red('\u274c Kernel URL required. Pass --url or set IMAJIN_NODE_URL.'));
@@ -537,6 +572,10 @@ export class VaultCommands {
         console.log(chalk.gray(`   nodeDid    : ${nodeDid}`));
         console.log(chalk.gray(`   kernel     : ${nodeUrl}`));
         console.log(chalk.gray(`   poll       : ${pollInterval}s  |  auto-approve: ${autoApprove}`));
+        console.log(chalk.gray(
+            `   renewal    : policy=${renewPolicy}  |  within=${renewWithinDays}d  |  ` +
+            `ttl=${grantTtlDays !== null ? `${grantTtlDays}d` : 'none (no expiry)'}`
+        ));
         console.log();
         console.log(chalk.yellow('Waiting for grant requests... (Ctrl+C to stop)'));
         console.log();
@@ -553,6 +592,22 @@ export class VaultCommands {
             for (const req of requests) {
                 await this.processGrantRequest(req, keypair, nodeDid, ownerDid, grantService, autoApprove);
             }
+
+            if (renewPolicy === 'never') {
+                return;
+            }
+
+            let renewable: RenewableGrant[];
+            try {
+                renewable = await grantService.fetchRenewableGrants(renewWithinDays);
+            } catch (err) {
+                console.error(chalk.yellow(`\u26a0\ufe0f  Renewal poll error: ${err}`));
+                return;
+            }
+
+            for (const grant of renewable) {
+                await this.processRenewableGrant(grant, keypair, nodeDid, ownerDid, grantService, renewPolicy, grantTtlDays);
+            }
         };
 
         await poll();
@@ -568,13 +623,33 @@ export class VaultCommands {
         process.on('SIGTERM', shutdown);
     }
 
+    /** Validate --renew-policy. Exits the process on an invalid value. */
+    private parseRenewPolicy(value: any): RenewPolicy {
+        const raw = String(value ?? 'prompt');
+        if (raw !== 'prompt' && raw !== 'auto' && raw !== 'never') {
+            console.error(chalk.red(`\u274c --renew-policy must be one of: prompt, auto, never (got '${raw}')`));
+            process.exit(1);
+        }
+        return raw;
+    }
+
+    /** Validate a numeric CLI option that must be a positive number. Exits on failure. */
+    private parsePositiveNumber(value: any, flagName: string): number {
+        const parsed = Number.parseFloat(String(value));
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+            console.error(chalk.red(`\u274c ${flagName} must be a positive number`));
+            process.exit(1);
+        }
+        return parsed;
+    }
+
     private async handleBackup(options: any): Promise<void> {
         const shares = Number.parseInt(String(options.shares ?? '3'), 10);
         const threshold = Number.parseInt(String(options.threshold ?? '2'), 10);
         const outDir = String(options.out ?? './vault-recovery');
 
         if (Number.isNaN(shares) || shares < 2) {
-            console.error(chalk.red('\u274c --shares must be an integer ≥ 2'));
+            console.error(chalk.red('\u274c --shares must be an integer ΓëÑ 2'));
             process.exit(1);
         }
         if (Number.isNaN(threshold) || threshold < 2 || threshold > shares) {
@@ -639,7 +714,7 @@ export class VaultCommands {
         console.log();
         console.log(chalk.yellow(`\u26a0\ufe0f  Store share files in separate secure locations (different devices / trusted custodians).`));
         console.log(chalk.yellow(`   Any ${threshold} of ${shares} shares are sufficient to recover your key.`));
-        console.log(chalk.yellow('   Fewer than that cannot recover the key — there is no fallback.'));
+        console.log(chalk.yellow('   Fewer than that cannot recover the key ΓÇö there is no fallback.'));
     }
 
     private async processGrantRequest(
@@ -678,7 +753,7 @@ export class VaultCommands {
 
         try {
             // Step 1: Recover the field key.
-            // The kernel wrapped it nodeXPriv → ownerXPub for secure delivery.
+            // The kernel wrapped it nodeXPriv ΓåÆ ownerXPub for secure delivery.
             // We unwrap using ownerXPriv + nodeXPub.
             const fieldKey = unwrapFieldKey(
                 { encryptedKey: req.wrappedFieldKey, nonce: req.wrappedFieldKeyNonce },
@@ -687,7 +762,7 @@ export class VaultCommands {
             );
 
             // Step 2: Wrap the field key as the canonical delegation grant.
-            // Owner signs and wraps ownerXPriv → nodeXPub.
+            // Owner signs and wraps ownerXPriv ΓåÆ nodeXPub.
             const wrapped = wrapFieldKey(fieldKey, req.nodeXPub, keypair.xPriv);
 
             const expiresAt = req.expiresAt ? new Date(req.expiresAt) : null;
@@ -722,6 +797,110 @@ export class VaultCommands {
             console.log(chalk.green(`\u2705 Grant issued: field='${result.field}' grantId=${result.grantId.slice(0, 16)}...`));
         } catch (err) {
             console.error(chalk.red(`\u274c Failed to process grant for '${req.field}': ${err}`));
+        }
+    }
+
+    /**
+     * Renew a grant that is missing or nearing expiry (#1536).
+     *
+     * Unlike processGrantRequest, there is no `vault_grant_requests` row here ΓÇö
+     * the owner envelope (persisted at seal time) is the only source of the
+     * field key, and the kernel resolves trust from the vault entry instead of
+     * a request row. Submitting with no `requestId` is what tells the kernel
+     * this is a renewal.
+     *
+     * The ECDH counterparty for BOTH steps below is `grant.senderXPub` ΓÇö the
+     * node's X25519 pubkey, recorded under that name because the envelope was
+     * wrapped nodeΓåÆowner. This is the single easiest thing to get wrong: the
+     * seal-time handshake in processGrantRequest unwraps against `req.nodeXPub`;
+     * renewal unwraps against `grant.senderXPub` instead. There is no separate
+     * "nodeXPub" field on a RenewableGrant because senderXPub already is that key.
+     */
+    private async processRenewableGrant(
+        grant: RenewableGrant,
+        keypair: OwnerKeypair,
+        nodeDid: string,
+        ownerDid: string,
+        grantService: VaultGrantService,
+        renewPolicy: RenewPolicy,
+        grantTtlDays: number | null,
+    ): Promise<void> {
+        // Guard: envelope must be addressed to our key.
+        if (grant.ownerXPub !== keypair.xPub) {
+            console.warn(chalk.yellow(
+                `\u26a0\ufe0f  Skipping renewal of '${grant.field}': ownerXPub mismatch ` +
+                `(expected ${keypair.xPub.slice(0, 8)}, got ${grant.ownerXPub.slice(0, 8)})`
+            ));
+            return;
+        }
+
+        console.log(chalk.gray(
+            `\n   Renewable grant: field='${grant.field}' reason=${grant.reason}` +
+            (grant.expiresAt ? ` expiresAt=${grant.expiresAt}` : '')
+        ));
+
+        if (renewPolicy === 'prompt') {
+            const { default: inquirer } = await import('inquirer');
+            const { approve } = await inquirer.prompt([{
+                type: 'confirm',
+                name: 'approve',
+                message: `Renew delegation grant for field '${chalk.cyan(grant.field)}' (${grant.reason})?`,
+                default: true,
+            }]) as { approve: boolean };
+
+            if (!approve) {
+                console.log(chalk.yellow('  Skipped.'));
+                return;
+            }
+        }
+
+        try {
+            // Step 1: Recover the field key. Counterparty is grant.senderXPub, not
+            // a nodeXPub field ΓÇö see the method doc comment for why.
+            const fieldKey = unwrapFieldKey(
+                { encryptedKey: grant.wrappedKey, nonce: grant.wrappedNonce },
+                grant.senderXPub,
+                keypair.xPriv,
+            );
+
+            // Step 2: Re-wrap for the node (ownerXPriv ΓåÆ nodeXPub). The node's
+            // X25519 pubkey is grant.senderXPub ΓÇö the envelope's sender.
+            const wrapped = wrapFieldKey(fieldKey, grant.senderXPub, keypair.xPriv);
+
+            const expiresAt = grantTtlDays !== null
+                ? new Date(Date.now() + grantTtlDays * 24 * 60 * 60 * 1000)
+                : null;
+
+            const canonical = canonicalizeGrantPayload({
+                subject: ownerDid,
+                grantedTo: nodeDid,
+                field: grant.field,
+                ownerXPub: keypair.xPub,
+                wrappedKey: wrapped.encryptedKey,
+                wrappedNonce: wrapped.nonce,
+                keyId: grant.keyId,
+                expiresAt,
+            });
+            const ownerSignature = signCanonical(canonical, keypair.edPriv);
+
+            // No requestId: its absence is what marks this a renewal to the kernel.
+            const result = await grantService.submitGrant({
+                subject: ownerDid,
+                grantedTo: nodeDid,
+                field: grant.field,
+                ownerXPub: keypair.xPub,
+                wrappedKey: wrapped.encryptedKey,
+                wrappedNonce: wrapped.nonce,
+                keyId: grant.keyId,
+                ownerSignature,
+                expiresAt: expiresAt?.toISOString() ?? null,
+            });
+
+            console.log(chalk.green(
+                `\u2705 Grant renewed: field='${result.field}' grantId=${result.grantId.slice(0, 16)}...`
+            ));
+        } catch (err) {
+            console.error(chalk.red(`\u274c Failed to renew grant for '${grant.field}': ${err}`));
         }
     }
 
@@ -798,7 +977,7 @@ export class VaultCommands {
                 return;
             }
 
-            console.log(chalk.blue('🔑 Owner vault public keys (Tier 1 custody setup)'));
+            console.log(chalk.blue('≡ƒöæ Owner vault public keys (Tier 1 custody setup)'));
             console.log();
             console.log(chalk.gray('  Set these environment variables on the kernel to activate Tier 1:'));
             console.log();
@@ -806,14 +985,14 @@ export class VaultCommands {
             console.log(`  ${chalk.cyan('VAULT_OWNER_ED_PUB')}=${chalk.white(kp.edPub)}`);
             console.log();
             console.log(chalk.gray('  Once set, run `imajin vault serve` to process grant requests.'));
-            console.log(chalk.yellow('  ⚠️  Back up your key before storing production secrets: imajin vault backup'));
+            console.log(chalk.yellow('  ΓÜá∩╕Å  Back up your key before storing production secrets: imajin vault backup'));
         } catch (error) {
             this.logger.error('vault pubkey failed', error as Error);
             if (options.json) {
                 console.log(JSON.stringify({ success: false, error: String(error) }, null, 2));
                 process.exit(1);
             }
-            console.error(chalk.red(`❌ vault pubkey failed: ${error}`));
+            console.error(chalk.red(`Γ¥î vault pubkey failed: ${error}`));
             process.exit(1);
         }
     }
