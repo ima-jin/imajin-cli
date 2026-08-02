@@ -503,20 +503,6 @@ export class VaultCommands {
         }
         if (!adminToken) {
             console.error(chalk.red('\u274c Admin token required. Pass --token or set IMAJIN_ADMIN_TOKEN.'));
-        }
-    }
-  
-    private async handleBackup(options: any): Promise<void> {
-        const shares = Number.parseInt(String(options.shares ?? '3'), 10);
-        const threshold = Number.parseInt(String(options.threshold ?? '2'), 10);
-        const outDir = String(options.out ?? './vault-recovery');
-
-        if (Number.isNaN(shares) || shares < 2) {
-            console.error(chalk.red('\u274c --shares must be an integer ≥ 2'));
-            process.exit(1);
-        }
-        if (Number.isNaN(threshold) || threshold < 2 || threshold > shares) {
-            console.error(chalk.red(`\u274c --threshold must be an integer 2 \u2264 threshold \u2264 shares (${shares})`));
             process.exit(1);
         }
 
@@ -570,7 +556,7 @@ export class VaultCommands {
         };
 
         await poll();
-        const intervalId = setInterval(() => { void poll(); }, pollInterval * 1_000);
+        const intervalId = setInterval(() => void poll(), pollInterval * 1_000);
 
         const shutdown = (): void => {
             clearInterval(intervalId);
@@ -580,6 +566,80 @@ export class VaultCommands {
         };
         process.on('SIGINT', shutdown);
         process.on('SIGTERM', shutdown);
+    }
+
+    private async handleBackup(options: any): Promise<void> {
+        const shares = Number.parseInt(String(options.shares ?? '3'), 10);
+        const threshold = Number.parseInt(String(options.threshold ?? '2'), 10);
+        const outDir = String(options.out ?? './vault-recovery');
+
+        if (Number.isNaN(shares) || shares < 2) {
+            console.error(chalk.red('\u274c --shares must be an integer ≥ 2'));
+            process.exit(1);
+        }
+        if (Number.isNaN(threshold) || threshold < 2 || threshold > shares) {
+            console.error(chalk.red(`\u274c --threshold must be an integer 2 \u2264 threshold \u2264 shares (${shares})`));
+            process.exit(1);
+        }
+
+        const keypair = await this.vaultKeyStore.load();
+        if (!keypair) {
+            console.error(chalk.red('\u274c No vault owner key found. Run `imajin vault pubkey` first.'));
+            process.exit(1);
+        }
+
+        console.log(chalk.blue('\ud83d\udd10 Creating Shamir vault backup...'));
+        console.log(chalk.gray(`   Key fingerprint : ${keypair.xPub.slice(0, 8)}`));
+        console.log(chalk.gray(`   Shares          : ${shares}  |  Threshold: ${threshold}`));
+        console.log(chalk.yellow(`   You will be prompted for ${shares} separate passphrases (one per share).`));
+        console.log();
+
+        const seed = Buffer.from(keypair.edPriv, 'hex');
+
+        // Use dynamic import to avoid CJS/ESM issues with inquirer in tests.
+        const { default: inquirer } = await import('inquirer');
+
+        let filePaths: string[];
+        try {
+            filePaths = await this.vaultShareStore.createShares({
+                seed,
+                ownerXPub: keypair.xPub,
+                shares,
+                threshold,
+                outDir,
+                getPassphrase: async (shareIndex, total) => {
+                    const { passphrase } = await inquirer.prompt([{
+                        type: 'password',
+                        name: 'passphrase',
+                        message: `Passphrase for share ${shareIndex}/${total}:`,
+                        validate: (v: string) =>
+                            v.length >= 8 ? true : 'Passphrase must be at least 8 characters',
+                    }]);
+                    const { confirm } = await inquirer.prompt([{
+                        type: 'password',
+                        name: 'confirm',
+                        message: `Confirm passphrase for share ${shareIndex}/${total}:`,
+                    }]);
+                    if (passphrase !== confirm) {
+                        throw new Error(`Passphrases for share ${shareIndex} do not match`);
+                    }
+                    return passphrase as string;
+                },
+            });
+        } catch (error) {
+            this.logger.error('vault backup failed', error as Error);
+            console.error(chalk.red(`\u274c vault backup failed: ${error}`));
+            process.exit(1);
+        }
+
+        console.log(chalk.green('\u2705 Backup complete.'));
+        for (const p of filePaths) {
+            console.log(chalk.gray(`   ${p}`));
+        }
+        console.log();
+        console.log(chalk.yellow(`\u26a0\ufe0f  Store share files in separate secure locations (different devices / trusted custodians).`));
+        console.log(chalk.yellow(`   Any ${threshold} of ${shares} shares are sufficient to recover your key.`));
+        console.log(chalk.yellow('   Fewer than that cannot recover the key — there is no fallback.'));
     }
 
     private async processGrantRequest(
@@ -663,58 +723,6 @@ export class VaultCommands {
         } catch (err) {
             console.error(chalk.red(`\u274c Failed to process grant for '${req.field}': ${err}`));
         }
-        console.log(chalk.blue('\ud83d\udd10 Creating Shamir vault backup...'));
-        console.log(chalk.gray(`   Key fingerprint : ${keypair.xPub.slice(0, 8)}`));
-        console.log(chalk.gray(`   Shares          : ${shares}  |  Threshold: ${threshold}`));
-        console.log(chalk.yellow(`   You will be prompted for ${shares} separate passphrases (one per share).`));
-        console.log();
-
-        const seed = Buffer.from(keypair.edPriv, 'hex');
-
-        // Use dynamic import to avoid CJS/ESM issues with inquirer in tests.
-        const { default: inquirer } = await import('inquirer');
-
-        let filePaths: string[];
-        try {
-            filePaths = await this.vaultShareStore.createShares({
-                seed,
-                ownerXPub: keypair.xPub,
-                shares,
-                threshold,
-                outDir,
-                getPassphrase: async (shareIndex, total) => {
-                    const { passphrase } = await inquirer.prompt([{
-                        type: 'password',
-                        name: 'passphrase',
-                        message: `Passphrase for share ${shareIndex}/${total}:`,
-                        validate: (v: string) =>
-                            v.length >= 8 ? true : 'Passphrase must be at least 8 characters',
-                    }]);
-                    const { confirm } = await inquirer.prompt([{
-                        type: 'password',
-                        name: 'confirm',
-                        message: `Confirm passphrase for share ${shareIndex}/${total}:`,
-                    }]);
-                    if (passphrase !== confirm) {
-                        throw new Error(`Passphrases for share ${shareIndex} do not match`);
-                    }
-                    return passphrase as string;
-                },
-            });
-        } catch (error) {
-            this.logger.error('vault backup failed', error as Error);
-            console.error(chalk.red(`\u274c vault backup failed: ${error}`));
-            process.exit(1);
-        }
-
-        console.log(chalk.green('\u2705 Backup complete.'));
-        for (const p of filePaths) {
-            console.log(chalk.gray(`   ${p}`));
-        }
-        console.log();
-        console.log(chalk.yellow(`\u26a0\ufe0f  Store share files in separate secure locations (different devices / trusted custodians).`));
-        console.log(chalk.yellow(`   Any ${threshold} of ${shares} shares are sufficient to recover your key.`));
-        console.log(chalk.yellow('   Fewer than that cannot recover the key — there is no fallback.'));
     }
 
     private async handleRestore(sharePaths: string[], _options: any): Promise<void> {
