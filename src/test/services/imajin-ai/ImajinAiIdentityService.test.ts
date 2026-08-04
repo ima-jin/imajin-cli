@@ -1,6 +1,6 @@
-import { ImajinAiIdentityService } from '../../../services/imajin-ai/ImajinAiIdentityService';
-import { ImajinAiSessionService } from '../../../services/imajin-ai/ImajinAiSessionService';
-import type { Logger } from '../../../logging/Logger';
+import { ImajinAiIdentityService } from '../../../services/imajin-ai/ImajinAiIdentityService.js';
+import { ImajinAiSessionService } from '../../../services/imajin-ai/ImajinAiSessionService.js';
+import type { Logger } from '../../../logging/Logger.js';
 
 jest.mock('../../../services/imajin-ai/ImajinAiSessionService');
 jest.mock('../../../http/HttpClientSimple');

@@ -16,7 +16,7 @@ import os from 'node:os';
 import {
     assertEntryIntegrity as assertVaultCoreEntryIntegrity,
     type VaultIntegrityAdapters,
-} from '@imajin/vault-core';
+} from '@ima-jin/vault-core';
 import {
     computeCid,
     deriveKeyId,
