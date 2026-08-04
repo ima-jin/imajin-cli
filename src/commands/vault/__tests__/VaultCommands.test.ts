@@ -25,7 +25,7 @@ jest.mock('chalk', () => ({
     }
 }));
 
-// VaultStore.ts pulls in @imajin/vault-core, which in this environment fails to
+// VaultStore.ts pulls in @ima-jin/vault-core, which in this environment fails to
 // load under Jest's CJS transform (an unrelated, pre-existing pnpm/ESM issue in
 // the linked imajin-ai workspace package, not something owned by this file).
 // None of the tests below exercise VaultStore, so it is mocked out entirely to
