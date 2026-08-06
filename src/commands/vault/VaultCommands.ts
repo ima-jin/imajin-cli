@@ -26,6 +26,7 @@ import { VaultShareStore } from '../../services/vault/VaultShareStore.js';
 import type { OwnerKeypair } from '../../services/vault/VaultKeyStore.js';
 import { VaultGrantService } from '../../services/vault/VaultGrantService.js';
 import type { PendingGrantRequest, RenewableGrant } from '../../services/vault/VaultGrantService.js';
+import { resolveCustodyPair, isDelegatedGrantee } from '../../services/vault/custody-pair.js';
 import {
     wrapFieldKey,
     unwrapFieldKey,
@@ -734,7 +735,13 @@ export class VaultCommands {
             return;
         }
 
-        console.log(chalk.gray(`\n   Grant request: field='${req.field}' requestId=${req.requestId.slice(0, 8)}...`));
+        const custody = resolveCustodyPair(req, { ownerDid, nodeDid });
+        console.log(chalk.gray(
+            `\n   Grant request: field='${req.field}' requestId=${req.requestId.slice(0, 8)}...` +
+            // Surfaced only when it is not the node, so the operator approving a
+            // prompt can see they are authorizing a third party.
+            (isDelegatedGrantee(custody, nodeDid) ? `\n   grantee: ${custody.grantedTo}` : '')
+        ));
 
         if (!autoApprove) {
             const { default: inquirer } = await import('inquirer');
@@ -763,14 +770,21 @@ export class VaultCommands {
 
             // Step 2: Wrap the field key as the canonical delegation grant.
             // Owner signs and wraps ownerXPriv ΓåÆ nodeXPub.
+            //
+            // The recipient stays the NODE even when the grant is authorized to a
+            // connector DID (#1603): the node is what unseals on the grantee's
+            // behalf at call time. Wrapping to anything else produces a grant that
+            // verifies, installs, and then cannot decrypt.
             const wrapped = wrapFieldKey(fieldKey, req.nodeXPub, keypair.xPriv);
 
             const expiresAt = req.expiresAt ? new Date(req.expiresAt) : null;
 
+            const { subject, grantedTo } = custody;
+
             // Step 3: Sign the canonical grant payload.
             const canonical = canonicalizeGrantPayload({
-                subject: ownerDid,
-                grantedTo: nodeDid,
+                subject,
+                grantedTo,
                 field: req.field,
                 ownerXPub: keypair.xPub,
                 wrappedKey: wrapped.encryptedKey,
@@ -783,8 +797,8 @@ export class VaultCommands {
             // Step 4: Submit to kernel.
             const result = await grantService.submitGrant({
                 requestId: req.requestId,
-                subject: ownerDid,
-                grantedTo: nodeDid,
+                subject,
+                grantedTo,
                 field: req.field,
                 ownerXPub: keypair.xPub,
                 wrappedKey: wrapped.encryptedKey,
@@ -871,9 +885,14 @@ export class VaultCommands {
                 ? new Date(Date.now() + grantTtlDays * 24 * 60 * 60 * 1000)
                 : null;
 
+            // Re-issue to whoever held the grant, not to whoever is running this
+            // agent (#1603). Older kernels omit it, and there every renewable grant
+            // was the node's own.
+            const { grantedTo } = resolveCustodyPair(grant, { ownerDid, nodeDid });
+
             const canonical = canonicalizeGrantPayload({
                 subject: ownerDid,
-                grantedTo: nodeDid,
+                grantedTo,
                 field: grant.field,
                 ownerXPub: keypair.xPub,
                 wrappedKey: wrapped.encryptedKey,
@@ -886,7 +905,7 @@ export class VaultCommands {
             // No requestId: its absence is what marks this a renewal to the kernel.
             const result = await grantService.submitGrant({
                 subject: ownerDid,
-                grantedTo: nodeDid,
+                grantedTo,
                 field: grant.field,
                 ownerXPub: keypair.xPub,
                 wrappedKey: wrapped.encryptedKey,

@@ -33,6 +33,21 @@ export interface PendingGrantRequest {
     wrappedFieldKeyNonce: string;
     createdAt: string;
     expiresAt: string | null;
+    /**
+     * The custody pair the kernel is asking us to sign (#1603).
+     *
+     * A node self-grant has both set to the node's DID. A static-secret connector
+     * credential has `subject` = the principal who owns the key and `grantedTo` =
+     * the connector app DID.
+     *
+     * Optional because a kernel older than #1603 does not send them; the caller
+     * falls back to the self-grant shape, which is what those kernels mean.
+     *
+     * `grantedTo` authorizes and does NOT change where the key is wrapped ΓÇö that
+     * stays `nodeXPub`, because the node decrypts on the grantee's behalf.
+     */
+    subject?: string;
+    grantedTo?: string;
 }
 
 export interface GrantSubmission {
@@ -85,6 +100,15 @@ export interface RenewableGrant {
     senderXPub: string;
     wrappedKey: string;
     wrappedNonce: string;
+    /**
+     * Who the renewed grant must name (#1603). Absent from kernels older than
+     * #1603, where every renewable grant belonged to the node.
+     *
+     * Renewing to the node when the real grantee is a connector DID installs a
+     * grant nothing reads while the lapsed one stays lapsed ΓÇö a silent failure,
+     * which is why this is threaded through rather than assumed.
+     */
+    grantedTo?: string;
 }
 
 // ΓöÇΓöÇ VaultGrantService ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
