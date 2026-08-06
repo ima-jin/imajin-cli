@@ -17,10 +17,10 @@
  * - System keychain access permissions
  */
 
-import * as keytar from 'keytar';
 import { ERROR_MESSAGES } from '../../constants/CommonStrings.js';
 import { BaseCredentialProvider } from './BaseCredentialProvider.js';
 import type { CredentialData } from './interfaces.js';
+import { getKeytar } from './keytar-lazy.js';
 
 export class KeychainProvider extends BaseCredentialProvider {
     public readonly name = 'macOS Keychain';
@@ -34,7 +34,7 @@ export class KeychainProvider extends BaseCredentialProvider {
     }
 
     public get isAvailable(): boolean {
-        return process.platform === 'darwin' && this.isKeytarAvailable();
+        return process.platform === 'darwin';
     }
 
     /**
@@ -42,7 +42,8 @@ export class KeychainProvider extends BaseCredentialProvider {
      */
     public async store(service: string, credentials: CredentialData): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'darwin') {
                 throw new Error(ERROR_MESSAGES.MACOS_KEYCHAIN_NOT_AVAILABLE);
             }
 
@@ -66,7 +67,8 @@ export class KeychainProvider extends BaseCredentialProvider {
      */
     public async retrieve(service: string): Promise<CredentialData | null> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'darwin') {
                 return null;
             }
 
@@ -97,7 +99,8 @@ export class KeychainProvider extends BaseCredentialProvider {
      */
     public async delete(service: string): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'darwin') {
                 throw new Error(ERROR_MESSAGES.MACOS_KEYCHAIN_NOT_AVAILABLE);
             }
 
@@ -122,7 +125,8 @@ export class KeychainProvider extends BaseCredentialProvider {
      */
     public async list(): Promise<string[]> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'darwin') {
                 return [];
             }
 
@@ -142,7 +146,8 @@ export class KeychainProvider extends BaseCredentialProvider {
      */
     public async clear(): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'darwin') {
                 throw new Error(ERROR_MESSAGES.MACOS_KEYCHAIN_NOT_AVAILABLE);
             }
 
@@ -170,16 +175,13 @@ export class KeychainProvider extends BaseCredentialProvider {
     /**
      * Check if keytar is available and functional
      */
-    private isKeytarAvailable(): boolean {
-        try {
-            // Test if keytar functions are available
-            return typeof keytar.setPassword === 'function' &&
-                typeof keytar.getPassword === 'function' &&
-                typeof keytar.deletePassword === 'function';
-        } catch (error) {
-            this.logger.debug(`Keytar not available: ${error}`);
-            return false;
-        }
+    /**
+     * Eagerly probe keytar availability (call once at startup if desired).
+     * After this resolves, `isAvailable` returns a reliable synchronous answer.
+     */
+    public async probeAvailability(): Promise<boolean> {
+        const keytar = await getKeytar();
+        return keytar !== null && process.platform === 'darwin';
     }
 
     /**

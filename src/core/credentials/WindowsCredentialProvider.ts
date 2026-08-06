@@ -17,10 +17,10 @@
  * - Windows Hello biometric integration
  */
 
-import * as keytar from 'keytar';
 import { ERROR_MESSAGES } from '../../constants/CommonStrings.js';
 import { BaseCredentialProvider } from './BaseCredentialProvider.js';
 import type { CredentialData } from './interfaces.js';
+import { getKeytar } from './keytar-lazy.js';
 
 export class WindowsCredentialProvider extends BaseCredentialProvider {
     public readonly name = 'Windows Credential Manager';
@@ -34,7 +34,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
     }
 
     public get isAvailable(): boolean {
-        return process.platform === 'win32' && this.isKeytarAvailable();
+        return process.platform === 'win32';
     }
 
     /**
@@ -42,7 +42,8 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
      */
     public async store(service: string, credentials: CredentialData): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'win32') {
                 throw new Error(ERROR_MESSAGES.WINDOWS_CREDENTIAL_MANAGER_NOT_AVAILABLE);
             }
 
@@ -66,7 +67,8 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
      */
     public async retrieve(service: string): Promise<CredentialData | null> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'win32') {
                 return null;
             }
 
@@ -97,7 +99,8 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
      */
     public async delete(service: string): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'win32') {
                 throw new Error(ERROR_MESSAGES.WINDOWS_CREDENTIAL_MANAGER_NOT_AVAILABLE);
             }
 
@@ -122,7 +125,8 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
      */
     public async list(): Promise<string[]> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'win32') {
                 return [];
             }
 
@@ -142,7 +146,8 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
      */
     public async clear(): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || process.platform !== 'win32') {
                 throw new Error(ERROR_MESSAGES.WINDOWS_CREDENTIAL_MANAGER_NOT_AVAILABLE);
             }
 
@@ -165,20 +170,7 @@ export class WindowsCredentialProvider extends BaseCredentialProvider {
         }
     }
 
-    /**
-     * Check if keytar is available and functional on Windows
-     */
-    private isKeytarAvailable(): boolean {
-        try {
-            // Test if keytar functions are available
-            return typeof keytar.setPassword === 'function' &&
-                typeof keytar.getPassword === 'function' &&
-                typeof keytar.deletePassword === 'function';
-        } catch (error) {
-            this.logger.debug(`Keytar not available on Windows: ${error}`);
-            return false;
-        }
-    }
+
 
     /**
      * Get credential type for logging
