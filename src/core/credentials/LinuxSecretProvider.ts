@@ -17,10 +17,10 @@
  * - Desktop environment integration
  */
 
-import * as keytar from 'keytar';
 import { ERROR_MESSAGES } from '../../constants/CommonStrings.js';
 import { BaseCredentialProvider } from './BaseCredentialProvider.js';
 import type { CredentialData } from './interfaces.js';
+import { getKeytar } from './keytar-lazy.js';
 
 export class LinuxSecretProvider extends BaseCredentialProvider {
     public readonly name = 'Linux Secret Service';
@@ -34,7 +34,7 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
     }
 
     public get isAvailable(): boolean {
-        return process.platform === 'linux' && this.isKeytarAvailable() && this.isSecretServiceAvailable();
+        return process.platform === 'linux' && this.isSecretServiceAvailable();
     }
 
     /**
@@ -42,7 +42,8 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
      */
     public async store(service: string, credentials: CredentialData): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || !this.isAvailable) {
                 throw new Error(ERROR_MESSAGES.LINUX_SECRET_SERVICE_NOT_AVAILABLE);
             }
 
@@ -66,7 +67,8 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
      */
     public async retrieve(service: string): Promise<CredentialData | null> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || !this.isAvailable) {
                 return null;
             }
 
@@ -97,7 +99,8 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
      */
     public async delete(service: string): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || !this.isAvailable) {
                 throw new Error(ERROR_MESSAGES.LINUX_SECRET_SERVICE_NOT_AVAILABLE);
             }
 
@@ -122,7 +125,8 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
      */
     public async list(): Promise<string[]> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || !this.isAvailable) {
                 return [];
             }
 
@@ -142,7 +146,8 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
      */
     public async clear(): Promise<void> {
         try {
-            if (!this.isAvailable) {
+            const keytar = await getKeytar();
+            if (!keytar || !this.isAvailable) {
                 throw new Error(ERROR_MESSAGES.LINUX_SECRET_SERVICE_NOT_AVAILABLE);
             }
 
@@ -162,21 +167,6 @@ export class LinuxSecretProvider extends BaseCredentialProvider {
         } catch (error) {
             this.logger.error(`Failed to clear credentials: ${error}`);
             throw new Error(`Failed to clear credentials: ${error}`);
-        }
-    }
-
-    /**
-     * Check if keytar is available and functional on Linux
-     */
-    private isKeytarAvailable(): boolean {
-        try {
-            // Test if keytar functions are available
-            return typeof keytar.setPassword === 'function' &&
-                typeof keytar.getPassword === 'function' &&
-                typeof keytar.deletePassword === 'function';
-        } catch (error) {
-            this.logger.debug(`Keytar not available on Linux: ${error}`);
-            return false;
         }
     }
 
