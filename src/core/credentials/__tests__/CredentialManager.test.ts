@@ -153,6 +153,19 @@ describe('CredentialManager', () => {
                     .rejects.toThrow();
             }
         });
+
+        test('should accept a cookie-only imajin-ai session', async () => {
+            // /api/login/verify returns an httpOnly `imajin_session` cookie and no
+            // bearer token, so a valid stored session has neither apiKey nor
+            // accessToken. Rejecting it made cookie-session login unstorable.
+            const sessionCredentials: CredentialData = {
+                sessionCookie: 'imajin_session=abc123',
+                metadata: { authMode: 'cookie-session' }
+            };
+
+            await expect(credentialManager.store(testService, sessionCredentials))
+                .resolves.not.toThrow();
+        });
     });
 
     describe('Credential Testing', () => {

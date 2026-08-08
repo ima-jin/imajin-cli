@@ -336,9 +336,13 @@ export class CredentialManager implements ICredentialManager {
 
         const hasApiKey = credentials.apiKey && typeof credentials.apiKey === 'string';
         const hasAccessToken = credentials.accessToken && typeof credentials.accessToken === 'string';
+        // imajin-ai login is a cookie session: /api/login/verify returns an
+        // httpOnly `imajin_session` cookie and no bearer token, so a stored
+        // session legitimately has neither apiKey nor accessToken.
+        const hasSessionCookie = credentials.sessionCookie && typeof credentials.sessionCookie === 'string';
 
-        if (!hasApiKey && !hasAccessToken) {
-            throw new Error('Credentials must contain at least apiKey or accessToken');
+        if (!hasApiKey && !hasAccessToken && !hasSessionCookie) {
+            throw new Error('Credentials must contain at least apiKey, accessToken, or sessionCookie');
         }
 
         // Validate expiration date if present
