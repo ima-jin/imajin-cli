@@ -27,8 +27,21 @@ The old model (direct Stripe/Contentful/plugin-generation focus) is now consider
 The CLI remains thin: UX, argument handling, transport, envelopes, and automation ergonomics.
 
 ## Authentication strategy
-### Target (next implementation)
-Dedicated `imajin-ai` login/session flow in CLI (challenge/session based), so users authenticate to one backend and then orchestrate commands.
+### Current
+Dedicated `imajin-ai` login/session flow is implemented in the CLI (challenge/session based via `ImajinAiSessionService`), so users authenticate to one backend and then orchestrate commands.
+
+```bash
+# Set the imajin-ai base URL (must include the /auth path segment)
+export IMAJIN_AI_BASE_URL=https://jin.imajin.ai/auth
+
+# Request a login challenge, then verify it to store a session
+imajin auth imajin-ai challenge alice
+imajin auth imajin-ai login --challenge-id <id> --signature <hex>
+
+# Check session status, or clear it
+imajin auth imajin-ai status
+imajin auth imajin-ai logout
+```
 
 ## Workspace command examples
 ```bash
@@ -65,7 +78,7 @@ Issue generation scripts:
 ## Current implementation posture
 - Legacy provider paths (plugin-generation/Stripe/Contentful runtime loading) are being phased out of default bootstrap.
 - Work tracking is issue-first in GitHub.
-- The next major implementation step is `imajin-ai` auth/session integration and transport wiring for top command namespaces.
+- `imajin-ai` auth/session integration is implemented; transport wiring for remaining top command namespaces continues.
 
 ## Development
 ```bash
