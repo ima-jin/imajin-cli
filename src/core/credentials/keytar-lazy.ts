@@ -12,7 +12,12 @@ let _keytar: KeytarModule | null | undefined; // undefined = not yet loaded
 export async function getKeytar(): Promise<KeytarModule | null> {
     if (_keytar !== undefined) return _keytar;
     try {
-        _keytar = await import('keytar') as KeytarModule;
+        // keytar is CommonJS: under ESM the real API lands on `.default`, and
+        // only some names are re-exported on the namespace object. Without the
+        // unwrap, `keytar.getPassword` resolves but `keytar.setPassword` is
+        // undefined — reads appear to work while every write throws.
+        const mod = await import('keytar') as KeytarModule & { default?: KeytarModule };
+        _keytar = mod.default ?? mod;
         return _keytar;
     } catch {
         _keytar = null;
