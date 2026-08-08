@@ -101,10 +101,10 @@ Issue generation scripts:
 
 ## Development
 ```bash
-npm install
-npm run build
-npm run type-check
-npm run cli -- --help
+pnpm install
+pnpm run build
+pnpm run type-check
+pnpm run cli -- --help
 ```
 
 ## Notes for contributors

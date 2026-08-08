@@ -9,7 +9,7 @@ Common orientation for any AI/code agent working in this repo. The canonical, de
 
 ## Quick expectations
 - Treat `CLAUDE.md` as the source of truth for how to build, test, and navigate the codebase.
-- Prefer the npm scripts in `CLAUDE.md` for dev/build/test (`npm run dev`, `npm run build`, `npm test`, `npm run lint`, etc.).
+- Prefer the pnpm scripts in `CLAUDE.md` for dev/build/test (`pnpm run dev`, `pnpm run build`, `pnpm test`, `pnpm run lint`, etc.).
 - Keep changes aligned with the business-context-driven CLI generation model described in `README.md` and `CLAUDE.md`.
 - When adding or updating prompts or automation, check `docs/prompts/README.md` and existing agent briefs under `docs/agents/` to stay consistent.
 

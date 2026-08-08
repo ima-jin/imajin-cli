@@ -54,11 +54,6 @@ try {
         Remove-Item "node_modules" -Recurse -Force
     }
     
-    if (Test-Path "package-lock.json") {
-        Write-Host "   - Removing package-lock.json..." -ForegroundColor Gray
-        Remove-Item "package-lock.json" -Force
-    }
-    
     if (Test-Path "yarn.lock") {
         Write-Host "   - Removing yarn.lock..." -ForegroundColor Gray
         Remove-Item "yarn.lock" -Force
@@ -76,19 +71,19 @@ try {
     
     Write-Host "   ✅ Dist folder removed" -ForegroundColor Green
 
-    # Step 4: Clear npm cache
-    Write-Host "💾 Step 4: Clearing npm cache..." -ForegroundColor Yellow
-    npm cache clean --force
-    Write-Host "   ✅ NPM cache cleared" -ForegroundColor Green
+    # Step 4: Clear pnpm store cache
+    Write-Host "💾 Step 4: Clearing pnpm store cache..." -ForegroundColor Yellow
+    pnpm store prune
+    Write-Host "   ✅ pnpm store cache cleared" -ForegroundColor Green
 
     # Step 5: Fresh install
-    Write-Host "📥 Step 5: Fresh npm install..." -ForegroundColor Yellow
-    npm install
+    Write-Host "📥 Step 5: Fresh pnpm install..." -ForegroundColor Yellow
+    pnpm install
     Write-Host "   ✅ Dependencies installed" -ForegroundColor Green
 
     # Step 6: Build project
     Write-Host "🔨 Step 6: Building project..." -ForegroundColor Yellow
-    npm run build
+    pnpm run build
     Write-Host "   ✅ Project built successfully" -ForegroundColor Green
 
     # Step 7: Test the CLI
@@ -109,8 +104,8 @@ try {
     Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Yellow
     Write-Host "  • Run 'imajin --help' to see available commands" -ForegroundColor Gray
-    Write-Host "  • Run 'npm test' to run tests" -ForegroundColor Gray
-    Write-Host "  • Run 'npm run dev' for development mode" -ForegroundColor Gray
+    Write-Host "  • Run 'pnpm test' to run tests" -ForegroundColor Gray
+    Write-Host "  • Run 'pnpm run dev' for development mode" -ForegroundColor Gray
 
 } catch {
     Write-Host ""

@@ -36,7 +36,7 @@
   },
   
   // Set up shell for better development experience
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "corepack enable && pnpm install",
   
   // Forward ports
   "forwardPorts": [3000],

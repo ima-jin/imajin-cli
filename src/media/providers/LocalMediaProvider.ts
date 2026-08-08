@@ -155,7 +155,7 @@ throw error;
             const originalBuffer = await fs.readFile(originalPath);
 
             // Apply transformations (basic implementation)
-            let transformedBuffer = originalBuffer;
+            let transformedBuffer: Buffer = originalBuffer;
 
             for (const transformation of transformations) {
                 transformedBuffer = await LocalMediaProvider.applyTransformation(transformedBuffer, transformation);
