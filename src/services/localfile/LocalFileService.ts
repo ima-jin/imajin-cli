@@ -194,7 +194,7 @@ export class LocalFileService extends BaseService {
             const originalBuffer = await fs.readFile(originalPath);
 
             // Apply transformations (basic implementation)
-            let transformedBuffer = originalBuffer;
+            let transformedBuffer: Buffer = originalBuffer;
 
             for (const transformation of transformations) {
                 transformedBuffer = await this.applyTransformation(transformedBuffer, transformation);

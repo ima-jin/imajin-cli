@@ -5,6 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# pnpm is the authoritative package manager for this repo; do not commit npm's lockfile
+package-lock.json
+
 # Build outputs
 dist/
 build/

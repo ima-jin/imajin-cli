@@ -25,49 +25,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Building and Testing
 ```bash
 # Development server with hot reload
-npm run dev
+pnpm run dev
 
 # Build the project (includes TypeScript compilation and import fixing)
-npm run build
+pnpm run build
 
 # Start production build
-npm start
+pnpm start
 
 # Run the CLI directly
-npm run cli
+pnpm run cli
 
 # Build and run CLI
-npm run cli:dev
+pnpm run cli:dev
 
 # Run all tests
-npm test
+pnpm test
 
 # Run tests in watch mode
-npm test:watch
+pnpm test:watch
 
 # Run linting
-npm run lint
+pnpm run lint
 
 # Fix linting issues
-npm run lint:fix
+pnpm run lint:fix
 ```
 
 ### Project Management
 ```bash
 # Clean build artifacts
-npm run clean
+pnpm run clean
 
 # Full clean (including node_modules)
-npm run clean:all
+pnpm run clean:all
 
 # Complete rebuild
-npm run rebuild
+pnpm run rebuild
 
 # Nuclear option (Windows PowerShell script)
-npm run git-nuke
+pnpm run git-nuke
 
 # Update task dates in documentation
-npm run update-dates
+pnpm run update-dates
 ```
 
 ### Testing Commands
@@ -210,8 +210,8 @@ Real-time coordination via `src/core/events/` supporting:
 
 The build process includes several steps:
 1. **TypeScript compilation** (`tsc`)
-2. **Import path fixing** (`npm run fix-imports`) - resolves ES module import paths
-3. **Optional watch mode** (`npm run watch`) - file system monitoring
+2. **Import path fixing** (`pnpm run fix-imports`) - resolves ES module import paths
+3. **Optional watch mode** (`pnpm run watch`) - file system monitoring
 
 ## Important Development Considerations
 

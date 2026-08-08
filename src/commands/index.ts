@@ -18,7 +18,6 @@
 
 import { Command } from 'commander';
 import { registerSchemaCommands } from './schema/SchemaCommands.js';
-import { MarkdownCommand } from './MarkdownCommand.js';
 import { createCommandLimiterCommands } from './system/CommandLimiterCommands.js';
 import { TaskMigrationCommand } from './TaskMigrationCommand.js';
 import { TaskManagementCommands } from './TaskManagementCommands.js';
@@ -34,10 +33,6 @@ import { VaultCommands } from './vault/VaultCommands.js';
 export function registerCommands(program: Command): void {
     // Schema management commands (new external schema system)
     registerSchemaCommands(program);
-    
-    // Markdown utilities and conversion commands
-    const markdownCommand = new MarkdownCommand();
-    markdownCommand.register(program);
     
     // Command limiter and security commands
     const logger = (globalThis as any).imajinApp?.container?.resolve('logger');
@@ -71,7 +66,6 @@ export function registerCommands(program: Command): void {
 export function getAvailableCommandGroups(): string[] {
     return [
         'schema',
-        'markdown',
         'command-limiter',
         'task',
         'vault',
@@ -89,8 +83,6 @@ export function getCommandGroupDescription(group: string): string {
     switch (group) {
         case 'schema':
             return 'External schema management and validation commands';
-        case 'markdown':
-            return 'Markdown utilities and PDF conversion commands';
         case 'command-limiter':
             return 'Git command filtering and security management';
         case 'task':

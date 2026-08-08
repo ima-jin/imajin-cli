@@ -16,14 +16,14 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 COPY tsconfig.json ./
 
-# Install dependencies (without running build)
-RUN npm install --only=dev && npm install
+# Enable pnpm via corepack and install dependencies
+RUN corepack enable && pnpm install
 
 # Install global development tools
-RUN npm install -g \
+RUN pnpm add -g \
     ts-node \
     ts-node-dev \
     typescript \

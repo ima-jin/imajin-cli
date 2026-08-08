@@ -31,7 +31,7 @@ function fixImports() {
   isBuilding = true;
   try {
     console.log('🔄 Fixing imports...');
-    execSync('npm run fix-imports', { 
+    execSync('pnpm run fix-imports', { 
       stdio: 'inherit',
       cwd: projectRoot 
     });
