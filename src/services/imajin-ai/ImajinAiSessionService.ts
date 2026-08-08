@@ -70,8 +70,12 @@ export class ImajinAiSessionService {
         const path = query ? `/api/session?${query}` : '/api/session';
 
         const client = this.createHttpClient(headers);
-        const response = await client.get(path);
-        return response.data;
+        try {
+            const response = await client.get(path);
+            return response.data;
+        } catch (error) {
+            throw this.enhanceRequestError(error);
+        }
     }
 
     public async createLoginChallenge(handle: string): Promise<any> {
@@ -80,10 +84,14 @@ export class ImajinAiSessionService {
         }
 
         const client = this.createHttpClient();
-        const response = await client.post('/api/login/challenge', {
-            handle: handle.trim()
-        });
-        return response.data;
+        try {
+            const response = await client.post('/api/login/challenge', {
+                handle: handle.trim()
+            });
+            return response.data;
+        } catch (error) {
+            throw this.enhanceRequestError(error);
+        }
     }
 
     public async finalizeLogin(options: LoginFinalizeOptions): Promise<{
@@ -109,7 +117,12 @@ export class ImajinAiSessionService {
         }
 
         const client = this.createHttpClient();
-        const response = await client.post('/api/login/verify', payload);
+        let response;
+        try {
+            response = await client.post('/api/login/verify', payload);
+        } catch (error) {
+            throw this.enhanceRequestError(error);
+        }
         const cookie = this.extractSessionCookie(response?.headers?.['set-cookie']);
         if (!cookie.cookieHeaderValue) {
             throw new Error('Login verify succeeded but no imajin_session cookie was returned.');
@@ -247,5 +260,30 @@ export class ImajinAiSessionService {
 
         this.logger.debug('Using imajin-ai base URL', { baseURL: raw });
         return raw.replace(/\/+$/, '');
+    }
+
+    /**
+     * If a request 404s with an HTML body and IMAJIN_AI_BASE_URL doesn't include
+     * the required /auth path segment, append a hint pointing at the likely cause.
+     */
+    private enhanceRequestError(error: unknown): Error {
+        const err = error as { message?: string; response?: { status?: number; headers?: Record<string, unknown> } };
+        const status = err?.response?.status;
+        const contentTypeHeader = err?.response?.headers?.['content-type'];
+        const contentType = typeof contentTypeHeader === 'string' ? contentTypeHeader : '';
+        const baseUrl = process.env[ImajinAiSessionService.BASE_URL_ENV_KEY]?.trim() ?? '';
+
+        if (status === 404 && contentType.includes('text/html') && !baseUrl.includes('/auth')) {
+            const hint = `Hint: received a 404 HTML page instead of a JSON API response. ` +
+                `This usually means ${ImajinAiSessionService.BASE_URL_ENV_KEY} is missing the "/auth" path segment ` +
+                `(e.g. https://jin.imajin.ai/auth).`;
+            if (error instanceof Error) {
+                error.message = `${error.message}\n${hint}`;
+                return error;
+            }
+            return new Error(hint);
+        }
+
+        return error instanceof Error ? error : new Error(String(error));
     }
 }
