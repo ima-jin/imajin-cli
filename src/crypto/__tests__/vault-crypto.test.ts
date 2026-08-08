@@ -4,6 +4,7 @@
  * Tests for Ed25519/X25519 encryption, decryption, and CID computation.
  */
 
+import { ed25519 } from '@noble/curves/ed25519.js';
 import {
     generateKeypair,
     encrypt,
@@ -22,6 +23,7 @@ import {
     verifyDidKeyBinding,
     signVaultPayload,
     verifyVaultPayloadSignature,
+    signMessage,
 } from '../vault-crypto.js';
 
 describe('vault-crypto', () => {
@@ -244,6 +246,33 @@ describe('vault-crypto', () => {
             const signature = signVaultPayload(payload, sender.privateKey);
             const tampered = { ...payload, field: 'OTHER_KEY' };
             expect(verifyVaultPayloadSignature(tampered, signature, sender.publicKey)).toBe(false);
+        });
+    });
+
+    describe('signMessage (raw challenge signing)', () => {
+        it('signs a UTF-8 message such that it verifies against the signer public key', () => {
+            const signer = generateKeypair();
+            const message = 'imajin-ai-login-challenge:abc123';
+
+            const signatureHex = signMessage(message, signer.privateKey);
+            expect(signatureHex).toHaveLength(128);
+
+            const messageBytes = new TextEncoder().encode(message);
+            const isValid = ed25519.verify(hexToBytes(signatureHex), messageBytes, hexToBytes(signer.publicKey));
+            expect(isValid).toBe(true);
+        });
+
+        it('produces a signature that fails verification against a different message', () => {
+            const signer = generateKeypair();
+            const signatureHex = signMessage('original challenge', signer.privateKey);
+
+            const tamperedBytes = new TextEncoder().encode('tampered challenge');
+            const isValid = ed25519.verify(hexToBytes(signatureHex), tamperedBytes, hexToBytes(signer.publicKey));
+            expect(isValid).toBe(false);
+        });
+
+        it('rejects a private key that is not 32 bytes', () => {
+            expect(() => signMessage('hello', 'ab')).toThrow('Ed25519 private key must be 32 bytes');
         });
     });
 });

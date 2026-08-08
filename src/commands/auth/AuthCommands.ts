@@ -17,6 +17,7 @@
  * - User-friendly output formatting
  */
 
+import fs from 'node:fs';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -26,17 +27,30 @@ import type { CredentialData } from '../../core/credentials/interfaces.js';
 import { Logger } from '../../logging/Logger.js';
 import { ImajinAiSessionService } from '../../services/imajin-ai/ImajinAiSessionService.js';
 import type { LoginFinalizeOptions } from '../../services/imajin-ai/ImajinAiSessionService.js';
+import { hexToBytes, signMessage } from '../../crypto/vault-crypto.js';
 import { CommonOptions } from '../../utils/commonOptions.js';
+
+/**
+ * Shape of an exported Imajin identity JSON file (e.g. `~/.imajin/identity.json`).
+ * The Ed25519 private key/seed may be stored under either `privateKey` or `seed`;
+ * `did`/`publicKey` are optional and only used for informational output.
+ */
+interface ImajinIdentityKeyFile {
+    privateKey?: string;
+    seed?: string;
+    did?: string;
+    publicKey?: string;
+}
 
 export class AuthCommands {
     private readonly credentialManager: CredentialManager;
     private readonly logger: Logger;
     private readonly imajinAiSessionService: ImajinAiSessionService;
 
-    constructor(credentialManager: CredentialManager, logger: Logger) {
+    constructor(credentialManager: CredentialManager, logger: Logger, imajinAiSessionService?: ImajinAiSessionService) {
         this.credentialManager = credentialManager;
         this.logger = logger;
-        this.imajinAiSessionService = new ImajinAiSessionService(credentialManager, logger);
+        this.imajinAiSessionService = imajinAiSessionService ?? new ImajinAiSessionService(credentialManager, logger);
     }
 
     private async handleImajinAiStatus(options: any): Promise<void> {
@@ -110,6 +124,7 @@ export class AuthCommands {
             console.log(chalk.green('✅ Login challenge created'));
             console.log(chalk.gray(`  Handle: ${handle}`));
             console.log(chalk.gray('  Next: run `imajin auth imajin-ai login --challenge-id <id> --signature <hex>`'));
+            console.log(chalk.gray('  Or:   run `imajin auth imajin-ai login --handle <handle> --key-file <path>` to sign automatically'));
         } catch (error) {
             this.logger?.error('Failed to create imajin-ai login challenge', error as Error, { handle });
             if (options.json) {
@@ -172,6 +187,7 @@ export class AuthCommands {
             let challengeId = options.challengeId as string | undefined;
             let handle = options.handle as string | undefined;
             let signature = options.signature as string | undefined;
+            const keyFile = options.keyFile as string | undefined;
 
             let challengeResponse: any = null;
             if (!challengeId) {
@@ -196,6 +212,22 @@ export class AuthCommands {
                 }
                 if (challengeResponse?.challenge && !options.json) {
                     console.log(chalk.gray(`Challenge: ${challengeResponse.challenge}`));
+                }
+            }
+
+            if (!signature && keyFile) {
+                const challengeString = challengeResponse?.challenge as string | undefined;
+                if (!challengeString) {
+                    throw new Error(
+                        '--key-file signs the raw challenge text, which is only available when the CLI requests a fresh ' +
+                        'challenge. Pass --handle (instead of --challenge-id) so `login` can request and sign a new ' +
+                        'challenge in one step.'
+                    );
+                }
+                const privateKeyHex = this.loadPrivateKeyFromKeyFile(keyFile);
+                signature = signMessage(challengeString, privateKeyHex);
+                if (!options.json) {
+                    console.log(chalk.gray('  Signed challenge automatically using --key-file'));
                 }
             }
 
@@ -254,6 +286,45 @@ export class AuthCommands {
             console.error(chalk.red(`❌ Login failed: ${error}`));
             process.exit(1);
         }
+    }
+
+    /**
+     * Read a private key/seed hex value from an exported Imajin identity JSON
+     * file (`--key-file`). Supports `privateKey` or `seed` as the field name.
+     * Never logs or includes the key material in thrown errors.
+     */
+    private loadPrivateKeyFromKeyFile(keyFilePath: string): string {
+        let raw: string;
+        try {
+            raw = fs.readFileSync(keyFilePath, 'utf8');
+        } catch (error) {
+            throw new Error(`Unable to read --key-file at ${keyFilePath}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+
+        let parsed: ImajinIdentityKeyFile;
+        try {
+            parsed = JSON.parse(raw) as ImajinIdentityKeyFile;
+        } catch {
+            throw new Error(`--key-file at ${keyFilePath} is not valid JSON`);
+        }
+
+        const privateKeyHex = parsed.privateKey ?? parsed.seed;
+        if (!privateKeyHex || typeof privateKeyHex !== 'string') {
+            throw new Error(
+                `--key-file must contain a hex-encoded Ed25519 private key/seed under "privateKey" or "seed" (file: ${keyFilePath})`
+            );
+        }
+
+        try {
+            const bytes = hexToBytes(privateKeyHex);
+            if (bytes.length !== 32) {
+                throw new Error(`Ed25519 private key must be 32 bytes, got ${bytes.length}`);
+            }
+        } catch (error) {
+            throw new Error(`--key-file contains an invalid Ed25519 private key: ${error instanceof Error ? error.message : String(error)}`);
+        }
+
+        return privateKeyHex;
     }
 
     private parseDfosChainOption(value: unknown): string[] | undefined {
@@ -333,6 +404,7 @@ export class AuthCommands {
             .option('--handle <handle>', 'Identity handle used to request challenge when challenge-id is not provided')
             .option('--challenge-id <id>', 'Existing challenge ID to verify')
             .option('--signature <hex>', 'Challenge signature (hex)')
+            .option('--key-file <path>', 'Path to exported Imajin identity JSON (privateKey/seed hex) used to sign the challenge automatically; never printed or logged')
             .option('--dfos-chain <json>', 'Optional DFOS chain as JSON array string')
             .option('--no-prompt', 'Disable interactive prompts')
             .option(CLI_OPTIONS.JSON, CLI_DESCRIPTIONS.JSON_OUTPUT)

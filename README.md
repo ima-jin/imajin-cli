@@ -38,10 +38,29 @@ export IMAJIN_AI_BASE_URL=https://jin.imajin.ai/auth
 imajin auth imajin-ai challenge alice
 imajin auth imajin-ai login --challenge-id <id> --signature <hex>
 
+# Or sign the challenge in-process from an exported identity key file
+# (never prints or logs the private key material):
+imajin auth imajin-ai login --handle alice --key-file ~/.imajin/identity.json
+
 # Check session status, or clear it
 imajin auth imajin-ai status
 imajin auth imajin-ai logout
 ```
+
+`--key-file` expects a JSON file with a hex-encoded 32-byte Ed25519 private key/seed
+under `privateKey` (or `seed`), e.g.:
+
+```json
+{
+  "privateKey": "<64-hex-char Ed25519 seed>",
+  "did": "did:key:z..."
+}
+```
+
+This is the same shape used by `~/.imajin/identity.json` elsewhere in the CLI (see
+`imajin vault set`/`imajin vault get`). `--key-file` only works together with `--handle`
+(not `--challenge-id`), since signing requires the raw challenge text that is only
+returned when the CLI requests a fresh challenge.
 
 ## Workspace command examples
 ```bash
