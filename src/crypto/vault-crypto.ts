@@ -129,6 +129,23 @@ export function signVaultPayload(payload: VaultSignedPayload, signerPrivateKeyHe
 }
 
 /**
+ * Sign an arbitrary UTF-8 string message with Ed25519.
+ *
+ * Used for flows that sign a raw message string rather than a canonical vault
+ * payload object — e.g. signing an imajin-ai login challenge, where the kernel
+ * verifies `ed.verifyAsync(signature, new TextEncoder().encode(message), publicKey)`.
+ */
+export function signMessage(message: string, signerPrivateKeyHex: string): string {
+    const privateKey = hexToBytes(signerPrivateKeyHex);
+    if (privateKey.length !== 32) {
+        throw new Error(`Ed25519 private key must be 32 bytes, got ${privateKey.length}`);
+    }
+    const bytes = new TextEncoder().encode(message);
+    const signature = ed25519.sign(bytes, privateKey);
+    return bytesToHex(signature);
+}
+
+/**
  * Verify a signed canonical vault entry payload.
  */
 export function verifyVaultPayloadSignature(
