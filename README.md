@@ -1,4 +1,5 @@
 # imajin-cli
+**identity and authority for AI agents.**
 Thin orchestration client for `imajin-ai`.
 
 ## Direction reset
