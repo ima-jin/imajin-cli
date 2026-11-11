@@ -1,5 +1,9 @@
 # imajin-cli
-Thin orchestration client for `imajin-ai`.
+
+**identity and authority for AI agents.**
+
+Thin orchestration client for [Imajin](https://imajin.ai), the trust layer for AI agents.
+Imajin is in alpha.
 
 ## Direction reset
 `imajin-cli` is being re-positioned as a command UX over `imajin-ai` rather than a framework-agnostic multi-API CLI generator.

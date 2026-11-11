@@ -1,7 +1,7 @@
 {
     "name": "@imajin/cli",
     "version": "0.1.0",
-    "description": "LLM-powered universal service interface for dynamic service discovery and orchestration",
+    "description": "identity and authority for AI agents. Thin orchestration CLI for Imajin (alpha).",
     "main": "dist/index.js",
     "type": "module",
     "bin": {
